@@ -1,0 +1,33 @@
+[package]
+name = "skulpin"
+version = "0.1.0"
+authors = ["Philip Degarmo <aclysma@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+winit = "0.20.0-alpha4"
+raw-window-handle = "0.3"
+ash = "0.29"
+glam = "0.7"
+skia-safe = { version = "0.17", features = ["vulkan"] }
+
+log="0.4"
+
+num-traits = "0.2"
+num-derive = "0.2"
+strum = "0.15"
+strum_macros = "0.15"
+
+# From ash example code
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["windef", "winuser"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+metal-rs = "0.6"
+cocoa = "0.13"
+objc = "0.2.2"
+
+[dev-dependencies]
+env_logger = "0.6"
