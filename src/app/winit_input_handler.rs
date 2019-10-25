@@ -1,4 +1,9 @@
 
+use super::AppControl;
+use super::InputState;
+use super::MouseButton;
+use super::MouseButtonEvent;
+
 pub struct WinitInputHandler {
     hidpi_factor: f64
 }
@@ -13,14 +18,13 @@ impl WinitInputHandler {
 
     pub fn handle_input<T>(
         &mut self,
-        app_control: &mut crate::AppControl,
-        input_state: &mut crate::input_state::InputState,
+        app_control: &mut AppControl,
+        input_state: &mut InputState,
         event: winit::event::Event<T>,
         _window_target: &winit::event_loop::EventLoopWindowTarget<T>
     ) {
         use winit::event::Event;
         use winit::event::WindowEvent;
-        use crate::input_state;
 
         let mut is_close_requested = false;
 
@@ -63,11 +67,11 @@ impl WinitInputHandler {
             } => {
                 info!("keyboard {:?}", input);
                 if let Some(vk) = input.virtual_keycode {
-                    let keyboard_button = input_state::KeyboardButton::new(vk as u32);
+                    let keyboard_button = super::KeyboardButton::new(vk as u32);
 
                     let keyboard_event = match input.state {
-                        winit::event::ElementState::Pressed => input_state::KeyboardButtonEvent::Pressed,
-                        winit::event::ElementState::Released => input_state::KeyboardButtonEvent::Released,
+                        winit::event::ElementState::Pressed => super::KeyboardButtonEvent::Pressed,
+                        winit::event::ElementState::Released => super::KeyboardButtonEvent::Released,
                     };
 
                     input_state.handle_keyboard_event(keyboard_button, keyboard_event);
@@ -93,15 +97,15 @@ impl WinitInputHandler {
                 );
 
                 let mouse_button = match button {
-                    winit::event::MouseButton::Left => Some(crate::input_state::MouseButton::Left),
-                    winit::event::MouseButton::Right => Some(crate::input_state::MouseButton::Right),
-                    winit::event::MouseButton::Middle => Some(crate::input_state::MouseButton::Middle),
+                    winit::event::MouseButton::Left => Some(MouseButton::Left),
+                    winit::event::MouseButton::Right => Some(MouseButton::Right),
+                    winit::event::MouseButton::Middle => Some(MouseButton::Middle),
                     _ => None
                 };
 
                 let mouse_event = match state {
-                    winit::event::ElementState::Pressed => crate::input_state::MouseButtonEvent::Pressed,
-                    winit::event::ElementState::Released => crate::input_state::MouseButtonEvent::Released,
+                    winit::event::ElementState::Pressed => MouseButtonEvent::Pressed,
+                    winit::event::ElementState::Released => MouseButtonEvent::Released,
                 };
 
                 if let Some(mouse_button) = mouse_button {
