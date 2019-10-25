@@ -19,7 +19,8 @@ pub use app::TimeState;
 pub use app::AppControl;
 pub use app::PeriodicEvent;
 pub use app::ScopeTimer;
-pub use app::run; //TODO: Make this a struct with builder?
+pub use app::App;
+pub use app::AppHandler;
 
 mod renderer;
 pub use renderer::RendererBuilder;
