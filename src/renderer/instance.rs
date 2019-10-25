@@ -16,10 +16,7 @@ pub struct VkInstance {
 
 impl VkInstance {
     /// Creates a vulkan instance.
-    pub fn new() -> VkInstance {
-        //TODO: Only use in debug mode
-        let use_debug_layers = true;
-
+    pub fn new(use_vulkan_debug_layer: bool) -> VkInstance {
         // This loads the dll/so if needed
         info!("Find vulkan entry point");
         let entry = ash::Entry::new().unwrap();
@@ -44,7 +41,7 @@ impl VkInstance {
         let validation_layer_name = CString::new("VK_LAYER_LUNARG_standard_validation").unwrap();
 
         let mut layer_names = vec![];
-        if use_debug_layers {
+        if use_vulkan_debug_layer {
             //TODO: Validate that the layer exists
             //if layers.iter().find(|x| CStr::from_bytes_with_nul(&x.layer_name) == &validation_layer_name) {
             layer_names.push(validation_layer_name);
@@ -73,7 +70,7 @@ impl VkInstance {
         };
 
         // Setup the debug callback for the validation layer
-        let debug_reporter = if use_debug_layers {
+        let debug_reporter = if use_vulkan_debug_layer {
             Some(Self::setup_vulkan_debug_callback(&entry, &instance))
         } else {
             None

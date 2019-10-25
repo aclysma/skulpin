@@ -814,7 +814,6 @@ impl VkPipeline {
 
     pub fn update_uniform_buffer(
         &mut self,
-        _time_state: &super::TimeState,
         swapchain_image_index: u32,
         _extents: vk::Extent2D
     ) {

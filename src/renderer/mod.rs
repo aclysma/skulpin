@@ -40,8 +40,27 @@ use ash::vk;
 mod debug_reporter;
 pub use debug_reporter::VkDebugReporter;
 
-use super::TimeState;
-use crate::InputState;
+pub struct RendererBuilder {
+    use_vulkan_debug_layer: bool
+}
+
+impl RendererBuilder {
+    pub fn new() -> Self {
+        RendererBuilder {
+            use_vulkan_debug_layer: false
+        }
+    }
+
+    pub fn use_vulkan_debug_layer(mut self, use_vulkan_debug_layer: bool) -> RendererBuilder {
+        self.use_vulkan_debug_layer = use_vulkan_debug_layer;
+        self
+    }
+
+    //TODO: Make this return a result and properly return errors
+    pub fn build(&self, window: &winit::window::Window) -> Renderer {
+        Renderer::new(window, self.use_vulkan_debug_layer)
+    }
+}
 
 pub struct Renderer {
     instance: ManuallyDrop<VkInstance>,
@@ -57,8 +76,8 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(window: &winit::window::Window) -> Renderer {
-        let instance = ManuallyDrop::new(VkInstance::new());
+    pub fn new(window: &winit::window::Window, use_vulkan_debug_layer: bool) -> Renderer {
+        let instance = ManuallyDrop::new(VkInstance::new(use_vulkan_debug_layer));
         let device = ManuallyDrop::new(VkDevice::new(&instance, window));
         let mut skia_context = ManuallyDrop::new(VkSkiaContext::new(&instance, &device));
         let swapchain = ManuallyDrop::new(VkSwapchain::new(&instance, &device, window));
@@ -75,13 +94,12 @@ impl Renderer {
         }
     }
 
-    pub fn draw(
+    pub fn draw<F : FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
         window: &winit::window::Window,
-        time_state: &TimeState,
-        input_state: &InputState
+        f: F
     ) {
-        let result = self.do_draw(window, time_state, input_state);
+        let result = self.do_draw(window, f);
         if let Err(e) = result {
             match e {
                 ash::vk::Result::ERROR_OUT_OF_DATE_KHR => {
@@ -108,11 +126,10 @@ impl Renderer {
         }
     }
 
-    pub fn do_draw(
+    fn do_draw<F : FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
         _window: &winit::window::Window,
-        time_state: &TimeState,
-        input_state: &InputState
+        f: F
     )
         -> Result<(), ash::vk::Result>
     {
@@ -141,11 +158,13 @@ impl Renderer {
         {
             let surface = self.pipeline.skia_surface(present_index as usize);
             let mut canvas = surface.surface.canvas();
-            Self::draw_canvas(&mut canvas, time_state, input_state);
+
+            f(&mut canvas);
+
             canvas.flush();
         }
 
-        self.pipeline.update_uniform_buffer(time_state, present_index, self.swapchain.swapchain_info.extents);
+        self.pipeline.update_uniform_buffer(present_index, self.swapchain.swapchain_info.extents);
 
         let wait_semaphores = [self.swapchain.image_available_semaphores[self.sync_frame_index]];
         let signal_semaphores = [self.swapchain.render_finished_semaphores[self.sync_frame_index]];
@@ -186,72 +205,6 @@ impl Renderer {
         self.sync_frame_index = (self.sync_frame_index + 1) % MAX_FRAMES_IN_FLIGHT;
 
         Ok(())
-    }
-
-    fn draw_canvas(
-        canvas: &mut skia_safe::Canvas,
-        time_state: &TimeState,
-        input_state: &InputState
-    ) {
-        canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
-
-        let f = (time_state.system().frame_count % 60) as f32 / 60.0;
-
-        let mut paint = skia_safe::Paint::new(skia_safe::Color4f::new(1.0 - f, 0.0, f, 1.0), None);
-        paint.set_anti_alias(true);
-        paint.set_style(skia_safe::paint::Style::Stroke);
-        paint.set_stroke_width(3.0);
-        //canvas.draw_line(skia_safe::Point::new(0.0, 0.0), skia_safe::Point::new(100.0, 50.0), &paint);
-
-        canvas.draw_circle(
-            skia_safe::Point::new(
-                100.0 + (f * 300.0),
-                50.0 + (f * 300.0)
-            ),
-            50.0,
-            &paint);
-
-        let rect = skia_safe::Rect {
-            left: 10.0,
-            top: 10.0,
-            right: 500.0,
-            bottom: 500.0
-        };
-        canvas.draw_rect(rect, &paint);
-
-        let mut paint_green = skia_safe::Paint::new(skia_safe::Color4f::new(0.0, 1.0, 0.0, 1.0), None);
-        paint_green.set_anti_alias(true);
-        paint_green.set_style(skia_safe::paint::Style::Stroke);
-        paint_green.set_stroke_width(3.0);
-
-        let mouse_position_px = input_state.mouse_position();
-
-        let rect = skia_safe::Rect {
-            left: mouse_position_px.x() - 10.0,
-            top: mouse_position_px.y() - 10.0,
-            right: mouse_position_px.x() + 10.0,
-            bottom: mouse_position_px.y() + 10.0
-        };
-        canvas.draw_rect(rect, &paint_green);
-
-
-        //canvas.draw_text();
-        //TODO: draw_str
-        //TODO: draw_bitmap
-
-        let mut font = skia_safe::Font::default();
-        font.set_size(500.0);
-
-        canvas.draw_str("Here is a string", (130, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (150, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (160, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (170, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (180, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (190, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (200, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (210, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (220, 500), &font, &paint);
-        canvas.draw_str("Here is a string", (230, 500), &font, &paint);
     }
 }
 
