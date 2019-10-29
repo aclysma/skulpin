@@ -20,6 +20,7 @@ pub use app::AppControl;
 pub use app::PeriodicEvent;
 pub use app::ScopeTimer;
 pub use app::App;
+pub use app::AppBuilder;
 pub use app::AppHandler;
 
 mod renderer;

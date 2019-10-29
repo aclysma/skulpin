@@ -2,6 +2,7 @@ use std::ffi::CString;
 
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
+use ash::prelude::VkResult;
 
 use super::debug_reporter;
 use super::VkDebugReporter;
@@ -16,24 +17,24 @@ pub struct VkInstance {
 
 impl VkInstance {
     /// Creates a vulkan instance.
-    pub fn new(use_vulkan_debug_layer: bool) -> VkInstance {
+    pub fn new(app_name: &CString, use_vulkan_debug_layer: bool) -> VkResult<VkInstance> {
         // This loads the dll/so if needed
         info!("Find vulkan entry point");
-        let entry = ash::Entry::new().unwrap();
+        //TODO: Return this error
+        let entry = ash::Entry::new().expect("Could not find Vulkan entry point");
 
         // Get the available layers/extensions
-        let layers = entry.enumerate_instance_layer_properties().expect("error enumerating layers");
+        let layers = entry.enumerate_instance_layer_properties()?;
         info!("Available Layers: {:#?}", layers);
-        let extensions = entry.enumerate_instance_extension_properties().expect("error enumerating extensions");
+        let extensions = entry.enumerate_instance_extension_properties()?;
         info!("Available Extensions: {:#?}", extensions);
 
         // Info that's exposed to the driver. In a real shipped product, this data might be used by
         // the driver to make specific adjustments to improve performance
-        let app_name = CString::new("VulkanTriangle").unwrap();
         let appinfo = vk::ApplicationInfo::builder()
-            .application_name(&app_name)
+            .application_name(app_name)
             .application_version(0)
-            .engine_name(&app_name)
+            .engine_name(app_name)
             .engine_version(0)
             .api_version(ash::vk_make_version!(1, 0, 0));
 
@@ -64,6 +65,7 @@ impl VkInstance {
 
         info!("Create vulkan instance");
         let instance: ash::Instance = unsafe {
+            //TODO: Return this error
             entry
                 .create_instance(&create_info, None)
                 .expect("Instance creation error")
@@ -71,20 +73,20 @@ impl VkInstance {
 
         // Setup the debug callback for the validation layer
         let debug_reporter = if use_vulkan_debug_layer {
-            Some(Self::setup_vulkan_debug_callback(&entry, &instance))
+            Some(Self::setup_vulkan_debug_callback(&entry, &instance)?)
         } else {
             None
         };
 
-        VkInstance {
+        Ok(VkInstance {
             entry,
             instance,
             debug_reporter,
-        }
+        })
     }
 
     /// This is used to setup a debug callback for logging validation errors
-    fn setup_vulkan_debug_callback(entry: &ash::Entry, instance: &ash::Instance) -> VkDebugReporter {
+    fn setup_vulkan_debug_callback(entry: &ash::Entry, instance: &ash::Instance) -> VkResult<VkDebugReporter> {
         info!("Setup vulkan debug callback");
         let debug_info = vk::DebugReportCallbackCreateInfoEXT::builder()
             .flags(
@@ -99,14 +101,13 @@ impl VkInstance {
         let debug_report_loader = ash::extensions::ext::DebugReport::new(entry, instance);
         let debug_callback = unsafe {
             debug_report_loader
-                .create_debug_report_callback(&debug_info, None)
-                .unwrap()
+                .create_debug_report_callback(&debug_info, None)?
         };
 
-        VkDebugReporter {
+        Ok(VkDebugReporter {
             debug_report_loader,
             debug_callback
-        }
+        })
     }
 }
 

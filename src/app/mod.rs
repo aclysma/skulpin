@@ -1,6 +1,7 @@
 mod app;
 pub use app::App;
 pub use app::AppHandler;
+pub use app::AppBuilder;
 
 mod app_control;
 pub use app_control::AppControl;

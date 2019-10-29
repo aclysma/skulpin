@@ -2,6 +2,7 @@
 
 use std::io;
 use ash::vk;
+use ash::prelude::VkResult;
 use ash::version::DeviceV1_0;
 
 pub fn find_memorytype_index(
@@ -62,7 +63,7 @@ pub fn submit_single_use_command_buffer<F : Fn(&vk::CommandBuffer)>(
     queue: &vk::Queue,
     command_pool: &vk::CommandPool,
     f: F
-) {
+) -> VkResult<()> {
     let alloc_info = vk::CommandBufferAllocateInfo::builder()
         .level(vk::CommandBufferLevel::PRIMARY)
         .command_pool(*command_pool)
@@ -72,15 +73,13 @@ pub fn submit_single_use_command_buffer<F : Fn(&vk::CommandBuffer)>(
         .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
 
     let command_buffer = unsafe {
-        let command_buffer = logical_device.allocate_command_buffers(&alloc_info).unwrap()[0];
+        let command_buffer = logical_device.allocate_command_buffers(&alloc_info)?[0];
 
-        logical_device
-            .begin_command_buffer(command_buffer, &begin_info)
-            .expect("Begin commandbuffer");
+        logical_device.begin_command_buffer(command_buffer, &begin_info)?;
 
         f(&command_buffer);
 
-        logical_device.end_command_buffer(command_buffer).unwrap();
+        logical_device.end_command_buffer(command_buffer)?;
 
         command_buffer
     };
@@ -90,11 +89,13 @@ pub fn submit_single_use_command_buffer<F : Fn(&vk::CommandBuffer)>(
         .command_buffers(&command_buffers);
 
     unsafe {
-        logical_device.queue_submit(*queue, &[submit_info.build()], vk::Fence::null()).unwrap();
-        logical_device.device_wait_idle().unwrap();
+        logical_device.queue_submit(*queue, &[submit_info.build()], vk::Fence::null())?;
+        logical_device.device_wait_idle()?;
 
         logical_device.free_command_buffers(*command_pool, &command_buffers);
     }
+
+    Ok(())
 }
 /*
 pub fn transition_image_layout(

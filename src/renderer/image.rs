@@ -1,5 +1,6 @@
 
 use ash::vk;
+use ash::prelude::VkResult;
 
 use ash::version::DeviceV1_0;
 
@@ -20,7 +21,7 @@ impl VkImage {
         usage: vk::ImageUsageFlags,
         required_property_flags: vk::MemoryPropertyFlags,
     )
-        -> Self
+        -> VkResult<Self>
     {
         let image_create_info = vk::ImageCreateInfo::builder()
             .image_type(vk::ImageType::TYPE_2D)
@@ -35,13 +36,14 @@ impl VkImage {
             .samples(vk::SampleCountFlags::TYPE_1);
 
         let image = unsafe {
-            logical_device.create_image(&image_create_info, None).unwrap()
+            logical_device.create_image(&image_create_info, None)?
         };
 
         let image_memory_req = unsafe {
             logical_device.get_image_memory_requirements(image)
         };
 
+        //TODO: Better error handling here
         let image_memory_index = super::util::find_memorytype_index(
             &image_memory_req,
             device_memory_properties,
@@ -53,19 +55,19 @@ impl VkImage {
             .memory_type_index(image_memory_index);
 
         let image_memory = unsafe {
-            logical_device.allocate_memory(&image_allocate_info, None).unwrap()
+            logical_device.allocate_memory(&image_allocate_info, None)?
         };
 
         unsafe {
-            logical_device.bind_image_memory(image, image_memory, 0).unwrap();
+            logical_device.bind_image_memory(image, image_memory, 0)?;
         }
 
-        VkImage {
+        Ok(VkImage {
             device: logical_device.clone(),
             image,
             image_memory,
             extent
-        }
+        })
     }
 }
 

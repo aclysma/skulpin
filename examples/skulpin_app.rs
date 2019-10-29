@@ -3,6 +3,7 @@ use skulpin::AppHandler;
 use skulpin::AppControl;
 use skulpin::InputState;
 use skulpin::TimeState;
+use std::ffi::CString;
 
 struct ExampleApp {
 }
@@ -91,7 +92,9 @@ fn main() {
 
     let example_app = ExampleApp::new();
 
-    // Start the app
-    skulpin::App::run(example_app)
+    skulpin::AppBuilder::new()
+        .app_name(CString::new("Skulpin Example App").unwrap())
+        .use_vulkan_debug_layer(true)
+        .run(example_app)
         .expect("The app failed with an error");
 }

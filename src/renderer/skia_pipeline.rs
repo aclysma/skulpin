@@ -1,6 +1,7 @@
 
 use std::mem;
 use ash::vk;
+use ash::prelude::VkResult;
 use std::ffi::CString;
 use std::mem::ManuallyDrop;
 
@@ -84,10 +85,10 @@ pub struct VkPipeline {
 }
 
 impl VkPipeline {
-    pub fn new(device: &VkDevice, swapchain: &VkSwapchain, skia_context: &mut VkSkiaContext) -> Self {
+    pub fn new(device: &VkDevice, swapchain: &VkSwapchain, skia_context: &mut VkSkiaContext) -> VkResult<Self> {
         let mut pipeline_resources = None;
 
-        let descriptor_set_layout = Self::create_descriptor_set_layout(&device.logical_device);
+        let descriptor_set_layout = Self::create_descriptor_set_layout(&device.logical_device)?;
 
         Self::create_fixed_function_state(&swapchain.swapchain_info, |fixed_function_state| {
             Self::create_renderpass_create_info(&swapchain.swapchain_info, |renderpass_create_info| {
@@ -100,10 +101,11 @@ impl VkPipeline {
                     |resources| {
                         pipeline_resources = Some(resources);
                     }
-                );
-            });
-        });
+                )
+            })
+        })?;
 
+        //TODO: Return error if not set
         let pipeline_resources = pipeline_resources.unwrap();
         let pipeline_layout = pipeline_resources.pipeline_layout;
         let renderpass = pipeline_resources.renderpass;
@@ -119,44 +121,46 @@ impl VkPipeline {
         let command_pool = Self::create_command_pool(
             &device.logical_device,
             &device.queue_family_indices
-        );
+        )?;
 
         let command_buffers = Self::create_command_buffers(
             &device.logical_device,
             &swapchain.swapchain_info,
             &command_pool
-        );
+        )?;
 
         let vertex_buffer = Self::create_vertex_buffer(
             &device.logical_device,
             &device.queues.graphics_queue,
             &command_pool,
             &device.memory_properties
-        );
+        )?;
 
         let index_buffer = Self::create_index_buffer(
             &device.logical_device,
             &device.queues.graphics_queue,
             &command_pool,
             &device.memory_properties
-        );
+        )?;
 
+        //TODO: Figure out how to return error here
         let skia_surfaces : Vec<_> = (0..swapchain.swapchain_info.image_count).map(|_| {
-            VkSkiaSurface::new(device, skia_context, &swapchain.swapchain_info.extents)
+            VkSkiaSurface::new(device, skia_context, &swapchain.swapchain_info.extents).unwrap()
         }).collect();
 
+        //TODO: Figure out how to return error here
         let uniform_buffers : Vec<_> = (0..swapchain.swapchain_info.image_count).map(|_| {
-            Self::create_uniform_buffer(&device.logical_device, &device.memory_properties)
+            Self::create_uniform_buffer(&device.logical_device, &device.memory_properties).unwrap()
         }).collect();
 
-        let image_sampler = Self::create_texture_image_sampler(
+        let image_sampler = VkSkiaSurface::create_sampler(
             &device.logical_device
-        );
+        )?;
 
         let descriptor_pool = Self::create_descriptor_pool(
             &device.logical_device,
             swapchain.swapchain_info.image_count as u32
-        );
+        )?;
 
         let descriptor_sets = Self::create_descriptor_sets(
             &device.logical_device,
@@ -166,7 +170,7 @@ impl VkPipeline {
             &uniform_buffers,
             &image_sampler,
             &skia_surfaces
-        );
+        )?;
 
         for i in 0..swapchain.swapchain_info.image_count {
             Self::record_command_buffer(
@@ -181,10 +185,10 @@ impl VkPipeline {
                 &index_buffer.buffer,
                 &descriptor_sets[i],
                 &skia_surfaces[i]
-            );
+            )?;
         }
 
-        VkPipeline {
+        Ok(VkPipeline {
             device: device.logical_device.clone(),
             descriptor_set_layout,
             pipeline_layout,
@@ -200,13 +204,13 @@ impl VkPipeline {
             descriptor_pool,
             descriptor_sets,
             image_sampler
-        }
+        })
     }
 
     fn create_descriptor_set_layout(
         logical_device: &ash::Device
     )
-        -> vk::DescriptorSetLayout
+        -> VkResult<vk::DescriptorSetLayout>
     {
         let descriptor_set_layout_bindings = [
             vk::DescriptorSetLayoutBinding::builder()
@@ -228,11 +232,16 @@ impl VkPipeline {
             .bindings(&descriptor_set_layout_bindings);
 
         unsafe {
-            logical_device.create_descriptor_set_layout(&descriptor_set_layout_create_info, None).unwrap()
+            logical_device.create_descriptor_set_layout(&descriptor_set_layout_create_info, None)
         }
     }
 
-    fn create_fixed_function_state<F : FnMut(&FixedFunctionState)>(swapchain_info: &SwapchainInfo, mut f: F) {
+    fn create_fixed_function_state<F : FnMut(&FixedFunctionState) -> VkResult<()>>(
+        swapchain_info: &SwapchainInfo,
+        mut f: F
+    )
+        -> VkResult<()>
+    {
         let vertex_input_assembly_state_info = vk::PipelineInputAssemblyStateCreateInfo::builder()
             .topology(vk::PrimitiveTopology::TRIANGLE_LIST)
             .primitive_restart_enable(false);
@@ -325,10 +334,15 @@ impl VkPipeline {
             dynamic_state_info
         };
 
-        f(&fixed_function_state);
+        f(&fixed_function_state)
     }
 
-    fn create_renderpass_create_info<F : FnMut(&vk::RenderPassCreateInfo)>(swapchain_info: &SwapchainInfo, mut f: F) {
+    fn create_renderpass_create_info<F : FnMut(&vk::RenderPassCreateInfo) -> VkResult<()>>(
+        swapchain_info: &SwapchainInfo,
+        mut f: F
+    )
+        -> VkResult<()>
+    {
         let renderpass_attachments = [
             vk::AttachmentDescription::builder()
                 .format(swapchain_info.surface_format.format)
@@ -370,7 +384,7 @@ impl VkPipeline {
             .subpasses(&subpasses)
             .dependencies(&dependencies);
 
-        f(&renderpass_create_info);
+        f(&renderpass_create_info)
     }
 
     fn create_pipeline<F : FnMut(PipelineResources)>(
@@ -380,17 +394,19 @@ impl VkPipeline {
         renderpass_create_info: &vk::RenderPassCreateInfo,
         descriptor_set_layout: vk::DescriptorSetLayout,
         mut f: F
-    ) {
+    )
+        -> VkResult<()>
+    {
         //
         // Load Shaders
         //
         let vertex_shader_module = Self::load_shader_module(
             logical_device,
-            &include_bytes!("../../shaders/skia.vert.spv")[..]);
+            &include_bytes!("../../shaders/skia.vert.spv")[..])?;
 
         let fragment_shader_module = Self::load_shader_module(
             logical_device,
-            &include_bytes!("../../shaders/skia.frag.spv")[..]);
+            &include_bytes!("../../shaders/skia.frag.spv")[..])?;
 
         let shader_entry_name = CString::new("main").unwrap();
         let shader_stage_create_infos = [
@@ -416,14 +432,12 @@ impl VkPipeline {
 
         let pipeline_layout : vk::PipelineLayout = unsafe {
             logical_device
-                .create_pipeline_layout(&layout_create_info, None)
-                .unwrap()
+                .create_pipeline_layout(&layout_create_info, None)?
         };
 
         let renderpass : vk::RenderPass = unsafe {
             logical_device
-                .create_render_pass(renderpass_create_info, None)
-                .unwrap()
+                .create_render_pass(renderpass_create_info, None)?
         };
 
         let pipeline_info = vk::GraphicsPipelineCreateInfo::builder()
@@ -438,16 +452,19 @@ impl VkPipeline {
             .layout(pipeline_layout)
             .render_pass(renderpass);
 
-        let pipelines : Vec<vk::Pipeline> = unsafe {
-            logical_device
-                .create_graphics_pipelines(
-                    vk::PipelineCache::null(),
-                    &[pipeline_info.build()],
-                    None,
-                )
-                .expect("Unable to create graphics pipeline")
+        let pipeline = unsafe {
+            match logical_device.create_graphics_pipelines
+            (
+                vk::PipelineCache::null(),
+                &[pipeline_info.build()],
+                None
+            ) {
+                Ok(result) => Ok(result[0]),
+                Err(e) => {
+                    Err(e.1)
+                }
+            }?
         };
-        let pipeline = pipelines[0];
 
         //
         // Destroy shader modules. They don't need to be kept around once the pipeline is built
@@ -464,17 +481,18 @@ impl VkPipeline {
         };
 
         f(resources);
+        Ok(())
     }
 
-    fn load_shader_module(logical_device: &ash::Device, data: &[u8]) -> vk::ShaderModule {
+    fn load_shader_module(logical_device: &ash::Device, data: &[u8]) -> VkResult<vk::ShaderModule> {
         let mut spv_file = std::io::Cursor::new(data);
+        //TODO: Pass this error up
         let code = super::util::read_spv(&mut spv_file).expect("Failed to read vertex shader spv file");
         let shader_info = vk::ShaderModuleCreateInfo::builder().code(&code);
 
         unsafe {
             logical_device
                 .create_shader_module(&shader_info, None)
-                .expect("Vertex shader module error")
         }
     }
 
@@ -498,6 +516,7 @@ impl VkPipeline {
                     .layers(1);
 
                 unsafe {
+                    //TODO: Pass this error up
                     logical_device
                         .create_framebuffer(&frame_buffer_create_info, None)
                         .unwrap()
@@ -510,13 +529,13 @@ impl VkPipeline {
         logical_device: &ash::Device,
         queue_family_indices: &QueueFamilyIndices
     )
-        -> vk::CommandPool
+        -> VkResult<vk::CommandPool>
     {
         let pool_create_info = vk::CommandPoolCreateInfo::builder()
             .queue_family_index(queue_family_indices.graphics_queue_family_index);
 
         unsafe {
-            logical_device.create_command_pool(&pool_create_info, None).unwrap()
+            logical_device.create_command_pool(&pool_create_info, None)
         }
     }
 
@@ -525,7 +544,7 @@ impl VkPipeline {
         swapchain_info: &SwapchainInfo,
         command_pool: &vk::CommandPool
     )
-        -> Vec<vk::CommandBuffer>
+        -> VkResult<Vec<vk::CommandBuffer>>
     {
         let command_buffer_allocate_info = vk::CommandBufferAllocateInfo::builder()
             .command_buffer_count(swapchain_info.image_count as u32)
@@ -535,7 +554,6 @@ impl VkPipeline {
         unsafe {
             logical_device
                 .allocate_command_buffers(&command_buffer_allocate_info)
-                .unwrap()
         }
     }
 
@@ -545,7 +563,7 @@ impl VkPipeline {
         command_pool: &vk::CommandPool,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties
     )
-        -> ManuallyDrop<VkBuffer>
+        -> VkResult<ManuallyDrop<VkBuffer>>
     {
         VkBuffer::new_from_slice_device_local(
             logical_device,
@@ -562,7 +580,7 @@ impl VkPipeline {
         command_pool: &vk::CommandPool,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties
     )
-        -> ManuallyDrop<VkBuffer>
+        -> VkResult<ManuallyDrop<VkBuffer>>
     {
         VkBuffer::new_from_slice_device_local(
             logical_device,
@@ -577,7 +595,7 @@ impl VkPipeline {
         logical_device: &ash::Device,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties
     )
-        -> ManuallyDrop<VkBuffer>
+        -> VkResult<ManuallyDrop<VkBuffer>>
     {
         let buffer = VkBuffer::new(
             logical_device,
@@ -586,14 +604,14 @@ impl VkPipeline {
             vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
             mem::size_of::<UniformBufferObject>() as u64);
 
-        ManuallyDrop::new(buffer)
+        Ok(ManuallyDrop::new(buffer?))
     }
 
     fn create_descriptor_pool(
         logical_device: &ash::Device,
         swapchain_image_count: u32
     )
-        -> vk::DescriptorPool
+        -> VkResult<vk::DescriptorPool>
     {
         let pool_sizes = [
             vk::DescriptorPoolSize::builder()
@@ -611,7 +629,7 @@ impl VkPipeline {
             .max_sets(swapchain_image_count);
 
         unsafe {
-            logical_device.create_descriptor_pool(&descriptor_pool_info, None).unwrap()
+            logical_device.create_descriptor_pool(&descriptor_pool_info, None)
         }
     }
 
@@ -624,7 +642,7 @@ impl VkPipeline {
         image_sampler: &vk::Sampler,
         skia_surface: &Vec<VkSkiaSurface>
     )
-        -> Vec<vk::DescriptorSet>
+        -> VkResult<Vec<vk::DescriptorSet>>
     {
         // DescriptorSetAllocateInfo expects an array with an element per set
         let descriptor_set_layouts = vec![*descriptor_set_layout; swapchain_image_count];
@@ -634,8 +652,8 @@ impl VkPipeline {
             .set_layouts(descriptor_set_layouts.as_slice());
 
         let descriptor_sets = unsafe {
-            logical_device.allocate_descriptor_sets(&alloc_info).unwrap()
-        };
+            logical_device.allocate_descriptor_sets(&alloc_info)
+        }?;
 
         for i in 0..swapchain_image_count {
             let descriptor_buffer_infos = [
@@ -677,7 +695,7 @@ impl VkPipeline {
             }
         }
 
-        descriptor_sets
+        Ok(descriptor_sets)
     }
 
     fn record_command_buffer(
@@ -692,7 +710,9 @@ impl VkPipeline {
         index_buffer: &vk::Buffer,
         descriptor_set: &vk::DescriptorSet,
         skia_surface: &VkSkiaSurface
-    ) {
+    )
+        -> VkResult<()>
+    {
         let command_buffer_begin_info = vk::CommandBufferBeginInfo::builder();
 
         let clear_values = [
@@ -715,8 +735,7 @@ impl VkPipeline {
         // Implicitly resets the command buffer
         unsafe {
             logical_device
-                .begin_command_buffer(*command_buffer, &command_buffer_begin_info)
-                .expect("Begin commandbuffer");
+                .begin_command_buffer(*command_buffer, &command_buffer_begin_info)?;
 
             let image = VkSkiaSurface::get_image_from_skia_texture(&skia_surface.texture);
 
@@ -808,7 +827,7 @@ impl VkPipeline {
                 &[image_memory_barrier],//image_memory_barriers
             );
 
-            logical_device.end_command_buffer(*command_buffer).unwrap();
+            logical_device.end_command_buffer(*command_buffer)
         }
     }
 
@@ -816,43 +835,17 @@ impl VkPipeline {
         &mut self,
         swapchain_image_index: u32,
         _extents: vk::Extent2D
-    ) {
+    )
+        -> VkResult<()>
+    {
         let ubo = UniformBufferObject {
             model: glam::Mat4::identity(),
             view: glam::Mat4::identity(),
             proj: glam::Mat4::identity()
         };
 
-        self.uniform_buffers[swapchain_image_index as usize].write_to_host_visible_buffer(&[ubo]);
+        self.uniform_buffers[swapchain_image_index as usize].write_to_host_visible_buffer(&[ubo])
     }
-
-    pub fn create_texture_image_sampler(
-        logical_device: &ash::Device
-    )
-        -> vk::Sampler
-    {
-        let sampler_info = vk::SamplerCreateInfo::builder()
-            .mag_filter(vk::Filter::LINEAR)
-            .min_filter(vk::Filter::LINEAR)
-            .address_mode_u(vk::SamplerAddressMode::CLAMP_TO_EDGE)
-            .address_mode_v(vk::SamplerAddressMode::CLAMP_TO_EDGE)
-            .address_mode_w(vk::SamplerAddressMode::CLAMP_TO_EDGE)
-            .anisotropy_enable(false)
-            .max_anisotropy(1.0)
-            .border_color(vk::BorderColor::INT_OPAQUE_BLACK)
-            .unnormalized_coordinates(false)
-            .compare_enable(false)
-            .compare_op(vk::CompareOp::ALWAYS)
-            .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
-            .mip_lod_bias(0.0)
-            .min_lod(0.0)
-            .max_lod(0.0);
-
-        unsafe {
-            logical_device.create_sampler(&sampler_info, None).unwrap()
-        }
-    }
-
 
     pub fn skia_surface(&mut self, index: usize) -> &mut VkSkiaSurface {
         &mut self.skia_surfaces[index]

@@ -10,9 +10,6 @@ const TIME_CONTEXT_COUNT : usize = TIMECONTEXT_COUNT;
 
 const NANOS_PER_SEC: u32 = 1_000_000_000;
 
-//TODO: Exposing duration/instant is a little dangerous, it would be better if durations/instants
-// from each mode were different types, and couldn't be used directly with stdlib duration/instants
-
 //TODO: Avoid using pub for fields
 
 // This is not intended to be accessed when the system time updates, but we can double buffer it

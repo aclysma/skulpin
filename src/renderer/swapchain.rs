@@ -1,5 +1,6 @@
 
 use ash::vk;
+use ash::prelude::VkResult;
 use ash::extensions::khr;
 
 use ash::version::DeviceV1_0;
@@ -38,7 +39,7 @@ impl VkSwapchain {
         device: &VkDevice,
         window: &winit::window::Window
     )
-        -> VkSwapchain
+        -> VkResult<VkSwapchain>
     {
         let (swapchain_info, swapchain_loader, swapchain) = Self::create_swapchain(
             &instance.instance,
@@ -48,10 +49,10 @@ impl VkSwapchain {
             &device.surface,
             &device.queue_family_indices,
             window
-        );
+        )?;
 
         let swapchain_images = unsafe {
-            swapchain_loader.get_swapchain_images(swapchain).unwrap()
+            swapchain_loader.get_swapchain_images(swapchain)?
         };
 
         let swapchain_image_views = Self::create_image_views(
@@ -62,6 +63,7 @@ impl VkSwapchain {
         let image_available_semaphores : Vec<_> = (0..MAX_FRAMES_IN_FLIGHT).map(|_| {
             let semaphore_create_info = vk::SemaphoreCreateInfo::builder();
             unsafe {
+                //TODO: Return this
                 device.logical_device.create_semaphore(&semaphore_create_info, None).unwrap()
             }
         }).collect();
@@ -69,6 +71,7 @@ impl VkSwapchain {
         let render_finished_semaphores : Vec<_> = (0..MAX_FRAMES_IN_FLIGHT).map(|_| {
             let semaphore_create_info = vk::SemaphoreCreateInfo::builder();
             unsafe {
+                //TODO: Return this
                 device.logical_device.create_semaphore(&semaphore_create_info, None).unwrap()
             }
         }).collect();
@@ -77,11 +80,12 @@ impl VkSwapchain {
             let fence_create_info = vk::FenceCreateInfo::builder()
                 .flags(vk::FenceCreateFlags::SIGNALED);
             unsafe {
+                //TODO: Return this
                 device.logical_device.create_fence(&fence_create_info, None).unwrap()
             }
         }).collect();
 
-        VkSwapchain {
+        Ok(VkSwapchain {
             device: device.logical_device.clone(),
             swapchain_info,
             swapchain_loader,
@@ -91,7 +95,7 @@ impl VkSwapchain {
             image_available_semaphores,
             render_finished_semaphores,
             in_flight_fences
-        }
+        })
     }
 
     fn create_swapchain(
@@ -103,9 +107,14 @@ impl VkSwapchain {
         queue_family_indices: &QueueFamilyIndices,
         window: &winit::window::Window
     )
-        -> (SwapchainInfo, khr::Swapchain, vk::SwapchainKHR)
+        -> VkResult<(SwapchainInfo, khr::Swapchain, vk::SwapchainKHR)>
     {
-        let (available_formats, available_present_modes, surface_capabilities) = Self::query_swapchain_support(physical_device, surface_loader, surface);
+        let (available_formats, available_present_modes, surface_capabilities) =
+            Self::query_swapchain_support(
+                physical_device,
+                surface_loader,
+                surface
+            )?;
 
         let surface_format = Self::choose_format(&available_formats);
         let present_mode = Self::choose_present_mode(&available_present_modes);
@@ -157,8 +166,7 @@ impl VkSwapchain {
 
         let swapchain = unsafe {
             swapchain_loader
-                .create_swapchain(&swapchain_create_info, None)
-                .unwrap()
+                .create_swapchain(&swapchain_create_info, None)?
         };
 
         let swapchain_info = SwapchainInfo {
@@ -168,7 +176,7 @@ impl VkSwapchain {
             image_count: image_count as usize
         };
 
-        (swapchain_info, swapchain_loader, swapchain)
+        Ok((swapchain_info, swapchain_loader, swapchain))
     }
 
     fn query_swapchain_support(
@@ -176,27 +184,24 @@ impl VkSwapchain {
         surface_loader: &ash::extensions::khr::Surface,
         surface: &ash::vk::SurfaceKHR
     )
-        -> (Vec<vk::SurfaceFormatKHR>, Vec<vk::PresentModeKHR>, vk::SurfaceCapabilitiesKHR)
+        -> VkResult<(Vec<vk::SurfaceFormatKHR>, Vec<vk::PresentModeKHR>, vk::SurfaceCapabilitiesKHR)>
     {
         let available_formats : Vec<vk::SurfaceFormatKHR> = unsafe {
             surface_loader
-                .get_physical_device_surface_formats(*physical_device, *surface)
-                .unwrap()
+                .get_physical_device_surface_formats(*physical_device, *surface)?
         };
 
         let available_present_modes : Vec<vk::PresentModeKHR> = unsafe {
             surface_loader
-                .get_physical_device_surface_present_modes(*physical_device, *surface)
-                .unwrap()
+                .get_physical_device_surface_present_modes(*physical_device, *surface)?
         };
 
         let surface_capabilities : vk::SurfaceCapabilitiesKHR = unsafe {
             surface_loader
-                .get_physical_device_surface_capabilities(*physical_device, *surface)
-                .unwrap()
+                .get_physical_device_surface_capabilities(*physical_device, *surface)?
         };
 
-        (available_formats, available_present_modes, surface_capabilities)
+        Ok((available_formats, available_present_modes, surface_capabilities))
     }
 
     fn choose_format(available_formats: &Vec<vk::SurfaceFormatKHR>) -> vk::SurfaceFormatKHR {
@@ -277,6 +282,7 @@ impl VkSwapchain {
                     });
 
                 unsafe {
+                    //TODO: Return this
                     logical_device.create_image_view(&create_view_info, None).unwrap()
                 }
             })

@@ -5,6 +5,7 @@ use super::winit_input_handler::WinitInputHandler;
 use super::time_state::TimeState;
 use super::time_state::TimeContext;
 use super::util::PeriodicEvent;
+use std::ffi::CString;
 
 use crate::RendererBuilder;
 
@@ -25,13 +26,48 @@ pub trait AppHandler {
     );
 }
 
+pub struct AppBuilder {
+    app_name: CString,
+    use_vulkan_debug_layer: bool
+}
+
+impl AppBuilder {
+    pub fn new() -> Self {
+        AppBuilder {
+            app_name: CString::new("Skulpin").unwrap(),
+            use_vulkan_debug_layer: false
+        }
+    }
+
+    pub fn app_name(mut self, app_name: CString) -> Self {
+        self.app_name = app_name;
+        self
+    }
+
+    pub fn use_vulkan_debug_layer(mut self, use_vulkan_debug_layer: bool) -> Self {
+        self.use_vulkan_debug_layer = use_vulkan_debug_layer;
+        self
+    }
+
+    pub fn run<T : 'static + AppHandler>(&self, app_handler: T) -> Result<(), Box<dyn std::error::Error>> {
+        App::run(app_handler, &self.app_name, self.use_vulkan_debug_layer)
+    }
+}
 
 pub struct App {
 
 }
 
 impl App {
-    pub fn run<T : 'static + AppHandler>(mut app_handler: T) -> Result<(), Box<dyn std::error::Error>>  {
+    //TODO: Since winit returns !, we should just take a callback here for handling errors instead
+    // of returning
+    pub fn run<T : 'static + AppHandler>(
+        mut app_handler: T,
+        app_name: &CString,
+        use_vulkan_debug_layer: bool
+    )
+        -> Result<(), Box<dyn std::error::Error>>
+    {
         // Create the event loop
         let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
 
@@ -47,8 +83,9 @@ impl App {
         let mut time_state = TimeState::default();
 
         let mut renderer = RendererBuilder::new()
-            .use_vulkan_debug_layer(false)
-            .build(&window);
+            .use_vulkan_debug_layer(use_vulkan_debug_layer)
+            .app_name(app_name.clone())
+            .build(&window)?;
 
         // To print fps once per second
         let mut print_fps_event = PeriodicEvent::default();
@@ -56,7 +93,6 @@ impl App {
         // Pass control of this thread to winit until the app terminates. If this app wants to quit,
         // the update loop should send the appropriate event via the channel
         event_loop.run(move |event, window_target, control_flow| {
-            //println!("enter");
             match event {
                 winit::event::Event::EventsCleared => {
 
@@ -78,7 +114,6 @@ impl App {
                     // Call this to mark the start of the next frame (i.e. "key just down" will return false)
                     input_state.end_frame();
 
-                    //println!("events cleared");
                     // Queue a RedrawRequested event.
                     window.request_redraw();
                 },
@@ -86,15 +121,18 @@ impl App {
                     event: winit::event::WindowEvent::RedrawRequested,
                     ..
                 } => {
-                    renderer.draw(&window, |canvas| {
-
+                    if let Err(e) = renderer.draw(&window, |canvas| {
                         app_handler.draw(
                             &app_control,
                             &input_state,
                             &time_state,
                             canvas
                         );
-                    });
+                    }) {
+                        //TODO: Handle Error
+                        warn!("{:?}", e);
+                        app_control.enqueue_terminate_process();
+                    }
                 },
                 _ => input_handler.handle_input(
                     &mut app_control,

@@ -11,12 +11,19 @@ fn main() {
         .with_title("Skulpin")
         .with_inner_size(winit::dpi::LogicalSize::new(1300.0, 900.0))
         .build(&event_loop)
-        .unwrap();
+        .expect("Failed to create window");
 
     // Create the renderer, which will draw to the window
-    let mut renderer = skulpin::RendererBuilder::new()
+    let renderer = skulpin::RendererBuilder::new()
         .use_vulkan_debug_layer(true)
         .build(&window);
+
+    if let Err(e) = renderer {
+        println!("Error during renderer construction: {:?}", e);
+        return;
+    }
+
+    let mut renderer = renderer.unwrap();
 
     // Increment a frame count so we can render something that moves
     let mut frame_count = 0;
@@ -61,10 +68,13 @@ fn main() {
                 event: winit::event::WindowEvent::RedrawRequested,
                 ..
             } => {
-                renderer.draw(&window, |canvas| {
+                if let Err(e) = renderer.draw(&window, |canvas| {
                     draw(canvas, frame_count);
                     frame_count += 1;
-                });
+                }) {
+                    println!("Error during draw: {:?}", e);
+                    *control_flow = winit::event_loop::ControlFlow::Exit
+                }
             },
 
             // Ignore all other events

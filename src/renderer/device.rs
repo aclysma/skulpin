@@ -1,5 +1,6 @@
 
 use ash::vk;
+use ash::prelude::VkResult;
 use super::VkInstance;
 use super::window_support;
 
@@ -36,7 +37,7 @@ pub struct VkDevice {
 }
 
 impl VkDevice {
-    pub fn new(instance: &VkInstance, window: &winit::window::Window) -> Self {
+    pub fn new(instance: &VkInstance, window: &winit::window::Window) -> VkResult<Self> {
         // Get the surface, needed to select the best queue family
         use raw_window_handle::HasRawWindowHandle;
         let surface = unsafe {
@@ -44,7 +45,7 @@ impl VkDevice {
                 &instance.entry,
                 &instance.instance,
                 &window.raw_window_handle()
-            ).unwrap()
+            )?
         };
 
         let surface_loader = khr::Surface::new(
@@ -55,7 +56,7 @@ impl VkDevice {
         let (
             physical_device,
             queue_family_indices
-        ) = Self::choose_physical_device(&instance.instance, &surface_loader, &surface);
+        ) = Self::choose_physical_device(&instance.instance, &surface_loader, &surface)?;
 
         // Create a logical device
         let (
@@ -65,13 +66,13 @@ impl VkDevice {
             &instance.instance,
             &physical_device,
             &queue_family_indices
-        );
+        )?;
 
         let memory_properties = unsafe {
             instance.instance.get_physical_device_memory_properties(physical_device)
         };
 
-        VkDevice {
+        Ok(VkDevice {
             surface,
             surface_loader,
             physical_device,
@@ -79,18 +80,17 @@ impl VkDevice {
             queue_family_indices,
             queues,
             memory_properties
-        }
+        })
     }
 
     fn choose_physical_device(
         instance: &ash::Instance,
         surface_loader: &ash::extensions::khr::Surface,
         surface: &ash::vk::SurfaceKHR
-    ) -> (ash::vk::PhysicalDevice, QueueFamilyIndices) {
+    ) -> VkResult<(ash::vk::PhysicalDevice, QueueFamilyIndices)> {
         let physical_devices = unsafe {
             instance
-                .enumerate_physical_devices()
-                .expect("Could not enumerate physical devices")
+                .enumerate_physical_devices()?
         };
 
         if physical_devices.len() <= 0 {
@@ -101,7 +101,7 @@ impl VkDevice {
         let mut best_physical_device_score = -1;
         let mut best_physical_device_queue_family_indices = None;
         for physical_device in physical_devices {
-            if let Some((score, queue_family_indices)) = Self::get_score_and_queue_families_for_physical_device(instance, &physical_device, surface_loader, surface) {
+            if let Some((score, queue_family_indices)) = Self::get_score_and_queue_families_for_physical_device(instance, &physical_device, surface_loader, surface)? {
                 if score > best_physical_device_score {
                     best_physical_device = Some(physical_device);
                     best_physical_device_score = score;
@@ -110,10 +110,11 @@ impl VkDevice {
             }
         }
 
+        //TODO: Return an error
         let physical_device = best_physical_device.expect("Could not find suitable device");
         let queue_family_indices = best_physical_device_queue_family_indices.unwrap();
 
-        (physical_device, queue_family_indices)
+        Ok((physical_device, queue_family_indices))
     }
 
     fn get_score_and_queue_families_for_physical_device(
@@ -121,17 +122,17 @@ impl VkDevice {
         device: &ash::vk::PhysicalDevice,
         surface_loader: &ash::extensions::khr::Surface,
         surface: &ash::vk::SurfaceKHR
-    ) -> Option<(i32, QueueFamilyIndices)> {
+    ) -> VkResult<Option<(i32, QueueFamilyIndices)>> {
         let properties : ash::vk::PhysicalDeviceProperties = unsafe { instance.get_physical_device_properties(*device) };
         let device_name = unsafe {CStr::from_ptr(properties.device_name.as_ptr()).to_str().unwrap().to_string() };
 
         //TODO: Check that the extensions we want to use are supported
-        let _extensions : Vec<ash::vk::ExtensionProperties> = unsafe { instance.enumerate_device_extension_properties(*device).unwrap() };
+        let _extensions : Vec<ash::vk::ExtensionProperties> = unsafe { instance.enumerate_device_extension_properties(*device)? };
         let features : vk::PhysicalDeviceFeatures = unsafe { instance.get_physical_device_features(*device) };
 
         if features.sampler_anisotropy == vk::FALSE {
             info!("Found unsuitable device '{}', does not support sampler_anisotropy", device_name);
-            return None;
+            return Ok(None);
         }
 
         let queue_family_indices = Self::find_queue_families(instance, device, surface_loader, surface);
@@ -154,11 +155,11 @@ impl VkDevice {
 
             info!("Found suitable device '{}' score = {}", device_name, score);
             trace!("{:#?}", properties);
-            Some((score, queue_family_indices))
+            Ok(Some((score, queue_family_indices)))
         } else {
             info!("Found unsuitable device '{}', could not find queue families", device_name);
             trace!("{:#?}", properties);
-            None
+            Ok(None)
         }
     }
 
@@ -194,7 +195,7 @@ impl VkDevice {
         physical_device: &ash::vk::PhysicalDevice,
         queue_family_indices: &QueueFamilyIndices
     )
-        -> (ash::Device, Queues)
+        -> VkResult<(ash::Device, Queues)>
     {
         //TODO: Ideally we would set up validation layers for the logical device too.
 
@@ -221,8 +222,7 @@ impl VkDevice {
 
         let device : ash::Device = unsafe {
             instance
-                .create_device(*physical_device, &device_create_info, None)
-                .unwrap()
+                .create_device(*physical_device, &device_create_info, None)?
         };
 
         let graphics_queue = unsafe {
@@ -238,7 +238,7 @@ impl VkDevice {
             present_queue
         };
 
-        (device, queues)
+        Ok((device, queues))
     }
 }
 

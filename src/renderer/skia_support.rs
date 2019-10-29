@@ -1,5 +1,6 @@
 
 use ash::vk;
+use ash::prelude::VkResult;
 
 use super::VkInstance;
 use super::VkDevice;
@@ -22,7 +23,7 @@ impl VkSkiaContext {
             match Self::get_proc(instance, of) {
                 Some(f) => f as _,
                 None => {
-                    println!("resolve of {} failed", of.name().to_str().unwrap());
+                    error!("resolve of {} failed", of.name().to_str().unwrap());
                     std::ptr::null()
                 }
             }
@@ -74,7 +75,6 @@ pub struct VkSkiaSurface {
     pub surface: skia_safe::Surface,
     pub texture: skia_safe::gpu::BackendTexture,
     pub image_view: vk::ImageView,
-    pub sampler: vk::Sampler
 }
 
 impl VkSkiaSurface {
@@ -85,7 +85,7 @@ impl VkSkiaSurface {
         }
     }
 
-    pub fn new(device: &VkDevice, context: &mut VkSkiaContext, extent: &vk::Extent2D) -> Self {
+    pub fn new(device: &VkDevice, context: &mut VkSkiaContext, extent: &vk::Extent2D) -> VkResult<Self> {
 
         let image_info = skia_safe::ImageInfo::new_n32_premul((extent.width as i32, extent.height as i32), None);
 
@@ -124,33 +124,39 @@ impl VkSkiaSurface {
         let image_view = unsafe {
             device
                 .logical_device
-                .create_image_view(&skia_tex_image_view_info, None)
-                .unwrap()
+                .create_image_view(&skia_tex_image_view_info, None)?
         };
 
-        let skia_sampler_info = vk::SamplerCreateInfo {
-            mag_filter: vk::Filter::LINEAR,
-            min_filter: vk::Filter::LINEAR,
-            mipmap_mode: vk::SamplerMipmapMode::LINEAR,
-            address_mode_u: vk::SamplerAddressMode::MIRRORED_REPEAT,
-            address_mode_v: vk::SamplerAddressMode::MIRRORED_REPEAT,
-            address_mode_w: vk::SamplerAddressMode::MIRRORED_REPEAT,
-            max_anisotropy: 1.0,
-            border_color: vk::BorderColor::FLOAT_OPAQUE_WHITE,
-            compare_op: vk::CompareOp::NEVER,
-            ..Default::default()
-        };
-
-        let sampler = unsafe {
-            device.logical_device.create_sampler(&skia_sampler_info, None).unwrap()
-        };
-
-        VkSkiaSurface {
+        Ok(VkSkiaSurface {
             device: device.logical_device.clone(),
             surface,
             texture,
             image_view,
-            sampler
+        })
+    }
+
+    /// Creates a sampler appropriate for rendering skia surfaces. We don't create one per surface
+    /// since one can be shared among all code that renders surfaces
+    pub fn create_sampler(logical_device: &ash::Device) -> VkResult<vk::Sampler>{
+        let sampler_info = vk::SamplerCreateInfo::builder()
+            .mag_filter(vk::Filter::LINEAR)
+            .min_filter(vk::Filter::LINEAR)
+            .address_mode_u(vk::SamplerAddressMode::MIRRORED_REPEAT)
+            .address_mode_v(vk::SamplerAddressMode::MIRRORED_REPEAT)
+            .address_mode_w(vk::SamplerAddressMode::MIRRORED_REPEAT)
+            .anisotropy_enable(false)
+            .max_anisotropy(1.0)
+            .border_color(vk::BorderColor::FLOAT_OPAQUE_WHITE)
+            .unnormalized_coordinates(false)
+            .compare_enable(false)
+            .compare_op(vk::CompareOp::NEVER)
+            .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
+            .mip_lod_bias(0.0)
+            .min_lod(0.0)
+            .max_lod(0.0);
+
+        unsafe {
+            logical_device.create_sampler(&sampler_info, None)
         }
     }
 }
@@ -158,7 +164,7 @@ impl VkSkiaSurface {
 impl Drop for VkSkiaSurface {
     fn drop(&mut self) {
         unsafe {
-            self.device.destroy_sampler(self.sampler, None);
+            //self.device.destroy_sampler(self.sampler, None);
             self.device.destroy_image_view(self.image_view, None);
         }
     }
