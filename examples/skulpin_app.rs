@@ -1,9 +1,27 @@
 
+// This example shows how to use the "app" helpers to get a window open and drawing with minimal code
+// It's not as flexible as working with winit directly, but it's quick and simple
+
 use skulpin::AppHandler;
 use skulpin::AppControl;
 use skulpin::InputState;
 use skulpin::TimeState;
 use std::ffi::CString;
+
+fn main() {
+    // Setup logging
+    env_logger::Builder::from_default_env()
+        .filter_level(log::LevelFilter::Debug)
+        .init();
+
+    let example_app = ExampleApp::new();
+
+    skulpin::AppBuilder::new()
+        .app_name(CString::new("Skulpin Example App").unwrap())
+        .use_vulkan_debug_layer(true)
+        .run(example_app)
+        .expect("The app failed with an error");
+}
 
 struct ExampleApp {
 }
@@ -82,19 +100,4 @@ impl AppHandler for ExampleApp {
         canvas.draw_str("Hello Skulpin", (135, 305), &font, &paint);
         canvas.draw_str("Hello Skulpin", (140, 310), &font, &paint);
     }
-}
-
-fn main() {
-    // Setup logging
-    env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Debug)
-        .init();
-
-    let example_app = ExampleApp::new();
-
-    skulpin::AppBuilder::new()
-        .app_name(CString::new("Skulpin Example App").unwrap())
-        .use_vulkan_debug_layer(true)
-        .run(example_app)
-        .expect("The app failed with an error");
 }

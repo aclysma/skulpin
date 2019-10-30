@@ -128,6 +128,8 @@ impl Renderer {
 
         //TODO: Dont lock up forever (don't use std::u64::MAX)
         //TODO: Can part of this run in a separate thread from the window pump?
+        //TODO: Explore an option that ensures we receive the same skia canvas back every draw call.
+        // This may require a copy from a surface that is not use in the swapchain into one that is
 
         // Wait if two frame are already in flight
         unsafe {

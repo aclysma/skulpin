@@ -3,7 +3,12 @@
 // and the update loop
 
 fn main() {
-    // Create the event loop
+    // Setup logging
+    env_logger::Builder::from_default_env()
+        .filter_level(log::LevelFilter::Debug)
+        .init();
+
+    // Create the winit event loop
     let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
 
     // Create a single window
@@ -18,6 +23,7 @@ fn main() {
         .use_vulkan_debug_layer(true)
         .build(&window);
 
+    // Check if there were error setting up vulkan
     if let Err(e) = renderer {
         println!("Error during renderer construction: {:?}", e);
         return;
@@ -28,11 +34,14 @@ fn main() {
     // Increment a frame count so we can render something that moves
     let mut frame_count = 0;
 
-    // Start the window event loop
+    // Start the window event loop. Winit will not return once run is called. We will get notified
+    // when important events happen.
     event_loop.run(move |event, _window_target, control_flow| {
         match event {
 
+            //
             // Halt if the user requests to close the window
+            //
             winit::event::Event::WindowEvent {
                 event: winit::event::WindowEvent::CloseRequested,
                 ..
@@ -40,7 +49,9 @@ fn main() {
                 *control_flow = winit::event_loop::ControlFlow::Exit
             },
 
+            //
             // Close if the escape key is hit
+            //
             winit::event::Event::WindowEvent {
                 event:
                 winit::event::WindowEvent::KeyboardInput {
@@ -57,13 +68,17 @@ fn main() {
                 *control_flow = winit::event_loop::ControlFlow::Exit
             },
 
+            //
             // Request a redraw any time we finish processing events
+            //
             winit::event::Event::EventsCleared => {
                 // Queue a RedrawRequested event.
                 window.request_redraw();
             },
 
+            //
             // Redraw
+            //
             winit::event::Event::WindowEvent {
                 event: winit::event::WindowEvent::RedrawRequested,
                 ..
@@ -77,14 +92,19 @@ fn main() {
                 }
             },
 
+            //
             // Ignore all other events
+            //
             _ => {}
         }
     });
 }
 
+/// Called when winit passes us a WindowEvent::RedrawRequested
 fn draw(canvas: &mut skia_safe::Canvas, frame_count: i32) {
-    // Generally would want to clear data every time we draw
+    // Generally would want to clear data every time we draw. Currently, the canvas is not
+    // guaranteed to match the previous state since we use multiple skia surfaces simultanously for
+    // backbuffering
     canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
 
     // Floating point value constantly moving between 0..1 to generate some movement
