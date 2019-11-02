@@ -91,22 +91,25 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     instance: &I,
     raw_window_handle: &raw_window_handle::RawWindowHandle
 ) -> Result<vk::SurfaceKHR, vk::Result> {
-    use std::ptr;
-    use winapi::shared::windef::HWND;
-    use winapi::um::libloaderapi::GetModuleHandleW;
-    use winit::os::windows::WindowExt;
-
-    let hwnd = window.get_hwnd() as HWND;
-    let hinstance = GetModuleHandleW(ptr::null()) as *const c_void;
-    let win32_create_info = vk::Win32SurfaceCreateInfoKHR {
-        s_type: vk::StructureType::WIN32_SURFACE_CREATE_INFO_KHR,
-        p_next: ptr::null(),
-        flags: Default::default(),
-        hinstance: hinstance,
-        hwnd: hwnd as *const c_void,
-    };
-    let win32_surface_loader = Win32Surface::new(entry, instance);
-    win32_surface_loader.create_win32_surface(&win32_create_info, None)
+    
+    match raw_window_handle {
+        raw_window_handle::RawWindowHandle::Windows(window_handle) => {
+            let hwnd = window_handle.hwnd;
+            let hinstance = window_handle.hinstance;
+                
+            let win32_create_info = vk::Win32SurfaceCreateInfoKHR {
+                s_type: vk::StructureType::WIN32_SURFACE_CREATE_INFO_KHR,
+                p_next: std::ptr::null(),
+                flags: Default::default(),
+                hinstance: hinstance,
+                hwnd: hwnd as *const c_void,
+            };
+            
+            let win32_surface_loader = Win32Surface::new(entry, instance);
+            win32_surface_loader.create_win32_surface(&win32_create_info, None)
+        },
+        _ => unreachable!()
+    }
 }
 
 //
