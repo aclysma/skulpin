@@ -3,6 +3,24 @@ name = "skulpin"
 version = "0.1.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
+description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/aclysma/skulpin"
+homepage = "https://github.com/aclysma/skulpin"
+keywords = ["skia", "vulkan", "ash", "2d", "graphics"]
+categories = ["Graphics", "GUI", "Multimedia", "Rendering", "Visualization"]
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+    "shaders/*.frag",
+    "shaders/*.vert",
+    "shaders/*.spv",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "README.md"
+]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
