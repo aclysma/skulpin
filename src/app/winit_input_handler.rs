@@ -35,21 +35,6 @@ impl WinitInputHandler {
                 ..
             } => is_close_requested = true,
 
-            // Close if the escape key is hit
-            Event::WindowEvent {
-                event:
-                WindowEvent::KeyboardInput {
-                    input:
-                    winit::event::KeyboardInput {
-                        virtual_keycode:
-                        Some(winit::event::VirtualKeyCode::Escape),
-                        ..
-                    },
-                    ..
-                },
-                ..
-            } => is_close_requested = true,
-
             Event::WindowEvent {
                 event: WindowEvent::HiDpiFactorChanged(hidpi_factor),
                 ..

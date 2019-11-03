@@ -102,7 +102,7 @@ impl App {
                         time_state.system().frame_start_instant,
                         std::time::Duration::from_secs_f32(1.0)
                     ) {
-                        info!("fps: {}", time_state.system().fps);
+                        debug!("fps: {}", time_state.system().fps);
                     }
 
                     app_handler.update(

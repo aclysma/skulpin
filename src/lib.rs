@@ -29,5 +29,6 @@ pub use renderer::Renderer;
 
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;
+pub use glam;
 pub use skia_safe;
 pub use winit;

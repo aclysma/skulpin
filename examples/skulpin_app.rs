@@ -37,11 +37,13 @@ impl ExampleApp {
 impl AppHandler for ExampleApp {
     fn update(
         &mut self,
-        _app_control: &mut AppControl,
-        _input_state: &InputState,
+        app_control: &mut AppControl,
+        input_state: &InputState,
         _time_state: &TimeState
     ) {
-
+        if input_state.is_key_down(skulpin::KeyboardButton::new(winit::event::VirtualKeyCode::Escape as u32)) {
+            app_control.enqueue_terminate_process();
+        }
     }
 
     fn draw(
