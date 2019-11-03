@@ -27,13 +27,13 @@ First, ensure that the below requirements are met depending on OS. Afterwards, t
 
 ## Requirements
 
-All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
-
 ### Windows
 
-No extra steps required
+All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
 ### MacOS
+
+All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
 Currently you may get a build error "cannot infer type" when compiling cocoa with objc 0.2.7.
 
@@ -41,7 +41,9 @@ Currently you may get a build error "cannot infer type" when compiling cocoa wit
 
 ### Linux
 
-On linux you'll need to link against bz2, GL, fontconfig, and freetype.
+All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
+
+On linux you'll also need to link against bz2, GL, fontconfig, and freetype.
 
 On ubuntu, you could use `libbz2-dev`, `libfreetype6-dev`, `libfontconfig1-dev`, and `libgl-dev`. (And `libvulkan-dev` to pick up the Vulkan SDK)
 
