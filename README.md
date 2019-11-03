@@ -14,17 +14,47 @@ This crate mainly depends on:
  
 ## Usage
 
-Currently there are two main ways to use this library.
+Currently there are two ways to use this library.
  * [app](blob/master/examples/skuplin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
  * [renderer_only](blob/master/examples/renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to draw to it.
+
+## Running the Examples
+
+First, ensure that the below requirements are met depending on OS. Afterwards, the examples can be run normally:
+
+`cargo run --example skulpin_app`
+
+## Requirements
+
+All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
+
+### Windows
+
+No extra steps required
+
+### MacOS
+
+Currently you may get a build error "cannot infer type" when compiling cocoa with objc 0.2.7.
+
+0.2.6 works fine, you can force using it with `cargo update -p objc --precise 0.2.6`
+
+### Linux
+
+On linux you'll need to link against bz2, GL, fontconfig, and freetype.
+
+On ubuntu, you could use `libbz2-dev`, `libfreetype6-dev`, `libfontconfig1-dev`, and `libgl-dev`. (And `libvulkan-dev` to pick up the Vulkan SDK)
+
+### Other Platforms
+
+It may be possible to build this for mobile platforms, but I've not investigated this yet.
 
 ## Status
 
 For now this is a proof-of-concept. I think there is desire for a simple entry point to drawing on the screen, and that
 this approach can provide a good balance of performance, features, and ease-of-use for many applications.
 
-Flutter, Google's new UI framework that targets 60+ FPS on mobile devices, uses a Skia + Vulkan stack. So I expect this
-type of usage to be maintained and improved in the upstream libraries.
+Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. So I expect this
+type of usage to be maintained and improved as needed in the upstream libraries.
 
 ## License
 
