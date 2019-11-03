@@ -8,6 +8,8 @@ winit!)
 [![Build Status](https://travis-ci.org/aclysma/skulpin.svg?branch=master)](https://travis-ci.org/aclysma/skulpin)
 ![Crates.io](https://img.shields.io/crates/v/skulpin)
 
+![Example Screenshot](screenshot.png "Example Screenshot")
+
 This crate mainly depends on:
  * [ash](https://github.com/MaikKlein/ash) - Vulkan bindings for Rust
  * [skia-safe](https://github.com/rust-skia/rust-skia) - [Skia](https://skia.org) bindings for Rust
