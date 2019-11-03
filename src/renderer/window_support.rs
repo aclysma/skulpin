@@ -34,15 +34,21 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     instance: &I,
     raw_window_handle: &raw_window_handle::RawWindowHandle
 ) -> Result<vk::SurfaceKHR, vk::Result> {
-    use winit::os::unix::WindowExt;
-    let x11_display = window.get_xlib_display().unwrap();
-    let x11_window = window.get_xlib_window().unwrap();
-    let x11_create_info = vk::XlibSurfaceCreateInfoKHR::builder()
-        .window(x11_window)
-        .dpy(x11_display as *mut vk::Display);
 
-    let xlib_surface_loader = XlibSurface::new(entry, instance);
-    xlib_surface_loader.create_xlib_surface(&x11_create_info, None)
+    match raw_window_handle {
+        raw_window_handle::RawWindowHandle::Xlib(window_handle) => {
+            let x11_display = window_handle.display;
+            let x11_window = window_handle.window;
+
+            let x11_create_info = vk::XlibSurfaceCreateInfoKHR::builder()
+                .window(x11_window)
+                .dpy(x11_display as *mut vk::Display);
+
+            let xlib_surface_loader = XlibSurface::new(entry, instance);
+            xlib_surface_loader.create_xlib_surface(&x11_create_info, None)
+        },
+        _ => unreachable!()
+    }
 }
 
 #[cfg(target_os = "macos")]
