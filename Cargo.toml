@@ -9,7 +9,7 @@ readme = "README.md"
 repository = "https://github.com/aclysma/skulpin"
 homepage = "https://github.com/aclysma/skulpin"
 keywords = ["skia", "vulkan", "ash", "2d", "graphics"]
-categories = ["Graphics", "GUI", "Multimedia", "Rendering", "Visualization"]
+categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 include = [
     "**/*.rs",
     "Cargo.toml",

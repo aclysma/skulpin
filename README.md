@@ -5,7 +5,8 @@ Skia + Vulkan = Skulpin
 This crate provides an easy option for drawing hardware-accelerated 2D by combining vulkan and skia. (And a dash of 
 winit!)
 
-TODO: Build Status and crates.io badges
+[![Build Status](https://travis-ci.org/aclysma/skulpin.svg?branch=master)](https://travis-ci.org/aclysma/skulpin)
+![Crates.io](https://img.shields.io/crates/v/skulpin)
 
 This crate mainly depends on:
  * [ash](https://github.com/MaikKlein/ash) - Vulkan bindings for Rust
