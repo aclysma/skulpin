@@ -28,14 +28,16 @@ pub trait AppHandler {
 
 pub struct AppBuilder {
     app_name: CString,
-    use_vulkan_debug_layer: bool
+    use_vulkan_debug_layer: bool,
+    logical_size: glam::Vec2
 }
 
 impl AppBuilder {
     pub fn new() -> Self {
         AppBuilder {
             app_name: CString::new("Skulpin").unwrap(),
-            use_vulkan_debug_layer: false
+            use_vulkan_debug_layer: false,
+            logical_size: glam::Vec2::new(900.0, 600.0)
         }
     }
 
@@ -49,8 +51,18 @@ impl AppBuilder {
         self
     }
 
+    pub fn logical_size(mut self, logical_size: glam::Vec2) -> Self {
+        self.logical_size = logical_size;
+        self
+    }
+
     pub fn run<T : 'static + AppHandler>(&self, app_handler: T) -> Result<(), Box<dyn std::error::Error>> {
-        App::run(app_handler, &self.app_name, self.use_vulkan_debug_layer)
+        App::run(
+            app_handler,
+            &self.app_name,
+            self.use_vulkan_debug_layer,
+            self.logical_size
+        )
     }
 }
 
@@ -64,7 +76,8 @@ impl App {
     pub fn run<T : 'static + AppHandler>(
         mut app_handler: T,
         app_name: &CString,
-        use_vulkan_debug_layer: bool
+        use_vulkan_debug_layer: bool,
+        logical_size: glam::Vec2
     )
         -> Result<(), Box<dyn std::error::Error>>
     {
@@ -74,7 +87,7 @@ impl App {
         // Create a single window
         let window = winit::window::WindowBuilder::new()
             .with_title("Skulpin")
-            .with_inner_size(winit::dpi::LogicalSize::new(1300.0, 900.0))
+            .with_inner_size(winit::dpi::LogicalSize::new(logical_size.x() as f64, logical_size.y() as f64))
             .build(&event_loop)?;
 
         let mut app_control = AppControl::default();

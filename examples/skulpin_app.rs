@@ -20,6 +20,7 @@ fn main() {
     skulpin::AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
+        .logical_size(glam::Vec2::new(900.0, 600.0))
         .run(example_app)
         .expect("The app failed with an error");
 }

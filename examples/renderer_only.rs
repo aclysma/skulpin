@@ -14,7 +14,7 @@ fn main() {
     // Create a single window
     let window = winit::window::WindowBuilder::new()
         .with_title("Skulpin")
-        .with_inner_size(winit::dpi::LogicalSize::new(1300.0, 900.0))
+        .with_inner_size(winit::dpi::LogicalSize::new(900.0, 600.0))
         .build(&event_loop)
         .expect("Failed to create window");
 
