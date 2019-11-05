@@ -19,7 +19,8 @@ This crate mainly depends on:
 
 Currently there are two ways to use this library.
  * [app](examples/skulpin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
- * [renderer_only](examples/renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to draw to it.
+ * [renderer_only](examples/renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to 
+   draw to it.
  
 The [interactive](examples/interactive.rs) example is good to look at for an easy way to get keyboard/mouse input.
 
@@ -35,19 +36,23 @@ First, ensure that the below requirements are met depending on OS. Afterwards, t
 
 ### Windows
 
-All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
+All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
+get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
 ### MacOS
 
-All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
+All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
+get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
 ### Linux
 
-All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
+All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
+get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
 On linux you'll also need to link against bz2, GL, fontconfig, and freetype.
 
-On ubuntu, you could use `libbz2-dev`, `libfreetype6-dev`, `libfontconfig1-dev`, and `libgl-dev`. (And `libvulkan-dev` to pick up the Vulkan SDK)
+On ubuntu, you could use `libbz2-dev`, `libfreetype6-dev`, `libfontconfig1-dev`, and `libgl-dev`. (And `libvulkan-dev` 
+to pick up the Vulkan SDK)
 
 ### Other Platforms
 
@@ -60,6 +65,15 @@ this approach can provide a good balance of performance, features, and ease-of-u
 
 Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. So I expect this
 type of usage to be maintained and improved as needed in the upstream libraries.
+
+## A note on High-DPI Display Support
+
+For the common case, you can draw to the skia canvas using winit's "logical" coordinates and not worry about dpi/scaling 
+issues.
+
+Internally, the skia surface will match the swapchain size, but this size is not necessarily winit's LogicalSize or
+PhysicalSize of the window. In order to produce consistently-sized results, the renderer will apply a scaling factor to
+the skia canvas before handing it off to your draw implementation. 
 
 ## License
 

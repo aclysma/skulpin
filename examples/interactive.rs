@@ -7,10 +7,11 @@ use skulpin::InputState;
 use skulpin::TimeState;
 use skulpin::MouseButton;
 use skulpin::VirtualKeyCode;
-use std::ffi::CString;
-use std::collections::VecDeque;
 use skulpin::LogicalPosition;
 use skulpin::LogicalSize;
+
+use std::ffi::CString;
+use std::collections::VecDeque;
 
 fn main() {
     // Setup logging
@@ -95,11 +96,17 @@ impl AppHandler for ExampleApp {
             self.last_fps_text_change = Some(now);
         }
 
+        //
+        // Pop old clicks from the previous_clicks list
+        //
         while self.previous_clicks.len() > 0 &&
             (now - self.previous_clicks[0].time).as_secs_f32() >= 1.0 {
             self.previous_clicks.pop_front();
         }
 
+        //
+        // Push new clicks onto the previous_clicks list
+        //
         if input_state.is_mouse_just_down(MouseButton::Left) {
             let previous_click = PreviousClick::new(
                 input_state.mouse_position(),
@@ -190,14 +197,14 @@ impl AppHandler for ExampleApp {
         text_paint.set_stroke_width(1.0);
 
         let mut font = skia_safe::Font::default();
-        font.set_size(25.0);
+        font.set_size(20.0);
         canvas.draw_str(self.fps_text.clone(), (50, 50), &font, &text_paint);
-        canvas.draw_str("Click and drag the mouse", (50, 100), &font, &text_paint);
-        canvas.draw_str(format!("dpi factor: {}", input_state.dpi_factor()), (50, 150), &font, &text_paint);
+        canvas.draw_str("Click and drag the mouse", (50, 80), &font, &text_paint);
+        canvas.draw_str(format!("dpi factor: {}", input_state.dpi_factor()), (50, 110), &font, &text_paint);
         let physical_mouse_position = input_state.mouse_position().to_physical(input_state.dpi_factor());
         canvas.draw_str(
             format!("mouse L: ({:.1} {:.1}) P: ({:.1} {:.1})", input_state.mouse_position().x, input_state.mouse_position().y, physical_mouse_position.x, physical_mouse_position.y),
-            (50, 250),
+            (50, 140),
             &font,
             &text_paint);
     }

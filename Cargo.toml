@@ -1,6 +1,6 @@
 [package]
 name = "skulpin"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
@@ -20,9 +20,6 @@ include = [
     "LICENSE-MIT",
     "README.md"
 ]
-
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 winit = "0.20.0-alpha4"
