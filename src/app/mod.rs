@@ -8,10 +8,9 @@ pub use app_control::AppControl;
 
 mod input_state;
 pub use input_state::InputState;
-pub use input_state::KeyboardButton;
-pub use input_state::KeyboardButtonEvent;
+pub use input_state::VirtualKeyCode;
 pub use input_state::MouseButton;
-pub use input_state::MouseButtonEvent;
+pub use input_state::ElementState;
 pub use input_state::MouseDragState;
 
 mod winit_input_handler;

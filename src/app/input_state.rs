@@ -1,40 +1,11 @@
 
-
-
-#[derive(Copy, Clone)]
-pub struct KeyboardButton {
-    index: u32
-}
-
-impl KeyboardButton {
-    pub fn new(index: u32) -> Self {
-        KeyboardButton {
-            index
-        }
-    }
-}
-
-#[derive(PartialEq)]
-pub enum KeyboardButtonEvent {
-    Pressed,
-    Released
-}
-
-pub enum MouseButtonEvent {
-    Pressed,
-    Released
-}
-
-#[derive(EnumCount, FromPrimitive, Copy, Clone)]
-pub enum MouseButton {
-    Left = 0,
-    Right = 1,
-    Middle = 2,
-}
+pub use winit::event::VirtualKeyCode;
+pub use winit::event::ElementState;
+pub use winit::event::MouseButton;
 
 impl InputState {
     pub const KEYBOARD_BUTTON_COUNT: usize = 255;
-    pub const MOUSE_BUTTON_COUNT: usize = MOUSEBUTTON_COUNT;
+    pub const MOUSE_BUTTON_COUNT: usize = 7;
     const MIN_DRAG_DISTANCE : f32 = 2.0;
 }
 
@@ -86,16 +57,52 @@ impl Default for InputState {
 
 impl InputState {
 
-    pub fn is_key_down(&self, key: KeyboardButton) -> bool {
-        return self.key_is_down[key.index as usize];
+    fn mouse_button_to_index(button: MouseButton) -> Option<usize> {
+        let index = match button {
+            MouseButton::Left => 0,
+            MouseButton::Right => 1,
+            MouseButton::Middle => 2,
+            MouseButton::Other(x) => (x as usize) + 3
+        };
+
+        if index >= Self::MOUSE_BUTTON_COUNT {
+            None
+        } else {
+            Some(index)
+        }
     }
 
-    pub fn is_key_just_down(&self, key: KeyboardButton) -> bool {
-        return self.key_just_down[key.index as usize];
+    fn keyboard_button_to_index(button: VirtualKeyCode) -> Option<usize> {
+        let index = button as usize;
+        if index >= Self::KEYBOARD_BUTTON_COUNT {
+            None
+        } else {
+            Some(index)
+        }
     }
 
-    pub fn is_key_just_up(&self, key: KeyboardButton) -> bool {
-        return self.key_just_up[key.index as usize];
+    pub fn is_key_down(&self, key: VirtualKeyCode) -> bool {
+        if let Some(index) = Self::keyboard_button_to_index(key) {
+            return self.key_is_down[index];
+        } else {
+            false
+        }
+    }
+
+    pub fn is_key_just_down(&self, key: VirtualKeyCode) -> bool {
+        if let Some(index) = Self::keyboard_button_to_index(key) {
+            return self.key_just_down[index];
+        } else {
+            false
+        }
+    }
+
+    pub fn is_key_just_up(&self, key: VirtualKeyCode) -> bool {
+        if let Some(index) = Self::keyboard_button_to_index(key) {
+            return self.key_just_up[index];
+        } else {
+            false
+        }
     }
 
     pub fn mouse_position(&self) -> glam::Vec2 {
@@ -103,62 +110,112 @@ impl InputState {
     }
 
     pub fn is_mouse_down(&self, mouse_button: MouseButton) -> bool {
-        return self.mouse_button_is_down[mouse_button as usize];
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_is_down[index];
+        } else {
+            false
+        }
     }
 
     pub fn is_mouse_just_down(&self, mouse_button: MouseButton) -> bool {
-        return self.mouse_button_just_down[mouse_button as usize].is_some();
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_just_down[index].is_some();
+        } else {
+            false
+        }
     }
 
     pub fn mouse_just_down_position(&self, mouse_button: MouseButton) -> Option<glam::Vec2> {
-        return self.mouse_button_just_down[mouse_button as usize];
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_just_down[index];
+        } else {
+            None
+        }
     }
 
     pub fn is_mouse_just_up(&self, mouse_button: MouseButton) -> bool {
-        return self.mouse_button_just_up[mouse_button as usize].is_some();
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_just_up[index].is_some();
+        } else {
+            false
+        }
     }
 
     pub fn mouse_just_up_position(&self, mouse_button: MouseButton) -> Option<glam::Vec2> {
-        return self.mouse_button_just_up[mouse_button as usize];
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_just_up[index];
+        } else {
+            None
+        }
     }
 
     pub fn is_mouse_button_just_clicked(&self, mouse_button: MouseButton) -> bool {
-        return self.mouse_button_just_clicked[mouse_button as usize].is_some();
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_just_clicked[index].is_some();
+        } else {
+            false
+        }
     }
 
     pub fn mouse_button_just_clicked_position(
         &self,
         mouse_button: MouseButton,
     ) -> Option<glam::Vec2> {
-        return self.mouse_button_just_clicked[mouse_button as usize];
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_just_clicked[index];
+        } else {
+            None
+        }
     }
 
     pub fn mouse_button_went_down_position(&self, mouse_button: MouseButton) -> Option<glam::Vec2> {
-        return self.mouse_button_went_down_position[mouse_button as usize];
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_went_down_position[index];
+        } else {
+            None
+        }
     }
 
     pub fn mouse_button_went_up_position(&self, mouse_button: MouseButton) -> Option<glam::Vec2> {
-        return self.mouse_button_went_up_position[mouse_button as usize];
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_button_went_up_position[index];
+        } else {
+            None
+        }
     }
 
     pub fn is_mouse_drag_in_progress(&self, mouse_button: MouseButton) -> bool {
-        return self.mouse_drag_in_progress[mouse_button as usize].is_some();
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_drag_in_progress[index].is_some();
+        } else {
+            false
+        }
     }
 
     pub fn mouse_drag_in_progress(&self, mouse_button: MouseButton) -> Option<MouseDragState> {
-        return self.mouse_drag_in_progress[mouse_button as usize];
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_drag_in_progress[index];
+        } else {
+            None
+        }
     }
 
     pub fn is_mouse_drag_just_finished(&self, mouse_button: MouseButton) -> bool {
-        return self.mouse_drag_just_finished[mouse_button as usize].is_some();
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_drag_just_finished[index].is_some();
+        } else {
+            false
+        }
     }
 
     pub fn mouse_drag_just_finished(&self, mouse_button: MouseButton) -> Option<MouseDragState> {
-        return self.mouse_drag_just_finished[mouse_button as usize];
+        if let Some(index) = Self::mouse_button_to_index(mouse_button) {
+            return self.mouse_drag_just_finished[index];
+        } else {
+            None
+        }
     }
-}
 
-impl InputState {
     pub fn end_frame(&mut self) {
         for value in self.key_just_down.iter_mut() {
             *value = false;
@@ -193,79 +250,66 @@ impl InputState {
 
     pub fn handle_keyboard_event(
         &mut self,
-        keyboard_button: KeyboardButton,
-        button_state: KeyboardButtonEvent
+        keyboard_button: VirtualKeyCode,
+        button_state: ElementState
     ) {
-        //TODO: Find a safer way to change enum back/forth with int
-        // Assign true if key is down, or false if key is up
-        let kc = keyboard_button.index;
-        if kc as usize > Self::KEYBOARD_BUTTON_COUNT {
-            error!("kc {} out of expected range", kc as u32);
-        }
+        if let Some(kc) = Self::keyboard_button_to_index(keyboard_button) {
+            // Assign true if key is down, or false if key is up
+            if button_state == ElementState::Pressed {
+                if !self.key_is_down[kc] {
+                    self.key_just_down[kc] = true;
+                }
+                self.key_is_down[kc] = true
+            } else {
 
-        if button_state == KeyboardButtonEvent::Pressed {
-            if !self.key_is_down[kc as usize] {
-                self.key_just_down[kc as usize] = true;
+                if self.key_is_down[kc] {
+                    self.key_just_up[kc] = true;
+                }
+                self.key_is_down[kc] = false
             }
-            self.key_is_down[kc as usize] = true
-        } else {
-
-            if self.key_is_down[kc as usize] {
-                self.key_just_up[kc as usize] = true;
-            }
-            self.key_is_down[kc as usize] = false
         }
     }
 
     pub fn handle_mouse_button_event(
         &mut self,
-        //state: winit::event::ElementState,
         button: MouseButton,
-        button_event: MouseButtonEvent
-        //_modifiers: winit::event::ModifiersState,
+        button_event: ElementState
     ) {
-        //use winit::event::ElementState;
-        //use winit::event::MouseButton;
+        if let Some(button_index) = Self::mouse_button_to_index(button) {
+            assert!(button_index < InputState::MOUSE_BUTTON_COUNT);
 
-        let button_index = button as i32;
+            // Update is down/up, just down/up
+            match button_event {
+                ElementState::Pressed => {
+                    self.mouse_button_just_down[button_index] = Some(self.mouse_position);
+                    self.mouse_button_is_down[button_index] = true;
 
-        if button_index < 0 {
-            return;
-        }
-
-        let button_index = button_index as usize;
-
-        // Update is down/up, just down/up
-        match button_event {
-            MouseButtonEvent::Pressed => {
-                self.mouse_button_just_down[button_index] = Some(self.mouse_position);
-                self.mouse_button_is_down[button_index] = true;
-
-                self.mouse_button_went_down_position[button_index] = Some(self.mouse_position);
-            }
-            MouseButtonEvent::Released => {
-                self.mouse_button_just_up[button_index] = Some(self.mouse_position);
-                self.mouse_button_is_down[button_index] = false;
-
-                self.mouse_button_went_up_position[button_index] = Some(self.mouse_position);
-
-                match self.mouse_drag_in_progress[button_index] {
-                    Some(in_progress) => {
-
-                        let delta = self.mouse_position - (in_progress.begin_position + in_progress.accumulated_frame_delta);
-                        self.mouse_drag_just_finished[button_index] = Some(MouseDragState {
-                            begin_position: in_progress.begin_position,
-                            end_position: self.mouse_position,
-                            previous_frame_delta: delta,
-                            accumulated_frame_delta: in_progress.accumulated_frame_delta + delta
-                        });
-                    }
-                    None => {
-                        self.mouse_button_just_clicked[button_index] = Some(self.mouse_position)
-                    }
+                    self.mouse_button_went_down_position[button_index] = Some(self.mouse_position);
                 }
+                ElementState::Released => {
+                    self.mouse_button_just_up[button_index] = Some(self.mouse_position);
+                    self.mouse_button_is_down[button_index] = false;
 
-                self.mouse_drag_in_progress[button_index] = None;
+                    self.mouse_button_went_up_position[button_index] = Some(self.mouse_position);
+
+                    match self.mouse_drag_in_progress[button_index] {
+                        Some(in_progress) => {
+
+                            let delta = self.mouse_position - (in_progress.begin_position + in_progress.accumulated_frame_delta);
+                            self.mouse_drag_just_finished[button_index] = Some(MouseDragState {
+                                begin_position: in_progress.begin_position,
+                                end_position: self.mouse_position,
+                                previous_frame_delta: delta,
+                                accumulated_frame_delta: in_progress.accumulated_frame_delta + delta
+                            });
+                        }
+                        None => {
+                            self.mouse_button_just_clicked[button_index] = Some(self.mouse_position)
+                        }
+                    }
+
+                    self.mouse_drag_in_progress[button_index] = None;
+                }
             }
         }
     }

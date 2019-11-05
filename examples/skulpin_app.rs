@@ -6,6 +6,7 @@ use skulpin::AppHandler;
 use skulpin::AppControl;
 use skulpin::InputState;
 use skulpin::TimeState;
+use skulpin::VirtualKeyCode;
 use std::ffi::CString;
 
 fn main() {
@@ -41,7 +42,7 @@ impl AppHandler for ExampleApp {
         input_state: &InputState,
         _time_state: &TimeState
     ) {
-        if input_state.is_key_down(skulpin::KeyboardButton::new(winit::event::VirtualKeyCode::Escape as u32)) {
+        if input_state.is_key_down(VirtualKeyCode::Escape) {
             app_control.enqueue_terminate_process();
         }
     }

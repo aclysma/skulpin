@@ -2,18 +2,11 @@
 #[macro_use]
 extern crate log;
 
-#[macro_use]
-extern crate num_derive;
-
-#[macro_use]
-extern crate strum_macros;
-
 mod app;
 pub use app::InputState;
-pub use app::KeyboardButton;
-pub use app::KeyboardButtonEvent;
-pub use app::MouseButton;
-pub use app::MouseButtonEvent;
+pub use app::MouseButton; // This is the same type as winit::event::MouseButton
+pub use app::VirtualKeyCode; // This is the same type as winit::event::VirtualKeyCode
+pub use app::ElementState; // This is the same type as winit::event::ElementState
 pub use app::MouseDragState;
 pub use app::TimeState;
 pub use app::AppControl;

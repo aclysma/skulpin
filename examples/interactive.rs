@@ -1,10 +1,12 @@
 
 // This example shows a bit more interaction with mouse input
 
-use skulpin::{AppHandler, MouseButton};
+use skulpin::AppHandler;
 use skulpin::AppControl;
 use skulpin::InputState;
 use skulpin::TimeState;
+use skulpin::MouseButton;
+use skulpin::VirtualKeyCode;
 use skulpin::glam;
 use std::ffi::CString;
 use std::collections::VecDeque;
@@ -71,7 +73,7 @@ impl AppHandler for ExampleApp {
         //
         // Quit if user hits escape
         //
-        if input_state.is_key_down(skulpin::KeyboardButton::new(winit::event::VirtualKeyCode::Escape as u32)) {
+        if input_state.is_key_down(VirtualKeyCode::Escape) {
             app_control.enqueue_terminate_process();
         }
 
