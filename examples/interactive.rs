@@ -7,9 +7,10 @@ use skulpin::InputState;
 use skulpin::TimeState;
 use skulpin::MouseButton;
 use skulpin::VirtualKeyCode;
-use skulpin::glam;
 use std::ffi::CString;
 use std::collections::VecDeque;
+use skulpin::LogicalPosition;
+use skulpin::LogicalSize;
 
 fn main() {
     // Setup logging
@@ -22,19 +23,19 @@ fn main() {
     skulpin::AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
-        .logical_size(glam::Vec2::new(900.0, 600.0))
+        .logical_size(LogicalSize::new(900.0, 600.0))
         .run(example_app)
         .expect("The app failed with an error");
 }
 
 struct PreviousClick {
-    position: glam::Vec2,
+    position: LogicalPosition,
     time: std::time::Instant
 }
 
 impl PreviousClick {
     fn new(
-        position: glam::Vec2,
+        position: LogicalPosition,
         time: std::time::Instant
     )
         -> Self
@@ -125,18 +126,18 @@ impl AppHandler for ExampleApp {
         let mut paint = skia_safe::Paint::new(skia_safe::Color4f::new(0.0, 1.0, 0.0, 1.0), None);
         paint.set_anti_alias(true);
         paint.set_style(skia_safe::paint::Style::Stroke);
-        paint.set_stroke_width(3.0);
+        paint.set_stroke_width(2.0);
 
         //
-        // Draw current mouse position
+        // Draw current mouse position.
         //
         let mouse_position = input_state.mouse_position();
         canvas.draw_circle(
             skia_safe::Point::new(
-                mouse_position.x(),
-                mouse_position.y()
+                mouse_position.x as f32,
+                mouse_position.y as f32
             ),
-            30.0,
+            15.0,
             &paint
         );
 
@@ -153,12 +154,14 @@ impl AppHandler for ExampleApp {
             paint.set_style(skia_safe::paint::Style::Stroke);
             paint.set_stroke_width(3.0);
 
+            let position = previous_click.position;
+
             canvas.draw_circle(
                 skia_safe::Point::new(
-                    previous_click.position.x(),
-                    previous_click.position.y()
+                    position.x as f32,
+                    position.y as f32
                 ),
-                50.0,
+                25.0,
                 &paint
             );
         }
@@ -167,9 +170,13 @@ impl AppHandler for ExampleApp {
         // If mouse is being dragged, draw a line to show the drag
         //
         if let Some(drag) = input_state.mouse_drag_in_progress(MouseButton::Left) {
+
+            let begin_position = drag.begin_position;
+            let end_position = drag.end_position;
+
             canvas.draw_line(
-                skia_safe::Point::new(drag.begin_position.x(), drag.begin_position.y()),
-                skia_safe::Point::new(drag.end_position.x(), drag.end_position.y()),
+                skia_safe::Point::new(begin_position.x as f32, begin_position.y as f32),
+                skia_safe::Point::new(end_position.x as f32, end_position.y as f32),
                 &paint
             );
         }
@@ -180,12 +187,18 @@ impl AppHandler for ExampleApp {
         let mut text_paint = skia_safe::Paint::new(skia_safe::Color4f::new(1.0, 1.0, 0.0, 1.0), None);
         text_paint.set_anti_alias(true);
         text_paint.set_style(skia_safe::paint::Style::StrokeAndFill);
-        text_paint.set_stroke_width(2.0);
+        text_paint.set_stroke_width(1.0);
 
         let mut font = skia_safe::Font::default();
-        font.set_size(50.0);
-        canvas.draw_str(self.fps_text.clone(), (50, 200), &font, &text_paint);
-
-        canvas.draw_str("Click and drag the mouse", (50, 300), &font, &text_paint);
+        font.set_size(25.0);
+        canvas.draw_str(self.fps_text.clone(), (50, 50), &font, &text_paint);
+        canvas.draw_str("Click and drag the mouse", (50, 100), &font, &text_paint);
+        canvas.draw_str(format!("dpi factor: {}", input_state.dpi_factor()), (50, 150), &font, &text_paint);
+        let physical_mouse_position = input_state.mouse_position().to_physical(input_state.dpi_factor());
+        canvas.draw_str(
+            format!("mouse L: ({:.1} {:.1}) P: ({:.1} {:.1})", input_state.mouse_position().x, input_state.mouse_position().y, physical_mouse_position.x, physical_mouse_position.y),
+            (50, 250),
+            &font,
+            &text_paint);
     }
 }

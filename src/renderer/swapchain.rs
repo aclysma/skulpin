@@ -136,6 +136,7 @@ impl VkSwapchain {
 
         let swapchain_loader = khr::Swapchain::new(instance, logical_device);
 
+        //TODO: old_swapchain should be specified here if appropriate
         let mut swapchain_create_info = vk::SwapchainCreateInfoKHR::builder()
             .surface(*surface)
             .min_image_count(image_count)
@@ -241,9 +242,13 @@ impl VkSwapchain {
         window: &winit::window::Window
     ) -> ash::vk::Extent2D {
         if surface_capabilities.current_extent.width != std::u32::MAX {
+            info!("Swapchain extents chosen by surface capabilities ({} {})", surface_capabilities.current_extent.width, surface_capabilities.current_extent.height);
             surface_capabilities.current_extent
         } else {
-            let (width, height) = window.inner_size().into();
+            let (width, height) = window.inner_size().to_physical(window.hidpi_factor()).into();
+
+            info!("Swapchain extents chosen by inner window size ({} {})", width, height);
+
             let mut actual_extent = ash::vk::Extent2D::builder().width(width).height(height).build();
 
             actual_extent.width = num_traits::clamp(actual_extent.width, surface_capabilities.min_image_extent.width, surface_capabilities.max_image_extent.width);

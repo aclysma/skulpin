@@ -16,13 +16,6 @@ use crate::renderer::VkBuffer;
 use crate::renderer::skia_support::{VkSkiaContext, VkSkiaSurface};
 
 #[derive(Clone, Debug, Copy)]
-struct UniformBufferObject {
-    model: glam::Mat4,
-    view: glam::Mat4,
-    proj: glam::Mat4
-}
-
-#[derive(Clone, Debug, Copy)]
 struct Vertex {
     pos: [f32; 2],
     tex_coord: [f32; 2]
@@ -78,7 +71,6 @@ pub struct VkPipeline {
     pub vertex_buffer: ManuallyDrop<VkBuffer>,
     pub index_buffer: ManuallyDrop<VkBuffer>,
     pub skia_surfaces: Vec<VkSkiaSurface>,
-    pub uniform_buffers: Vec<ManuallyDrop<VkBuffer>>,
     pub descriptor_pool: vk::DescriptorPool,
     pub descriptor_sets: Vec<vk::DescriptorSet>,
     pub image_sampler: vk::Sampler
@@ -143,14 +135,11 @@ impl VkPipeline {
             &device.memory_properties
         )?;
 
+        info!("Create skia surfaces with extent: {:?}", swapchain.swapchain_info.extents);
+
         //TODO: Figure out how to return error here
         let skia_surfaces : Vec<_> = (0..swapchain.swapchain_info.image_count).map(|_| {
             VkSkiaSurface::new(device, skia_context, &swapchain.swapchain_info.extents).unwrap()
-        }).collect();
-
-        //TODO: Figure out how to return error here
-        let uniform_buffers : Vec<_> = (0..swapchain.swapchain_info.image_count).map(|_| {
-            Self::create_uniform_buffer(&device.logical_device, &device.memory_properties).unwrap()
         }).collect();
 
         let image_sampler = VkSkiaSurface::create_sampler(
@@ -167,7 +156,6 @@ impl VkPipeline {
             &descriptor_pool,
             &descriptor_set_layout,
             swapchain.swapchain_info.image_count,
-            &uniform_buffers,
             &image_sampler,
             &skia_surfaces
         )?;
@@ -200,7 +188,6 @@ impl VkPipeline {
             vertex_buffer,
             index_buffer,
             skia_surfaces,
-            uniform_buffers,
             descriptor_pool,
             descriptor_sets,
             image_sampler
@@ -215,13 +202,6 @@ impl VkPipeline {
         let descriptor_set_layout_bindings = [
             vk::DescriptorSetLayoutBinding::builder()
                 .binding(0)
-                .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
-                .descriptor_count(1)
-                .stage_flags(vk::ShaderStageFlags::VERTEX)
-                .build(),
-
-            vk::DescriptorSetLayoutBinding::builder()
-                .binding(1)
                 .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
                 .descriptor_count(1)
                 .stage_flags(vk::ShaderStageFlags::FRAGMENT)
@@ -591,22 +571,6 @@ impl VkPipeline {
             &INDEX_LIST)
     }
 
-    fn create_uniform_buffer(
-        logical_device: &ash::Device,
-        device_memory_properties: &vk::PhysicalDeviceMemoryProperties
-    )
-        -> VkResult<ManuallyDrop<VkBuffer>>
-    {
-        let buffer = VkBuffer::new(
-            logical_device,
-            device_memory_properties,
-            vk::BufferUsageFlags::UNIFORM_BUFFER,
-            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-            mem::size_of::<UniformBufferObject>() as u64);
-
-        Ok(ManuallyDrop::new(buffer?))
-    }
-
     fn create_descriptor_pool(
         logical_device: &ash::Device,
         swapchain_image_count: u32
@@ -614,10 +578,6 @@ impl VkPipeline {
         -> VkResult<vk::DescriptorPool>
     {
         let pool_sizes = [
-            vk::DescriptorPoolSize::builder()
-                .ty(vk::DescriptorType::UNIFORM_BUFFER)
-                .descriptor_count(swapchain_image_count)
-                .build(),
             vk::DescriptorPoolSize::builder()
                 .ty(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
                 .descriptor_count(swapchain_image_count)
@@ -638,7 +598,6 @@ impl VkPipeline {
         descriptor_pool: &vk::DescriptorPool,
         descriptor_set_layout: &vk::DescriptorSetLayout,
         swapchain_image_count: usize,
-        uniform_buffers: &Vec<ManuallyDrop<VkBuffer>>,
         image_sampler: &vk::Sampler,
         skia_surface: &Vec<VkSkiaSurface>
     )
@@ -656,14 +615,6 @@ impl VkPipeline {
         }?;
 
         for i in 0..swapchain_image_count {
-            let descriptor_buffer_infos = [
-                vk::DescriptorBufferInfo::builder()
-                    .buffer(uniform_buffers[i].buffer)
-                    .offset(0)
-                    .range(mem::size_of::<UniformBufferObject>() as u64)
-                    .build()
-            ];
-
             let descriptor_image_infos = [
                 vk::DescriptorImageInfo::builder()
                     .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
@@ -676,14 +627,6 @@ impl VkPipeline {
                 vk::WriteDescriptorSet::builder()
                     .dst_set(descriptor_sets[i])
                     .dst_binding(0)
-                    .dst_array_element(0)
-                    .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
-                    .buffer_info(&descriptor_buffer_infos)
-                    .build(),
-
-                vk::WriteDescriptorSet::builder()
-                    .dst_set(descriptor_sets[i])
-                    .dst_binding(1)
                     .dst_array_element(0)
                     .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
                     .image_info(&descriptor_image_infos)
@@ -831,22 +774,6 @@ impl VkPipeline {
         }
     }
 
-    pub fn update_uniform_buffer(
-        &mut self,
-        swapchain_image_index: u32,
-        _extents: vk::Extent2D
-    )
-        -> VkResult<()>
-    {
-        let ubo = UniformBufferObject {
-            model: glam::Mat4::identity(),
-            view: glam::Mat4::identity(),
-            proj: glam::Mat4::identity()
-        };
-
-        self.uniform_buffers[swapchain_image_index as usize].write_to_host_visible_buffer(&[ubo])
-    }
-
     pub fn skia_surface(&mut self, index: usize) -> &mut VkSkiaSurface {
         &mut self.skia_surfaces[index]
     }
@@ -858,10 +785,6 @@ impl Drop for VkPipeline {
 
         unsafe {
             self.device.destroy_sampler(self.image_sampler, None);
-
-            for uniform_buffer in &mut self.uniform_buffers {
-                ManuallyDrop::drop(uniform_buffer);
-            }
 
             ManuallyDrop::drop(&mut self.vertex_buffer);
             ManuallyDrop::drop(&mut self.index_buffer);

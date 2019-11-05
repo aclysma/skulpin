@@ -1,13 +1,13 @@
 
 use super::app_control::AppControl;
 use super::input_state::InputState;
-use super::winit_input_handler::WinitInputHandler;
 use super::time_state::TimeState;
 use super::time_state::TimeContext;
 use super::util::PeriodicEvent;
 use std::ffi::CString;
 
 use crate::RendererBuilder;
+use winit::dpi::LogicalSize;
 
 pub trait AppHandler {
     fn update(
@@ -22,14 +22,14 @@ pub trait AppHandler {
         app_control: &AppControl,
         input_state: &InputState,
         time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas,
+        canvas: &mut skia_safe::Canvas
     );
 }
 
 pub struct AppBuilder {
     app_name: CString,
     use_vulkan_debug_layer: bool,
-    logical_size: glam::Vec2
+    logical_size: LogicalSize
 }
 
 impl AppBuilder {
@@ -37,7 +37,7 @@ impl AppBuilder {
         AppBuilder {
             app_name: CString::new("Skulpin").unwrap(),
             use_vulkan_debug_layer: false,
-            logical_size: glam::Vec2::new(900.0, 600.0)
+            logical_size: LogicalSize::new(900.0, 600.0)
         }
     }
 
@@ -51,7 +51,7 @@ impl AppBuilder {
         self
     }
 
-    pub fn logical_size(mut self, logical_size: glam::Vec2) -> Self {
+    pub fn logical_size(mut self, logical_size: LogicalSize) -> Self {
         self.logical_size = logical_size;
         self
     }
@@ -77,7 +77,7 @@ impl App {
         mut app_handler: T,
         app_name: &CString,
         use_vulkan_debug_layer: bool,
-        logical_size: glam::Vec2
+        logical_size: LogicalSize
     )
         -> Result<(), Box<dyn std::error::Error>>
     {
@@ -87,13 +87,12 @@ impl App {
         // Create a single window
         let window = winit::window::WindowBuilder::new()
             .with_title("Skulpin")
-            .with_inner_size(winit::dpi::LogicalSize::new(logical_size.x() as f64, logical_size.y() as f64))
+            .with_inner_size(logical_size)
             .build(&event_loop)?;
 
         let mut app_control = AppControl::default();
-        let mut input_state = InputState::default();
-        let mut input_handler = WinitInputHandler::new();
         let mut time_state = TimeState::default();
+        let mut input_state = InputState::new(&window);
 
         let mut renderer = RendererBuilder::new()
             .use_vulkan_debug_layer(use_vulkan_debug_layer)
@@ -106,6 +105,12 @@ impl App {
         // Pass control of this thread to winit until the app terminates. If this app wants to quit,
         // the update loop should send the appropriate event via the channel
         event_loop.run(move |event, window_target, control_flow| {
+            input_state.handle_winit_event(
+                &mut app_control,
+                &event,
+                window_target
+            );
+
             match event {
                 winit::event::Event::EventsCleared => {
 
@@ -147,11 +152,7 @@ impl App {
                         app_control.enqueue_terminate_process();
                     }
                 },
-                _ => input_handler.handle_input(
-                    &mut app_control,
-                    &mut input_state,
-                    event,
-                    window_target)
+                _ => {}
             }
 
             if app_control.should_terminate_process() {

@@ -119,7 +119,7 @@ impl Renderer {
 
     fn do_draw<F : FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
-        _window: &winit::window::Window,
+        window: &winit::window::Window,
         f: F
     )
         -> VkResult<()>
@@ -152,12 +152,22 @@ impl Renderer {
             let surface = self.pipeline.skia_surface(present_index as usize);
             let mut canvas = surface.surface.canvas();
 
+            // To handle hi-dpi displays, we need to compare the logical size of the window with the
+            // actual canvas size. Critically, the canvas size won't necessarily be the size of the
+            // window in physical pixels.
+            let window_size = window.inner_size();
+            let scale = (
+                (self.swapchain.swapchain_info.extents.width as f64 / window_size.width) as f32,
+                (self.swapchain.swapchain_info.extents.height as f64 / window_size.height) as f32
+            );
+
+            canvas.reset_matrix();
+            canvas.scale(scale);
+
             f(&mut canvas);
 
             canvas.flush();
         }
-
-        self.pipeline.update_uniform_buffer(present_index, self.swapchain.swapchain_info.extents)?;
 
         let wait_semaphores = [self.swapchain.image_available_semaphores[self.sync_frame_index]];
         let signal_semaphores = [self.swapchain.render_finished_semaphores[self.sync_frame_index]];

@@ -28,7 +28,6 @@ include = [
 winit = "0.20.0-alpha4"
 raw-window-handle = "0.3"
 ash = "0.29"
-glam = "0.7"
 skia-safe = { version = "0.17", features = ["vulkan"] }
 
 log="0.4"
