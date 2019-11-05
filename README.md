@@ -41,10 +41,6 @@ All examples require the LunarG Validation layers and a Vulkan library that is v
 
 All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
-Currently you may get a build error "cannot infer type" when compiling cocoa with objc 0.2.7.
-
-0.2.6 works fine, you can force using it with `cargo update -p objc --precise 0.2.6`
-
 ### Linux
 
 All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)

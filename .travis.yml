@@ -3,8 +3,6 @@ rust:
   - stable
   - beta
   - nightly
-before_script:
-  - if [ $TRAVIS_OS_NAME = osx ]; then cargo update -p objc --precise 0.2.6; fi
 script:
   - cargo build --verbose --all
 os:

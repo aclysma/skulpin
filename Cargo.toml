@@ -45,7 +45,7 @@ winapi = { version = "0.3", features = ["windef", "winuser"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 metal-rs = "0.6"
 cocoa = "0.13"
-objc = "0.2.2"
+objc = ">=0.2,<0.2.7"
 
 [dev-dependencies]
 env_logger = "0.6"
