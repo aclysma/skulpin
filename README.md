@@ -18,10 +18,10 @@ This crate mainly depends on:
 ## Usage
 
 Currently there are two ways to use this library.
- * [app](blob/master/examples/skuplin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
- * [renderer_only](blob/master/examples/renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to draw to it.
+ * [app](examples/skuplin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
+ * [renderer_only](examples/renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to draw to it.
  
-The [interactive](blob/master/examples/interactive.rs) example is good to look at for an easy way to get keyboard/mouse input.
+The [interactive](examples/interactive.rs) example is good to look at for an easy way to get keyboard/mouse input.
 
 Don't forget to install the prerequisites below appropriate to your platform! (See "Requirements")
 
