@@ -6,7 +6,7 @@ pub enum TimeContext {
     System,
 }
 
-const TIME_CONTEXT_COUNT : usize = TIMECONTEXT_COUNT;
+const TIME_CONTEXT_COUNT: usize = TIMECONTEXT_COUNT;
 
 const NANOS_PER_SEC: u32 = 1_000_000_000;
 
@@ -65,11 +65,11 @@ impl TimeState {
             self.time_context_states[time_context_index].update(mode_elapsed);
         }
 
-//        trace!(
-//            "fps: {:.1}  dt: {:.2}ms",
-//            self.time_context_states[0].fps,
-//            self.time_context_states[0].previous_frame_dt * 1000.0
-//        );
+        //        trace!(
+        //            "fps: {:.1}  dt: {:.2}ms",
+        //            self.time_context_states[0].fps,
+        //            self.time_context_states[0].previous_frame_dt * 1000.0
+        //        );
 
         if self.time_context_states[0].previous_frame_dt > 1.0 / 30.0 {
             //warn!("slow frame (dt: {:.2}ms)", dt);

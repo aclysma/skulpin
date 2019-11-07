@@ -1,17 +1,16 @@
-
 // This example shows a bit more interaction with mouse input
 
-use skulpin::AppHandler;
 use skulpin::AppControl;
+use skulpin::AppHandler;
 use skulpin::InputState;
-use skulpin::TimeState;
-use skulpin::MouseButton;
-use skulpin::VirtualKeyCode;
 use skulpin::LogicalPosition;
 use skulpin::LogicalSize;
+use skulpin::MouseButton;
+use skulpin::TimeState;
+use skulpin::VirtualKeyCode;
 
-use std::ffi::CString;
 use std::collections::VecDeque;
+use std::ffi::CString;
 
 fn main() {
     // Setup logging
@@ -31,27 +30,19 @@ fn main() {
 
 struct PreviousClick {
     position: LogicalPosition,
-    time: std::time::Instant
+    time: std::time::Instant,
 }
 
 impl PreviousClick {
-    fn new(
-        position: LogicalPosition,
-        time: std::time::Instant
-    )
-        -> Self
-    {
-        PreviousClick {
-            position,
-            time
-        }
+    fn new(position: LogicalPosition, time: std::time::Instant) -> Self {
+        PreviousClick { position, time }
     }
 }
 
 struct ExampleApp {
     last_fps_text_change: Option<std::time::Instant>,
     fps_text: String,
-    previous_clicks: VecDeque<PreviousClick>
+    previous_clicks: VecDeque<PreviousClick>,
 }
 
 impl ExampleApp {
@@ -59,7 +50,7 @@ impl ExampleApp {
         ExampleApp {
             last_fps_text_change: None,
             fps_text: "".to_string(),
-            previous_clicks: VecDeque::new()
+            previous_clicks: VecDeque::new(),
         }
     }
 }
@@ -69,7 +60,7 @@ impl AppHandler for ExampleApp {
         &mut self,
         app_control: &mut AppControl,
         input_state: &InputState,
-        time_state: &TimeState
+        time_state: &TimeState,
     ) {
         let now = time_state.system().frame_start_instant;
 
@@ -84,10 +75,8 @@ impl AppHandler for ExampleApp {
         // Update FPS once a second
         //
         let update_text_string = match self.last_fps_text_change {
-            Some(last_update_instant) => {
-                (now - last_update_instant).as_secs_f32() >= 1.0
-            },
-            None => true
+            Some(last_update_instant) => (now - last_update_instant).as_secs_f32() >= 1.0,
+            None => true,
         };
 
         if update_text_string {
@@ -99,8 +88,9 @@ impl AppHandler for ExampleApp {
         //
         // Pop old clicks from the previous_clicks list
         //
-        while self.previous_clicks.len() > 0 &&
-            (now - self.previous_clicks[0].time).as_secs_f32() >= 1.0 {
+        while self.previous_clicks.len() > 0
+            && (now - self.previous_clicks[0].time).as_secs_f32() >= 1.0
+        {
             self.previous_clicks.pop_front();
         }
 
@@ -108,10 +98,7 @@ impl AppHandler for ExampleApp {
         // Push new clicks onto the previous_clicks list
         //
         if input_state.is_mouse_just_down(MouseButton::Left) {
-            let previous_click = PreviousClick::new(
-                input_state.mouse_position(),
-                now
-            );
+            let previous_click = PreviousClick::new(input_state.mouse_position(), now);
 
             self.previous_clicks.push_back(previous_click);
         }
@@ -122,7 +109,7 @@ impl AppHandler for ExampleApp {
         _app_control: &AppControl,
         input_state: &InputState,
         time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas
+        canvas: &mut skia_safe::Canvas,
     ) {
         let now = time_state.system().frame_start_instant;
 
@@ -140,12 +127,9 @@ impl AppHandler for ExampleApp {
         //
         let mouse_position = input_state.mouse_position();
         canvas.draw_circle(
-            skia_safe::Point::new(
-                mouse_position.x as f32,
-                mouse_position.y as f32
-            ),
+            skia_safe::Point::new(mouse_position.x as f32, mouse_position.y as f32),
             15.0,
-            &paint
+            &paint,
         );
 
         //
@@ -156,7 +140,8 @@ impl AppHandler for ExampleApp {
             let age = age.as_secs_f32().min(1.0).max(0.0);
 
             // Make a color that fades out as the click is further in the past
-            let mut paint = skia_safe::Paint::new(skia_safe::Color4f::new(0.0, 1.0 - age, 0.0, 1.0), None);
+            let mut paint =
+                skia_safe::Paint::new(skia_safe::Color4f::new(0.0, 1.0 - age, 0.0, 1.0), None);
             paint.set_anti_alias(true);
             paint.set_style(skia_safe::paint::Style::Stroke);
             paint.set_stroke_width(3.0);
@@ -164,12 +149,9 @@ impl AppHandler for ExampleApp {
             let position = previous_click.position;
 
             canvas.draw_circle(
-                skia_safe::Point::new(
-                    position.x as f32,
-                    position.y as f32
-                ),
+                skia_safe::Point::new(position.x as f32, position.y as f32),
                 25.0,
-                &paint
+                &paint,
             );
         }
 
@@ -177,21 +159,21 @@ impl AppHandler for ExampleApp {
         // If mouse is being dragged, draw a line to show the drag
         //
         if let Some(drag) = input_state.mouse_drag_in_progress(MouseButton::Left) {
-
             let begin_position = drag.begin_position;
             let end_position = drag.end_position;
 
             canvas.draw_line(
                 skia_safe::Point::new(begin_position.x as f32, begin_position.y as f32),
                 skia_safe::Point::new(end_position.x as f32, end_position.y as f32),
-                &paint
+                &paint,
             );
         }
 
         //
         // Draw FPS text
         //
-        let mut text_paint = skia_safe::Paint::new(skia_safe::Color4f::new(1.0, 1.0, 0.0, 1.0), None);
+        let mut text_paint =
+            skia_safe::Paint::new(skia_safe::Color4f::new(1.0, 1.0, 0.0, 1.0), None);
         text_paint.set_anti_alias(true);
         text_paint.set_style(skia_safe::paint::Style::StrokeAndFill);
         text_paint.set_stroke_width(1.0);
@@ -200,12 +182,26 @@ impl AppHandler for ExampleApp {
         font.set_size(20.0);
         canvas.draw_str(self.fps_text.clone(), (50, 50), &font, &text_paint);
         canvas.draw_str("Click and drag the mouse", (50, 80), &font, &text_paint);
-        canvas.draw_str(format!("dpi factor: {}", input_state.dpi_factor()), (50, 110), &font, &text_paint);
-        let physical_mouse_position = input_state.mouse_position().to_physical(input_state.dpi_factor());
         canvas.draw_str(
-            format!("mouse L: ({:.1} {:.1}) P: ({:.1} {:.1})", input_state.mouse_position().x, input_state.mouse_position().y, physical_mouse_position.x, physical_mouse_position.y),
+            format!("dpi factor: {}", input_state.dpi_factor()),
+            (50, 110),
+            &font,
+            &text_paint,
+        );
+        let physical_mouse_position = input_state
+            .mouse_position()
+            .to_physical(input_state.dpi_factor());
+        canvas.draw_str(
+            format!(
+                "mouse L: ({:.1} {:.1}) P: ({:.1} {:.1})",
+                input_state.mouse_position().x,
+                input_state.mouse_position().y,
+                physical_mouse_position.x,
+                physical_mouse_position.y
+            ),
             (50, 140),
             &font,
-            &text_paint);
+            &text_paint,
+        );
     }
 }

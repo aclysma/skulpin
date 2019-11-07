@@ -1,9 +1,8 @@
-
 /// State that drives high-level decision making for the app
 #[derive(Default)]
 pub struct AppControl {
     /// If true, the application will quit when the next frame ends
-    should_terminate_process: bool
+    should_terminate_process: bool,
 }
 
 impl AppControl {

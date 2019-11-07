@@ -1,18 +1,17 @@
-
-use ash::vk;
 use ash::prelude::VkResult;
+use ash::vk;
 
-use super::VkInstance;
 use super::VkDevice;
+use super::VkInstance;
 
 use std::ffi::c_void;
 
-use ash::version::EntryV1_0;
 use ash::version::DeviceV1_0;
+use ash::version::EntryV1_0;
 use ash::version::InstanceV1_0;
 
 pub struct VkSkiaContext {
-    pub context: skia_safe::gpu::Context
+    pub context: skia_safe::gpu::Context,
 }
 
 impl VkSkiaContext {
@@ -36,7 +35,7 @@ impl VkSkiaContext {
                 device.logical_device.handle().as_raw() as _,
                 (
                     device.queues.present_queue.as_raw() as _,
-                    device.queue_family_indices.present_queue_family_index as usize
+                    device.queue_family_indices.present_queue_family_index as usize,
                 ),
                 &get_proc,
             )
@@ -44,16 +43,13 @@ impl VkSkiaContext {
 
         let context = skia_safe::gpu::Context::new_vulkan(&backend_context).unwrap();
 
-        VkSkiaContext {
-            context
-        }
+        VkSkiaContext { context }
     }
 
     pub unsafe fn get_proc(
         instance: &VkInstance,
         of: skia_safe::gpu::vk::GetProcOf,
     ) -> Option<unsafe extern "system" fn() -> c_void> {
-
         use vk::Handle;
 
         match of {
@@ -78,16 +74,17 @@ pub struct VkSkiaSurface {
 }
 
 impl VkSkiaSurface {
-
     pub fn get_image_from_skia_texture(texture: &skia_safe::gpu::BackendTexture) -> vk::Image {
-        unsafe {
-            std::mem::transmute(texture.vulkan_image_info().unwrap().image)
-        }
+        unsafe { std::mem::transmute(texture.vulkan_image_info().unwrap().image) }
     }
 
-    pub fn new(device: &VkDevice, context: &mut VkSkiaContext, extent: &vk::Extent2D) -> VkResult<Self> {
-
-        let image_info = skia_safe::ImageInfo::new_n32_premul((extent.width as i32, extent.height as i32), None);
+    pub fn new(
+        device: &VkDevice,
+        context: &mut VkSkiaContext,
+        extent: &vk::Extent2D,
+    ) -> VkResult<Self> {
+        let image_info =
+            skia_safe::ImageInfo::new_n32_premul((extent.width as i32, extent.height as i32), None);
 
         let mut surface = skia_safe::Surface::new_render_target(
             &mut context.context,
@@ -97,9 +94,14 @@ impl VkSkiaSurface {
             skia_safe::gpu::SurfaceOrigin::TopLeft,
             None,
             false,
-        ).unwrap();
+        )
+        .unwrap();
 
-        let texture = surface.get_backend_texture(skia_safe::surface::BackendHandleAccess::FlushRead).as_ref().unwrap().clone();
+        let texture = surface
+            .get_backend_texture(skia_safe::surface::BackendHandleAccess::FlushRead)
+            .as_ref()
+            .unwrap()
+            .clone();
         let image = Self::get_image_from_skia_texture(&texture);
 
         let skia_tex_image_view_info = vk::ImageViewCreateInfo {
@@ -137,7 +139,7 @@ impl VkSkiaSurface {
 
     /// Creates a sampler appropriate for rendering skia surfaces. We don't create one per surface
     /// since one can be shared among all code that renders surfaces
-    pub fn create_sampler(logical_device: &ash::Device) -> VkResult<vk::Sampler>{
+    pub fn create_sampler(logical_device: &ash::Device) -> VkResult<vk::Sampler> {
         let sampler_info = vk::SamplerCreateInfo::builder()
             .mag_filter(vk::Filter::LINEAR)
             .min_filter(vk::Filter::LINEAR)
@@ -155,9 +157,7 @@ impl VkSkiaSurface {
             .min_lod(0.0)
             .max_lod(0.0);
 
-        unsafe {
-            logical_device.create_sampler(&sampler_info, None)
-        }
+        unsafe { logical_device.create_sampler(&sampler_info, None) }
     }
 }
 

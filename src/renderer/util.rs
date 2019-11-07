@@ -1,9 +1,7 @@
-
-
-use std::io;
-use ash::vk;
 use ash::prelude::VkResult;
 use ash::version::DeviceV1_0;
+use ash::vk;
+use std::io;
 
 pub fn find_memorytype_index(
     memory_req: &vk::MemoryRequirements,
@@ -11,8 +9,9 @@ pub fn find_memorytype_index(
     required_property_flags: vk::MemoryPropertyFlags,
 ) -> Option<u32> {
     for (index, ref memory_type) in memory_prop.memory_types.iter().enumerate() {
-        let type_supported = (memory_req.memory_type_bits & (1<<index)) != 0;
-        let flags_supported = (memory_type.property_flags & required_property_flags) == required_property_flags;
+        let type_supported = (memory_req.memory_type_bits & (1 << index)) != 0;
+        let flags_supported =
+            (memory_type.property_flags & required_property_flags) == required_property_flags;
 
         if type_supported && flags_supported {
             return Some(index as u32);
@@ -58,19 +57,19 @@ pub fn read_spv<R: io::Read + io::Seek>(x: &mut R) -> io::Result<Vec<u32>> {
     Ok(result)
 }
 
-pub fn submit_single_use_command_buffer<F : Fn(&vk::CommandBuffer)>(
+pub fn submit_single_use_command_buffer<F: Fn(&vk::CommandBuffer)>(
     logical_device: &ash::Device,
     queue: &vk::Queue,
     command_pool: &vk::CommandPool,
-    f: F
+    f: F,
 ) -> VkResult<()> {
     let alloc_info = vk::CommandBufferAllocateInfo::builder()
         .level(vk::CommandBufferLevel::PRIMARY)
         .command_pool(*command_pool)
         .command_buffer_count(1);
 
-    let begin_info = vk::CommandBufferBeginInfo::builder()
-        .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
+    let begin_info =
+        vk::CommandBufferBeginInfo::builder().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
 
     let command_buffer = unsafe {
         let command_buffer = logical_device.allocate_command_buffers(&alloc_info)?[0];
@@ -85,8 +84,7 @@ pub fn submit_single_use_command_buffer<F : Fn(&vk::CommandBuffer)>(
     };
 
     let command_buffers = [command_buffer];
-    let submit_info = vk::SubmitInfo::builder()
-        .command_buffers(&command_buffers);
+    let submit_info = vk::SubmitInfo::builder().command_buffers(&command_buffers);
 
     unsafe {
         logical_device.queue_submit(*queue, &[submit_info.build()], vk::Fence::null())?;

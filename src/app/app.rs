@@ -1,8 +1,7 @@
-
 use super::app_control::AppControl;
 use super::input_state::InputState;
-use super::time_state::TimeState;
 use super::time_state::TimeContext;
+use super::time_state::TimeState;
 use super::util::PeriodicEvent;
 use std::ffi::CString;
 
@@ -14,7 +13,7 @@ pub trait AppHandler {
         &mut self,
         app_control: &mut AppControl,
         input_state: &InputState,
-        time_state: &TimeState
+        time_state: &TimeState,
     );
 
     fn draw(
@@ -22,14 +21,14 @@ pub trait AppHandler {
         app_control: &AppControl,
         input_state: &InputState,
         time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas
+        canvas: &mut skia_safe::Canvas,
     );
 }
 
 pub struct AppBuilder {
     app_name: CString,
     use_vulkan_debug_layer: bool,
-    logical_size: LogicalSize
+    logical_size: LogicalSize,
 }
 
 impl AppBuilder {
@@ -37,7 +36,7 @@ impl AppBuilder {
         AppBuilder {
             app_name: CString::new("Skulpin").unwrap(),
             use_vulkan_debug_layer: false,
-            logical_size: LogicalSize::new(900.0, 600.0)
+            logical_size: LogicalSize::new(900.0, 600.0),
         }
     }
 
@@ -56,31 +55,30 @@ impl AppBuilder {
         self
     }
 
-    pub fn run<T : 'static + AppHandler>(&self, app_handler: T) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run<T: 'static + AppHandler>(
+        &self,
+        app_handler: T,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         App::run(
             app_handler,
             &self.app_name,
             self.use_vulkan_debug_layer,
-            self.logical_size
+            self.logical_size,
         )
     }
 }
 
-pub struct App {
-
-}
+pub struct App {}
 
 impl App {
     //TODO: Since winit returns !, we should just take a callback here for handling errors instead
     // of returning
-    pub fn run<T : 'static + AppHandler>(
+    pub fn run<T: 'static + AppHandler>(
         mut app_handler: T,
         app_name: &CString,
         use_vulkan_debug_layer: bool,
-        logical_size: LogicalSize
-    )
-        -> Result<(), Box<dyn std::error::Error>>
-    {
+        logical_size: LogicalSize,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Create the event loop
         let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
 
@@ -105,53 +103,39 @@ impl App {
         // Pass control of this thread to winit until the app terminates. If this app wants to quit,
         // the update loop should send the appropriate event via the channel
         event_loop.run(move |event, window_target, control_flow| {
-            input_state.handle_winit_event(
-                &mut app_control,
-                &event,
-                window_target
-            );
+            input_state.handle_winit_event(&mut app_control, &event, window_target);
 
             match event {
                 winit::event::Event::EventsCleared => {
-
                     time_state.update(TimeContext::System);
 
                     if print_fps_event.try_take_event(
                         time_state.system().frame_start_instant,
-                        std::time::Duration::from_secs_f32(1.0)
+                        std::time::Duration::from_secs_f32(1.0),
                     ) {
                         debug!("fps: {}", time_state.system().fps);
                     }
 
-                    app_handler.update(
-                        &mut app_control,
-                        &input_state,
-                        &time_state
-                    );
+                    app_handler.update(&mut app_control, &input_state, &time_state);
 
                     // Call this to mark the start of the next frame (i.e. "key just down" will return false)
                     input_state.end_frame();
 
                     // Queue a RedrawRequested event.
                     window.request_redraw();
-                },
+                }
                 winit::event::Event::WindowEvent {
                     event: winit::event::WindowEvent::RedrawRequested,
                     ..
                 } => {
                     if let Err(e) = renderer.draw(&window, |canvas| {
-                        app_handler.draw(
-                            &app_control,
-                            &input_state,
-                            &time_state,
-                            canvas
-                        );
+                        app_handler.draw(&app_control, &input_state, &time_state, canvas);
                     }) {
                         //TODO: Handle Error
                         warn!("{:?}", e);
                         app_control.enqueue_terminate_process();
                     }
-                },
+                }
                 _ => {}
             }
 

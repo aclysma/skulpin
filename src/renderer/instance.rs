@@ -1,12 +1,12 @@
 use std::ffi::CString;
 
+use ash::prelude::VkResult;
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
-use ash::prelude::VkResult;
 
 use super::debug_reporter;
-use super::VkDebugReporter;
 use super::window_support;
+use super::VkDebugReporter;
 
 /// Create one of these at startup. It never gets lost/destroyed.
 pub struct VkInstance {
@@ -86,7 +86,10 @@ impl VkInstance {
     }
 
     /// This is used to setup a debug callback for logging validation errors
-    fn setup_vulkan_debug_callback(entry: &ash::Entry, instance: &ash::Instance) -> VkResult<VkDebugReporter> {
+    fn setup_vulkan_debug_callback(
+        entry: &ash::Entry,
+        instance: &ash::Instance,
+    ) -> VkResult<VkDebugReporter> {
         info!("Setup vulkan debug callback");
         let debug_info = vk::DebugReportCallbackCreateInfoEXT::builder()
             .flags(
@@ -99,14 +102,12 @@ impl VkInstance {
             .pfn_callback(Some(debug_reporter::vulkan_debug_callback));
 
         let debug_report_loader = ash::extensions::ext::DebugReport::new(entry, instance);
-        let debug_callback = unsafe {
-            debug_report_loader
-                .create_debug_report_callback(&debug_info, None)?
-        };
+        let debug_callback =
+            unsafe { debug_report_loader.create_debug_report_callback(&debug_info, None)? };
 
         Ok(VkDebugReporter {
             debug_report_loader,
-            debug_callback
+            debug_callback,
         })
     }
 }
@@ -123,4 +124,3 @@ impl Drop for VkInstance {
         info!("destroyed VkInstance");
     }
 }
-

@@ -1,4 +1,3 @@
-
 pub struct ScopeTimer<'a> {
     start_time: std::time::Instant,
     name: &'a str,
@@ -27,16 +26,20 @@ impl<'a> Drop for ScopeTimer<'a> {
 
 #[derive(Default)]
 pub struct PeriodicEvent {
-    last_time_triggered: Option<std::time::Instant>
+    last_time_triggered: Option<std::time::Instant>,
 }
 
 impl PeriodicEvent {
-    pub fn try_take_event(&mut self, current_time: std::time::Instant, wait_duration: std::time::Duration) -> bool {
+    pub fn try_take_event(
+        &mut self,
+        current_time: std::time::Instant,
+        wait_duration: std::time::Duration,
+    ) -> bool {
         match self.last_time_triggered {
             None => {
                 self.last_time_triggered = Some(current_time);
                 true
-            },
+            }
             Some(last_time_triggered) => {
                 if current_time - last_time_triggered >= wait_duration {
                     self.last_time_triggered = Some(current_time);

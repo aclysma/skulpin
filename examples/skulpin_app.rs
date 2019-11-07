@@ -1,15 +1,13 @@
-
 // This example shows how to use the "app" helpers to get a window open and drawing with minimal code
 // It's not as flexible as working with winit directly, but it's quick and simple
 
-use skulpin::AppHandler;
 use skulpin::AppControl;
+use skulpin::AppHandler;
 use skulpin::InputState;
+use skulpin::LogicalSize;
 use skulpin::TimeState;
 use skulpin::VirtualKeyCode;
-use skulpin::LogicalSize;
 use std::ffi::CString;
-
 
 fn main() {
     // Setup logging
@@ -27,14 +25,11 @@ fn main() {
         .expect("The app failed with an error");
 }
 
-struct ExampleApp {
-}
+struct ExampleApp {}
 
 impl ExampleApp {
     pub fn new() -> Self {
-        ExampleApp {
-
-        }
+        ExampleApp {}
     }
 }
 
@@ -43,7 +38,7 @@ impl AppHandler for ExampleApp {
         &mut self,
         app_control: &mut AppControl,
         input_state: &InputState,
-        _time_state: &TimeState
+        _time_state: &TimeState,
     ) {
         if input_state.is_key_down(VirtualKeyCode::Escape) {
             app_control.enqueue_terminate_process();
@@ -55,7 +50,7 @@ impl AppHandler for ExampleApp {
         _app_control: &AppControl,
         _input_state: &InputState,
         time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas
+        canvas: &mut skia_safe::Canvas,
     ) {
         // Generally would want to clear data every time we draw
         canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
@@ -73,17 +68,14 @@ impl AppHandler for ExampleApp {
         canvas.draw_line(
             skia_safe::Point::new(100.0, 500.0),
             skia_safe::Point::new(800.0, 500.0),
-            &paint
+            &paint,
         );
 
         // Draw a circle
         canvas.draw_circle(
-            skia_safe::Point::new(
-                200.0 + (f * 500.0),
-                420.0
-            ),
+            skia_safe::Point::new(200.0 + (f * 500.0), 420.0),
             50.0,
-            &paint
+            &paint,
         );
 
         // Draw a rectangle
@@ -92,9 +84,9 @@ impl AppHandler for ExampleApp {
                 left: 10.0,
                 top: 10.0,
                 right: 890.0,
-                bottom: 590.0
+                bottom: 590.0,
             },
-            &paint
+            &paint,
         );
 
         //TODO: draw_bitmap

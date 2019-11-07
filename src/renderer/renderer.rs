@@ -1,30 +1,28 @@
-
 use std::ffi::CString;
 
-use ash::version::DeviceV1_0;
 use ash::prelude::VkResult;
+use ash::version::DeviceV1_0;
 
-use std::mem::ManuallyDrop;
 use ash::vk;
+use std::mem::ManuallyDrop;
 
-use super::VkInstance;
 use super::VkDevice;
+use super::VkInstance;
+use super::VkPipeline;
 use super::VkSkiaContext;
 use super::VkSwapchain;
-use super::VkPipeline;
 use super::MAX_FRAMES_IN_FLIGHT;
-
 
 pub struct RendererBuilder {
     app_name: CString,
-    use_vulkan_debug_layer: bool
+    use_vulkan_debug_layer: bool,
 }
 
 impl RendererBuilder {
     pub fn new() -> Self {
         RendererBuilder {
             app_name: CString::new("Skulpin").unwrap(),
-            use_vulkan_debug_layer: false
+            use_vulkan_debug_layer: false,
         }
     }
 
@@ -60,7 +58,7 @@ impl Renderer {
     pub fn new(
         app_name: &CString,
         window: &winit::window::Window,
-        use_vulkan_debug_layer: bool
+        use_vulkan_debug_layer: bool,
     ) -> VkResult<Renderer> {
         let instance = ManuallyDrop::new(VkInstance::new(app_name, use_vulkan_debug_layer)?);
         let device = ManuallyDrop::new(VkDevice::new(&instance, window)?);
@@ -75,20 +73,19 @@ impl Renderer {
             skia_context,
             swapchain,
             pipeline,
-            sync_frame_index
+            sync_frame_index,
         })
     }
 
-    pub fn draw<F : FnOnce(&mut skia_safe::Canvas)>(
+    pub fn draw<F: FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
         window: &winit::window::Window,
-        f: F
+        f: F,
     ) -> VkResult<()> {
         let result = self.do_draw(window, f);
         if let Err(e) = result {
             match e {
                 ash::vk::Result::ERROR_OUT_OF_DATE_KHR => {
-
                     //TODO: Clean the do_draw stuff up
                     //TODO: How does it work to render from another thread?
                     unsafe {
@@ -97,16 +94,17 @@ impl Renderer {
                         ManuallyDrop::drop(&mut self.swapchain);
                     }
 
-                    self.swapchain = ManuallyDrop::new(VkSwapchain::new(&self.instance, &self.device, window)?);
-                    self.pipeline = ManuallyDrop::new(VkPipeline::new(&self.device, &self.swapchain, &mut self.skia_context)?);
+                    self.swapchain =
+                        ManuallyDrop::new(VkSwapchain::new(&self.instance, &self.device, window)?);
+                    self.pipeline = ManuallyDrop::new(VkPipeline::new(
+                        &self.device,
+                        &self.swapchain,
+                        &mut self.skia_context,
+                    )?);
                     Ok(())
-                },
-                ash::vk::Result::SUCCESS => {
-                    Ok(())
-                },
-                ash::vk::Result::SUBOPTIMAL_KHR => {
-                    Ok(())
-                },
+                }
+                ash::vk::Result::SUCCESS => Ok(()),
+                ash::vk::Result::SUBOPTIMAL_KHR => Ok(()),
                 _ => {
                     warn!("Unexpected rendering error");
                     Err(e)
@@ -117,13 +115,11 @@ impl Renderer {
         }
     }
 
-    fn do_draw<F : FnOnce(&mut skia_safe::Canvas)>(
+    fn do_draw<F: FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
         window: &winit::window::Window,
-        f: F
-    )
-        -> VkResult<()>
-    {
+        f: F,
+    ) -> VkResult<()> {
         let frame_fence = self.swapchain.in_flight_fences[self.sync_frame_index];
 
         //TODO: Dont lock up forever (don't use std::u64::MAX)
@@ -133,19 +129,19 @@ impl Renderer {
 
         // Wait if two frame are already in flight
         unsafe {
-            self.device.logical_device.wait_for_fences(&[frame_fence], true, std::u64::MAX)?;
+            self.device
+                .logical_device
+                .wait_for_fences(&[frame_fence], true, std::u64::MAX)?;
             self.device.logical_device.reset_fences(&[frame_fence])?;
         }
 
         let (present_index, _is_suboptimal) = unsafe {
-            self.swapchain
-                .swapchain_loader
-                .acquire_next_image(
-                    self.swapchain.swapchain,
-                    std::u64::MAX,
-                    self.swapchain.image_available_semaphores[self.sync_frame_index],
-                    vk::Fence::null(),
-                )?
+            self.swapchain.swapchain_loader.acquire_next_image(
+                self.swapchain.swapchain,
+                std::u64::MAX,
+                self.swapchain.image_available_semaphores[self.sync_frame_index],
+                vk::Fence::null(),
+            )?
         };
 
         {
@@ -158,7 +154,7 @@ impl Renderer {
             let window_size = window.inner_size();
             let scale = (
                 (self.swapchain.swapchain_info.extents.width as f64 / window_size.width) as f32,
-                (self.swapchain.swapchain_info.extents.height as f64 / window_size.height) as f32
+                (self.swapchain.swapchain_info.extents.height as f64 / window_size.height) as f32,
             );
 
             canvas.reset_matrix();
@@ -176,18 +172,19 @@ impl Renderer {
         let command_buffers = [self.pipeline.command_buffers[present_index as usize]];
 
         //add fence to queue submit
-        let submit_info = [
-            vk::SubmitInfo::builder()
-                .wait_semaphores(&wait_semaphores)
-                .signal_semaphores(&signal_semaphores)
-                .wait_dst_stage_mask(&wait_dst_stage_mask)
-                .command_buffers(&command_buffers)
-                .build()
-        ];
+        let submit_info = [vk::SubmitInfo::builder()
+            .wait_semaphores(&wait_semaphores)
+            .signal_semaphores(&signal_semaphores)
+            .wait_dst_stage_mask(&wait_dst_stage_mask)
+            .command_buffers(&command_buffers)
+            .build()];
 
         unsafe {
-            self.device.logical_device
-                .queue_submit(self.device.queues.graphics_queue, &submit_info, frame_fence)?;
+            self.device.logical_device.queue_submit(
+                self.device.queues.graphics_queue,
+                &submit_info,
+                frame_fence,
+            )?;
         }
 
         let wait_semaphors = [self.swapchain.render_finished_semaphores[self.sync_frame_index]];
@@ -199,7 +196,8 @@ impl Renderer {
             .image_indices(&image_indices);
 
         unsafe {
-            self.swapchain.swapchain_loader
+            self.swapchain
+                .swapchain_loader
                 .queue_present(self.device.queues.present_queue, &present_info)?;
         }
 
