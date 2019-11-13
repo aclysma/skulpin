@@ -117,6 +117,14 @@ impl VkDevice {
         Ok((physical_device, queue_family_indices))
     }
 
+    fn vk_version_to_string(version: u32) -> String {
+        format!("{}.{}.{}",
+            ash::vk_version_major!(version),
+            ash::vk_version_minor!(version),
+            ash::vk_version_patch!(version)
+        )
+    }
+
     fn get_score_and_queue_families_for_physical_device(
         instance: &ash::Instance,
         device: &ash::vk::PhysicalDevice,
@@ -128,12 +136,7 @@ impl VkDevice {
 
         //TODO: Check that the extensions we want to use are supported
         let _extensions : Vec<ash::vk::ExtensionProperties> = unsafe { instance.enumerate_device_extension_properties(*device)? };
-        let features : vk::PhysicalDeviceFeatures = unsafe { instance.get_physical_device_features(*device) };
-
-        if features.sampler_anisotropy == vk::FALSE {
-            info!("Found unsuitable device '{}', does not support sampler_anisotropy", device_name);
-            return Ok(None);
-        }
+        let _features : vk::PhysicalDeviceFeatures = unsafe { instance.get_physical_device_features(*device) };
 
         let queue_family_indices = Self::find_queue_families(instance, device, surface_loader, surface);
         if let Some(queue_family_indices) = queue_family_indices {
@@ -153,11 +156,23 @@ impl VkDevice {
                 0
             };
 
-            info!("Found suitable device '{}' score = {}", device_name, score);
+            info!(
+                "Found suitable device '{}' API: {} DriverVersion: {} Score = {}", 
+                device_name, 
+                Self::vk_version_to_string(properties.api_version), 
+                Self::vk_version_to_string(properties.driver_version), 
+                score
+            );
+
             trace!("{:#?}", properties);
             Ok(Some((score, queue_family_indices)))
         } else {
-            info!("Found unsuitable device '{}', could not find queue families", device_name);
+            info!(
+                "Found unsuitable device '{}' API: {} DriverVersion: {} could not find queue families",
+                device_name, 
+                Self::vk_version_to_string(properties.api_version), 
+                Self::vk_version_to_string(properties.driver_version)
+            );
             trace!("{:#?}", properties);
             Ok(None)
         }
@@ -200,8 +215,7 @@ impl VkDevice {
         //TODO: Ideally we would set up validation layers for the logical device too.
 
         let device_extension_names_raw = [khr::Swapchain::name().as_ptr()];
-        let features = vk::PhysicalDeviceFeatures::builder()
-            .sampler_anisotropy(true);
+        let features = vk::PhysicalDeviceFeatures::builder();
         let priorities = [1.0];
 
         let mut queue_families_to_create = std::collections::HashSet::new();
@@ -244,12 +258,12 @@ impl VkDevice {
 
 impl Drop for VkDevice {
     fn drop(&mut self) {
-        info!("destroying VkDevice");
+        debug!("destroying VkDevice");
         unsafe {
             self.logical_device.destroy_device(None);
             self.surface_loader.destroy_surface(self.surface, None);
         }
 
-        info!("destroyed VkDevice");
+        debug!("destroyed VkDevice");
     }
 }

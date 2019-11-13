@@ -73,13 +73,13 @@ impl VkImage {
 
 impl Drop for VkImage {
     fn drop(&mut self) {
-        info!("destroying VkBuffer");
+        debug!("destroying VkBuffer");
 
         unsafe {
             self.device.destroy_image(self.image, None);
             self.device.free_memory(self.image_memory, None);
         }
 
-        info!("destroyed VkBuffer");
+        debug!("destroyed VkBuffer");
     }
 }

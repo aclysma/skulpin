@@ -242,12 +242,12 @@ impl VkSwapchain {
         window: &winit::window::Window
     ) -> ash::vk::Extent2D {
         if surface_capabilities.current_extent.width != std::u32::MAX {
-            info!("Swapchain extents chosen by surface capabilities ({} {})", surface_capabilities.current_extent.width, surface_capabilities.current_extent.height);
+            debug!("Swapchain extents chosen by surface capabilities ({} {})", surface_capabilities.current_extent.width, surface_capabilities.current_extent.height);
             surface_capabilities.current_extent
         } else {
             let (width, height) = window.inner_size().to_physical(window.hidpi_factor()).into();
 
-            info!("Swapchain extents chosen by inner window size ({} {})", width, height);
+            debug!("Swapchain extents chosen by inner window size ({} {})", width, height);
 
             let mut actual_extent = ash::vk::Extent2D::builder().width(width).height(height).build();
 
@@ -297,7 +297,7 @@ impl VkSwapchain {
 
 impl Drop for VkSwapchain {
     fn drop(&mut self) {
-        info!("destroying VkSwapchain");
+        debug!("destroying VkSwapchain");
 
         unsafe {
 
@@ -321,6 +321,6 @@ impl Drop for VkSwapchain {
                 .destroy_swapchain(self.swapchain, None);
         }
 
-        info!("destroyed VkSwapchain");
+        debug!("destroyed VkSwapchain");
     }
 }

@@ -211,7 +211,7 @@ impl Renderer {
 
 impl Drop for Renderer {
     fn drop(&mut self) {
-        info!("destroying Renderer");
+        debug!("destroying Renderer");
 
         unsafe {
             self.device.logical_device.device_wait_idle().unwrap();
@@ -222,6 +222,6 @@ impl Drop for Renderer {
             ManuallyDrop::drop(&mut self.instance);
         }
 
-        info!("destroyed Renderer");
+        debug!("destroyed Renderer");
     }
 }

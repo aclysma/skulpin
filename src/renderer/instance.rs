@@ -19,18 +19,20 @@ impl VkInstance {
     /// Creates a vulkan instance.
     pub fn new(app_name: &CString, use_vulkan_debug_layer: bool) -> VkResult<VkInstance> {
         // This loads the dll/so if needed
-        info!("Find vulkan entry point");
+        info!("Finding vulkan entry point");
         //TODO: Return this error
         let entry = ash::Entry::new().expect("Could not find Vulkan entry point");
 
         // Get the available layers/extensions
         let layers = entry.enumerate_instance_layer_properties()?;
-        info!("Available Layers: {:#?}", layers);
+        debug!("Available Layers: {:#?}", layers);
         let extensions = entry.enumerate_instance_extension_properties()?;
-        info!("Available Extensions: {:#?}", extensions);
-
+        debug!("Available Extensions: {:#?}", extensions);
+        
         // Info that's exposed to the driver. In a real shipped product, this data might be used by
         // the driver to make specific adjustments to improve performance
+        //TODO: Review docs on usage of api_version:
+        // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkApplicationInfo.html
         let appinfo = vk::ApplicationInfo::builder()
             .application_name(app_name)
             .application_version(0)
@@ -63,7 +65,7 @@ impl VkInstance {
             .enabled_layer_names(&layers_names_raw)
             .enabled_extension_names(&extension_names_raw);
 
-        info!("Create vulkan instance");
+        info!("Creating vulkan instance");
         let instance: ash::Instance = unsafe {
             //TODO: Return this error
             entry
@@ -87,9 +89,9 @@ impl VkInstance {
 
     /// This is used to setup a debug callback for logging validation errors
     fn setup_vulkan_debug_callback(entry: &ash::Entry, instance: &ash::Instance) -> VkResult<VkDebugReporter> {
-        info!("Setup vulkan debug callback");
+        info!("Seting up vulkan debug callback");
         let debug_info = vk::DebugReportCallbackCreateInfoEXT::builder()
-            .flags(
+            .flags( //TODO: Allow configuring this
                 vk::DebugReportFlagsEXT::ERROR
                     | vk::DebugReportFlagsEXT::WARNING
                     | vk::DebugReportFlagsEXT::PERFORMANCE_WARNING
@@ -113,14 +115,14 @@ impl VkInstance {
 
 impl Drop for VkInstance {
     fn drop(&mut self) {
-        info!("destroying VkInstance");
+        debug!("destroying VkInstance");
         std::mem::drop(self.debug_reporter.take());
 
         unsafe {
             self.instance.destroy_instance(None);
         }
 
-        info!("destroyed VkInstance");
+        debug!("destroyed VkInstance");
     }
 }
 

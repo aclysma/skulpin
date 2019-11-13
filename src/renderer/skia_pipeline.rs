@@ -781,7 +781,7 @@ impl VkPipeline {
 
 impl Drop for VkPipeline {
     fn drop(&mut self) {
-        info!("destroying VkPipeline");
+        debug!("destroying VkPipeline");
 
         unsafe {
             self.device.destroy_sampler(self.image_sampler, None);
@@ -803,6 +803,6 @@ impl Drop for VkPipeline {
             self.device.destroy_descriptor_set_layout(self.descriptor_set_layout, None);
         }
 
-        info!("destroyed VkPipeline");
+        debug!("destroyed VkPipeline");
     }
 }
