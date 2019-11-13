@@ -118,7 +118,7 @@ impl App {
 
                     if print_fps_event.try_take_event(
                         time_state.system().frame_start_instant,
-                        std::time::Duration::from_secs_f32(1.0)
+                        std::time::Duration::from_secs(1)
                     ) {
                         debug!("fps: {}", time_state.system().fps);
                     }

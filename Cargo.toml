@@ -21,6 +21,9 @@ include = [
     "README.md"
 ]
 
+# Minimum required rust version:
+# rust="1.36"
+
 [dependencies]
 winit = "0.20.0-alpha4"
 raw-window-handle = "0.3"

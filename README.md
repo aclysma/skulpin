@@ -34,6 +34,8 @@ First, ensure that the below requirements are met depending on OS. Afterwards, t
 
 ## Requirements
 
+Minimum required rust version: **1.36.0**
+
 ### Windows
 
 All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
