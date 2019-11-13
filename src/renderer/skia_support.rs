@@ -117,7 +117,7 @@ impl VkSkiaSurface {
                 layer_count: 1,
                 ..Default::default()
             },
-            image: image,
+            image,
             ..Default::default()
         };
 

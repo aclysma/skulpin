@@ -35,13 +35,13 @@ impl Default for TimeState {
         let now_instant = time::Instant::now();
         let now_system_time = time::SystemTime::now();
 
-        return TimeState {
+        TimeState {
             app_start_system_time: now_system_time,
             app_start_instant: now_instant,
             previous_instant: now_instant,
             previous_time_context: TimeContext::System,
             time_context_states: [ModeTimeState::new(); TIME_CONTEXT_COUNT],
-        };
+        }
     }
 }
 
@@ -105,7 +105,7 @@ impl ModeTimeState {
     pub fn new() -> Self {
         let now_instant = time::Instant::now();
         let zero_duration = time::Duration::from_secs(0);
-        return ModeTimeState {
+        ModeTimeState {
             total_time: zero_duration,
             frame_start_instant: now_instant,
             previous_frame_time: zero_duration,
@@ -113,7 +113,7 @@ impl ModeTimeState {
             fps: 0.0,
             fps_smoothed: 0.0,
             frame_count: 0,
-        };
+        }
     }
 
     pub fn update(&mut self, elapsed: std::time::Duration) {

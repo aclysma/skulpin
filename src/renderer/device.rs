@@ -93,7 +93,7 @@ impl VkDevice {
                 .enumerate_physical_devices()?
         };
 
-        if physical_devices.len() <= 0 {
+        if physical_devices.is_empty() {
             panic!("Could not find a physical device");
         }
 

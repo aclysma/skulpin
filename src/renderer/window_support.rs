@@ -107,7 +107,7 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
                 s_type: vk::StructureType::WIN32_SURFACE_CREATE_INFO_KHR,
                 p_next: std::ptr::null(),
                 flags: Default::default(),
-                hinstance: hinstance,
+                hinstance,
                 hwnd: hwnd as *const c_void,
             };
             
