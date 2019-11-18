@@ -37,7 +37,8 @@ impl VkSwapchain {
     pub fn new(
         instance: &VkInstance,
         device: &VkDevice,
-        window: &winit::window::Window
+        window: &winit::window::Window,
+        old_swapchain: Option<vk::SwapchainKHR>
     )
         -> VkResult<VkSwapchain>
     {
@@ -48,7 +49,8 @@ impl VkSwapchain {
             &device.surface_loader,
             &device.surface,
             &device.queue_family_indices,
-            window
+            window,
+            old_swapchain
         )?;
 
         let swapchain_images = unsafe {
@@ -105,7 +107,8 @@ impl VkSwapchain {
         surface_loader: &ash::extensions::khr::Surface,
         surface: &ash::vk::SurfaceKHR,
         queue_family_indices: &QueueFamilyIndices,
-        window: &winit::window::Window
+        window: &winit::window::Window,
+        old_swapchain: Option<vk::SwapchainKHR>
     )
         -> VkResult<(SwapchainInfo, khr::Swapchain, vk::SwapchainKHR)>
     {
@@ -136,7 +139,6 @@ impl VkSwapchain {
 
         let swapchain_loader = khr::Swapchain::new(instance, logical_device);
 
-        //TODO: old_swapchain should be specified here if appropriate
         let mut swapchain_create_info = vk::SwapchainCreateInfoKHR::builder()
             .surface(*surface)
             .min_image_count(image_count)
@@ -150,6 +152,10 @@ impl VkSwapchain {
             .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
             .present_mode(present_mode)
             .clipped(true);
+
+        if let Some(old_swapchain) = old_swapchain {
+            swapchain_create_info = swapchain_create_info.old_swapchain(old_swapchain);
+        }
 
         // We must choose concurrent or exclusive image sharing mode. We only choose concurrent if
         // the queue families are not the same, which is uncommon. If we do choose concurrent, we

@@ -65,7 +65,7 @@ impl Renderer {
         let instance = ManuallyDrop::new(VkInstance::new(app_name, use_vulkan_debug_layer)?);
         let device = ManuallyDrop::new(VkDevice::new(&instance, window)?);
         let mut skia_context = ManuallyDrop::new(VkSkiaContext::new(&instance, &device));
-        let swapchain = ManuallyDrop::new(VkSwapchain::new(&instance, &device, window)?);
+        let swapchain = ManuallyDrop::new(VkSwapchain::new(&instance, &device, window, None)?);
         let pipeline = ManuallyDrop::new(VkPipeline::new(&device, &swapchain, &mut skia_context)?);
         let sync_frame_index = 0;
 
@@ -94,10 +94,22 @@ impl Renderer {
                     unsafe {
                         self.device.logical_device.device_wait_idle()?;
                         ManuallyDrop::drop(&mut self.pipeline);
+                    }
+
+                    let new_swapchain = ManuallyDrop::new(
+                        VkSwapchain::new(
+                            &self.instance,
+                            &self.device,
+                            window,
+                            Some(self.swapchain.swapchain)
+                        )?
+                    );
+
+                    unsafe {
                         ManuallyDrop::drop(&mut self.swapchain);
                     }
 
-                    self.swapchain = ManuallyDrop::new(VkSwapchain::new(&self.instance, &self.device, window)?);
+                    self.swapchain = new_swapchain;
                     self.pipeline = ManuallyDrop::new(VkPipeline::new(&self.device, &self.swapchain, &mut self.skia_context)?);
                     Ok(())
                 },
