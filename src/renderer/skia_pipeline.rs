@@ -682,29 +682,12 @@ impl VkPipeline {
 
             let image = VkSkiaSurface::get_image_from_skia_texture(&skia_surface.texture);
 
-            //TODO: Pull into helper function
-            let image_memory_barrier = ash::vk::ImageMemoryBarrier::builder()
-                .old_layout(ash::vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
-                .new_layout(ash::vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
-                .src_queue_family_index(3)
-                .dst_queue_family_index(3)
-                .image(image)
-                .subresource_range(ash::vk::ImageSubresourceRange::builder()
-                    .aspect_mask(ash::vk::ImageAspectFlags::COLOR)
-                    .level_count(1/*VK_REMAINING_MIP_LEVELS*/)
-                    .layer_count(1/*VK_REMAINING_ARRAY_LAYERS*/)
-                    .build())
-                .build();
-
-            //if current_
-            logical_device.cmd_pipeline_barrier(
-                *command_buffer,
-                vk::PipelineStageFlags::FRAGMENT_SHADER,
-                vk::PipelineStageFlags::FRAGMENT_SHADER,
-                vk::DependencyFlags::BY_REGION,
-                &[],//memory_barriers,
-                &[],//buffer_memory_barriers,
-                &[image_memory_barrier],//image_memory_barriers
+            Self::add_image_barrier(
+                logical_device,
+                command_buffer,
+                &image,
+                vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
+                vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL
             );
 
             logical_device.cmd_begin_render_pass(
@@ -745,21 +728,39 @@ impl VkPipeline {
             logical_device.cmd_draw_indexed(*command_buffer, INDEX_LIST.len() as u32, 1, 0, 0, 0);
             logical_device.cmd_end_render_pass(*command_buffer);
 
-            //TODO: Pull into helper function
-            let image_memory_barrier = ash::vk::ImageMemoryBarrier::builder()
-                .old_layout(ash::vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
-                .new_layout(ash::vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL)
-                .src_queue_family_index(3)
-                .dst_queue_family_index(3)
-                .image(image)
-                .subresource_range(ash::vk::ImageSubresourceRange::builder()
-                    .aspect_mask(ash::vk::ImageAspectFlags::COLOR)
-                    .level_count(1/*VK_REMAINING_MIP_LEVELS*/)
-                    .layer_count(1/*VK_REMAINING_ARRAY_LAYERS*/)
-                    .build())
-                .build();
+            Self::add_image_barrier(
+                logical_device,
+                command_buffer,
+                &image,
+                vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL
+            );
 
-            //if current_
+            logical_device.end_command_buffer(*command_buffer)
+        }
+    }
+
+    fn add_image_barrier(
+        logical_device: &ash::Device,
+        command_buffer: &vk::CommandBuffer,
+        image: &vk::Image,
+        old_layout: vk::ImageLayout,
+        new_layout: vk::ImageLayout
+    ) {
+        let image_memory_barrier = ash::vk::ImageMemoryBarrier::builder()
+            .old_layout(old_layout)
+            .new_layout(new_layout)
+            .src_queue_family_index(ash::vk::QUEUE_FAMILY_IGNORED)
+            .dst_queue_family_index(ash::vk::QUEUE_FAMILY_IGNORED)
+            .image(*image)
+            .subresource_range(ash::vk::ImageSubresourceRange::builder()
+                .aspect_mask(ash::vk::ImageAspectFlags::COLOR)
+                .level_count(1/*VK_REMAINING_MIP_LEVELS*/)
+                .layer_count(1/*VK_REMAINING_ARRAY_LAYERS*/)
+                .build())
+            .build();
+
+        unsafe {
             logical_device.cmd_pipeline_barrier(
                 *command_buffer,
                 vk::PipelineStageFlags::FRAGMENT_SHADER,
@@ -769,8 +770,6 @@ impl VkPipeline {
                 &[],//buffer_memory_barriers,
                 &[image_memory_barrier],//image_memory_barriers
             );
-
-            logical_device.end_command_buffer(*command_buffer)
         }
     }
 
