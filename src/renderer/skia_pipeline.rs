@@ -137,9 +137,16 @@ impl VkPipeline {
 
         info!("Create skia surfaces with extent: {:?}", swapchain.swapchain_info.extents);
 
+        // Force the skia surface size to be >0, otherwise the surface will fail to be created.
+        // I could fix this by not creating the canvas at all and having the upstream code
+        // check if the canvas is valid, but this is simpler.
+        let mut skia_surface_extents = swapchain.swapchain_info.extents;
+        skia_surface_extents.width = skia_surface_extents.width.max(1);
+        skia_surface_extents.height = skia_surface_extents.height.max(1);
+
         //TODO: Figure out how to return error here
         let skia_surfaces : Vec<_> = (0..swapchain.swapchain_info.image_count).map(|_| {
-            VkSkiaSurface::new(device, skia_context, &swapchain.swapchain_info.extents).unwrap()
+            VkSkiaSurface::new(device, skia_context, &skia_surface_extents).unwrap()
         }).collect();
 
         let image_sampler = VkSkiaSurface::create_sampler(
