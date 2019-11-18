@@ -18,16 +18,37 @@ pub struct VkInstance {
 impl VkInstance {
     /// Creates a vulkan instance.
     pub fn new(app_name: &CString, use_vulkan_debug_layer: bool) -> VkResult<VkInstance> {
+
         // This loads the dll/so if needed
         info!("Finding vulkan entry point");
         //TODO: Return this error
         let entry = ash::Entry::new().expect("Could not find Vulkan entry point");
+
+        // Determine the supported version of vulkan that's available
+        let vulkan_version = match entry.try_enumerate_instance_version()? {
+            // Vulkan 1.1+
+            Some(version) => {
+                let major = ash::vk_version_major!(version);
+                let minor = ash::vk_version_minor!(version);
+                let patch = ash::vk_version_patch!(version);
+
+                (major, minor, patch)
+            },
+            // Vulkan 1.0
+            None => (1, 0, 0),
+        };
+
+        info!("Found Vulkan version: {:?}", vulkan_version);
 
         // Get the available layers/extensions
         let layers = entry.enumerate_instance_layer_properties()?;
         debug!("Available Layers: {:#?}", layers);
         let extensions = entry.enumerate_instance_extension_properties()?;
         debug!("Available Extensions: {:#?}", extensions);
+
+        // Expected to be 1.1.0 or 1.0.0 depeneding on what we found in try_enumerate_instance_version
+        // https://vulkan.lunarg.com/doc/view/1.1.70.1/windows/tutorial/html/16-vulkan_1_1_changes.html
+        let api_version = ash::vk_make_version!(vulkan_version.0, vulkan_version.1, 0);
         
         // Info that's exposed to the driver. In a real shipped product, this data might be used by
         // the driver to make specific adjustments to improve performance
@@ -38,7 +59,7 @@ impl VkInstance {
             .application_version(0)
             .engine_name(app_name)
             .engine_version(0)
-            .api_version(ash::vk_make_version!(1, 0, 0));
+            .api_version(api_version);
 
         // Determine what layers to use
         let validation_layer_name = CString::new("VK_LAYER_LUNARG_standard_validation").unwrap();
