@@ -27,11 +27,6 @@ pub use skia_support::VkSkiaContext;
 mod buffer;
 pub use buffer::VkBuffer;
 
-/*
-mod image;
-pub use self::image::VkImage;
-*/
-
 mod debug_reporter;
 pub use debug_reporter::VkDebugReporter;
 

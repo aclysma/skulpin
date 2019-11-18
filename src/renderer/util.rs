@@ -169,39 +169,3 @@ pub fn transition_image_layout(
     });
 }
 */
-/*
-pub fn copy_buffer_to_image(
-    logical_device: &ash::Device,
-    queue: &vk::Queue,
-    command_pool: &vk::CommandPool,
-    buffer: &vk::Buffer,
-    image: &vk::Image,
-    extent: &vk::Extent3D
-) {
-    super::util::submit_single_use_command_buffer(logical_device, queue, command_pool, |command_buffer| {
-        let image_subresource = vk::ImageSubresourceLayers::builder()
-            .aspect_mask(vk::ImageAspectFlags::COLOR)
-            .mip_level(0)
-            .base_array_layer(0)
-            .layer_count(1);
-
-        let image_copy = vk::BufferImageCopy::builder()
-            .buffer_offset(0)
-            .buffer_row_length(0)
-            .buffer_image_height(0)
-            .image_subresource(*image_subresource)
-            .image_offset(vk::Offset3D { x: 0, y: 0, z: 0 })
-            .image_extent(*extent);
-
-        unsafe {
-            logical_device.cmd_copy_buffer_to_image(
-                *command_buffer,
-                *buffer,
-                *image,
-                vk::ImageLayout::TRANSFER_DST_OPTIMAL,
-                &[*image_copy]
-            );
-        }
-    });
-}
-*/
