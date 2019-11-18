@@ -86,8 +86,18 @@ impl VkSkiaSurface {
     }
 
     pub fn new(device: &VkDevice, context: &mut VkSkiaContext, extent: &vk::Extent2D) -> VkResult<Self> {
+        // The "native" color type is based on platform. For example, on Windows it's BGR and on
+        // MacOS it's RGB
+        let color_type = skia_safe::ColorType::n32();
+        let alpha_type = skia_safe::AlphaType::Premul;
+        let color_space = None;
 
-        let image_info = skia_safe::ImageInfo::new_n32_premul((extent.width as i32, extent.height as i32), None);
+        let image_info = skia_safe::ImageInfo::new(
+            (extent.width as i32, extent.height as i32),
+            color_type,
+            alpha_type,
+            color_space
+        );
 
         let mut surface = skia_safe::Surface::new_render_target(
             &mut context.context,
@@ -102,9 +112,21 @@ impl VkSkiaSurface {
         let texture = surface.get_backend_texture(skia_safe::surface::BackendHandleAccess::FlushRead).as_ref().unwrap().clone();
         let image = Self::get_image_from_skia_texture(&texture);
 
+        // According to docs, kN32_SkColorType can only be kRGBA_8888_SkColorType or
+        // kBGRA_8888_SkColorType. Whatever it is, we need to set up the image view with the
+        // matching format
+        let format = match color_type {
+            skia_safe::ColorType::RGBA8888 => vk::Format::R8G8B8A8_UNORM,
+            skia_safe::ColorType::BGRA8888 => vk::Format::B8G8R8A8_UNORM,
+            _ => {
+                warn!("Unexpected native color type {:?}", color_type);
+                vk::Format::R8G8B8A8_UNORM
+            }
+        };
+
         let skia_tex_image_view_info = vk::ImageViewCreateInfo {
             view_type: vk::ImageViewType::TYPE_2D,
-            format: vk::Format::R8G8B8A8_UNORM,
+            format: format,
             components: vk::ComponentMapping {
                 r: vk::ComponentSwizzle::R,
                 g: vk::ComponentSwizzle::G,
