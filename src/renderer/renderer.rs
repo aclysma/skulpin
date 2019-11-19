@@ -13,18 +13,27 @@ use super::VkSkiaContext;
 use super::VkSwapchain;
 use super::VkPipeline;
 use super::MAX_FRAMES_IN_FLIGHT;
+use super::PresentMode;
+use super::PhysicalDeviceType;
 
 
 pub struct RendererBuilder {
     app_name: CString,
-    use_vulkan_debug_layer: bool
+    use_vulkan_debug_layer: bool,
+    present_mode_priority: Vec<PresentMode>,
+    physical_device_type_priority: Vec<PhysicalDeviceType>,
 }
 
 impl RendererBuilder {
     pub fn new() -> Self {
         RendererBuilder {
             app_name: CString::new("Skulpin").unwrap(),
-            use_vulkan_debug_layer: false
+            use_vulkan_debug_layer: false,
+            present_mode_priority: vec![PresentMode::Fifo],
+            physical_device_type_priority: vec![
+                PhysicalDeviceType::DiscreteGpu,
+                PhysicalDeviceType::IntegratedGpu
+            ]
         }
     }
 
@@ -38,8 +47,51 @@ impl RendererBuilder {
         self
     }
 
+    pub fn present_mode_priority(mut self, present_mode_priority: Vec<PresentMode>) -> RendererBuilder {
+        self.present_mode_priority = present_mode_priority;
+        self
+    }
+
+    pub fn physical_device_type_priority(mut self, physical_device_type_priority: Vec<PhysicalDeviceType>) -> RendererBuilder {
+        self.physical_device_type_priority = physical_device_type_priority;
+        self
+    }
+
+    pub fn prefer_integrated_gpu(self) -> RendererBuilder {
+        self.physical_device_type_priority(vec![
+            PhysicalDeviceType::IntegratedGpu,
+            PhysicalDeviceType::DiscreteGpu
+        ])
+    }
+
+    pub fn prefer_discrete_gpu(self) -> RendererBuilder {
+        self.physical_device_type_priority(vec![
+            PhysicalDeviceType::DiscreteGpu,
+            PhysicalDeviceType::IntegratedGpu
+        ])
+    }
+
+    pub fn prefer_fifo_present_mode(self) -> RendererBuilder {
+        self.present_mode_priority(vec![
+            PresentMode::Fifo
+        ])
+    }
+
+    pub fn prefer_mailbox_present_mode(self) -> RendererBuilder{
+        self.present_mode_priority(vec![
+            PresentMode::Mailbox,
+            PresentMode::Fifo
+        ])
+    }
+
     pub fn build(&self, window: &winit::window::Window) -> VkResult<Renderer> {
-        Renderer::new(&self.app_name, window, self.use_vulkan_debug_layer)
+        Renderer::new(
+            &self.app_name,
+            window,
+            self.use_vulkan_debug_layer,
+            self.physical_device_type_priority.clone(),
+            self.present_mode_priority.clone()
+        )
     }
 }
 
@@ -54,18 +106,22 @@ pub struct Renderer {
 
     // Increase until > MAX_FRAMES_IN_FLIGHT, then set to 0, or -1 if no frame drawn yet
     sync_frame_index: usize,
+
+    present_mode_priority: Vec<PresentMode>
 }
 
 impl Renderer {
     pub fn new(
         app_name: &CString,
         window: &winit::window::Window,
-        use_vulkan_debug_layer: bool
+        use_vulkan_debug_layer: bool,
+        physical_device_type_priority: Vec<PhysicalDeviceType>,
+        present_mode_priority: Vec<PresentMode>
     ) -> VkResult<Renderer> {
         let instance = ManuallyDrop::new(VkInstance::new(app_name, use_vulkan_debug_layer)?);
-        let device = ManuallyDrop::new(VkDevice::new(&instance, window)?);
+        let device = ManuallyDrop::new(VkDevice::new(&instance, window, &physical_device_type_priority)?);
         let mut skia_context = ManuallyDrop::new(VkSkiaContext::new(&instance, &device));
-        let swapchain = ManuallyDrop::new(VkSwapchain::new(&instance, &device, window, None)?);
+        let swapchain = ManuallyDrop::new(VkSwapchain::new(&instance, &device, window, None, &present_mode_priority)?);
         let pipeline = ManuallyDrop::new(VkPipeline::new(&device, &swapchain, &mut skia_context)?);
         let sync_frame_index = 0;
 
@@ -75,7 +131,8 @@ impl Renderer {
             skia_context,
             swapchain,
             pipeline,
-            sync_frame_index
+            sync_frame_index,
+            present_mode_priority
         })
     }
 
@@ -101,7 +158,8 @@ impl Renderer {
                             &self.instance,
                             &self.device,
                             window,
-                            Some(self.swapchain.swapchain)
+                            Some(self.swapchain.swapchain),
+                            &self.present_mode_priority
                         )?
                     );
 

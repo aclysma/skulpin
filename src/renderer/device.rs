@@ -11,6 +11,7 @@ use std::ffi::CStr;
 
 //use ash::extensions::ext as ash_ext;
 use ash::extensions::khr;
+use crate::renderer::PhysicalDeviceType;
 
 /// Has the indexes for all the queue families we will need. It's possible a single family
 /// is used for both graphics and presentation, in which case the index will be the same
@@ -37,7 +38,11 @@ pub struct VkDevice {
 }
 
 impl VkDevice {
-    pub fn new(instance: &VkInstance, window: &winit::window::Window) -> VkResult<Self> {
+    pub fn new(
+        instance: &VkInstance,
+        window: &winit::window::Window,
+        physical_device_type_priority: &[PhysicalDeviceType]
+    ) -> VkResult<Self> {
         // Get the surface, needed to select the best queue family
         use raw_window_handle::HasRawWindowHandle;
         let surface = unsafe {
@@ -56,7 +61,7 @@ impl VkDevice {
         let (
             physical_device,
             queue_family_indices
-        ) = Self::choose_physical_device(&instance.instance, &surface_loader, &surface)?;
+        ) = Self::choose_physical_device(&instance.instance, &surface_loader, &surface, physical_device_type_priority)?;
 
         // Create a logical device
         let (
@@ -86,7 +91,8 @@ impl VkDevice {
     fn choose_physical_device(
         instance: &ash::Instance,
         surface_loader: &ash::extensions::khr::Surface,
-        surface: &ash::vk::SurfaceKHR
+        surface: &ash::vk::SurfaceKHR,
+        physical_device_type_priority: &[PhysicalDeviceType]
     ) -> VkResult<(ash::vk::PhysicalDevice, QueueFamilyIndices)> {
         let physical_devices = unsafe {
             instance
@@ -101,7 +107,15 @@ impl VkDevice {
         let mut best_physical_device_score = -1;
         let mut best_physical_device_queue_family_indices = None;
         for physical_device in physical_devices {
-            if let Some((score, queue_family_indices)) = Self::get_score_and_queue_families_for_physical_device(instance, &physical_device, surface_loader, surface)? {
+            let result = Self::get_score_and_queue_families_for_physical_device(
+                instance,
+                &physical_device,
+                surface_loader,
+                surface,
+                physical_device_type_priority
+            );
+
+            if let Some((score, queue_family_indices)) = result? {
                 if score > best_physical_device_score {
                     best_physical_device = Some(physical_device);
                     best_physical_device_score = score;
@@ -129,8 +143,11 @@ impl VkDevice {
         instance: &ash::Instance,
         device: &ash::vk::PhysicalDevice,
         surface_loader: &ash::extensions::khr::Surface,
-        surface: &ash::vk::SurfaceKHR
+        surface: &ash::vk::SurfaceKHR,
+        physical_device_type_priority: &[PhysicalDeviceType]
     ) -> VkResult<Option<(i32, QueueFamilyIndices)>> {
+        info!("Preferred device types: {:?}", physical_device_type_priority);
+
         let properties : ash::vk::PhysicalDeviceProperties = unsafe { instance.get_physical_device_properties(*device) };
         let device_name = unsafe {CStr::from_ptr(properties.device_name.as_ptr()).to_str().unwrap().to_string() };
 
@@ -140,21 +157,15 @@ impl VkDevice {
 
         let queue_family_indices = Self::find_queue_families(instance, device, surface_loader, surface);
         if let Some(queue_family_indices) = queue_family_indices {
-            // Query info about the GPU
-            //let features : ash::vk::PhysicalDeviceFeatures = unsafe { instance.get_physical_device_features(*device) };
+            let index = physical_device_type_priority.iter().map(|x| x.to_vk()).position(|x| x == properties.device_type);
+            let rank = if let Some(index) = index {
+                physical_device_type_priority.len() - index
+            } else {
+                physical_device_type_priority.len()
+            } as i32;
 
             let mut score = 0;
-
-            // What kind of GPU is it?
-            score += if properties.device_type == ash::vk::PhysicalDeviceType::DISCRETE_GPU {
-                1000
-            } else if properties.device_type == ash::vk::PhysicalDeviceType::VIRTUAL_GPU {
-                500
-            } else if properties.device_type == ash::vk::PhysicalDeviceType::INTEGRATED_GPU {
-                100
-            } else {
-                0
-            };
+            score += rank * 100;
 
             info!(
                 "Found suitable device '{}' API: {} DriverVersion: {} Score = {}", 

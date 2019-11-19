@@ -7,6 +7,8 @@ use super::util::PeriodicEvent;
 use std::ffi::CString;
 
 use crate::RendererBuilder;
+use crate::renderer::PresentMode;
+use crate::renderer::PhysicalDeviceType;
 use winit::dpi::LogicalSize;
 
 pub trait AppHandler {
@@ -27,28 +29,16 @@ pub trait AppHandler {
 }
 
 pub struct AppBuilder {
-    app_name: CString,
-    use_vulkan_debug_layer: bool,
-    logical_size: LogicalSize
+    logical_size: LogicalSize,
+    renderer_builder: RendererBuilder
 }
 
 impl AppBuilder {
     pub fn new() -> Self {
         AppBuilder {
-            app_name: CString::new("Skulpin").unwrap(),
-            use_vulkan_debug_layer: false,
-            logical_size: LogicalSize::new(900.0, 600.0)
+            logical_size: LogicalSize::new(900.0, 600.0),
+            renderer_builder: RendererBuilder::new()
         }
-    }
-
-    pub fn app_name(mut self, app_name: CString) -> Self {
-        self.app_name = app_name;
-        self
-    }
-
-    pub fn use_vulkan_debug_layer(mut self, use_vulkan_debug_layer: bool) -> Self {
-        self.use_vulkan_debug_layer = use_vulkan_debug_layer;
-        self
     }
 
     pub fn logical_size(mut self, logical_size: LogicalSize) -> Self {
@@ -56,12 +46,51 @@ impl AppBuilder {
         self
     }
 
+    pub fn app_name(mut self, app_name: CString) -> Self {
+        self.renderer_builder = self.renderer_builder.app_name(app_name);
+        self
+    }
+
+    pub fn use_vulkan_debug_layer(mut self, use_vulkan_debug_layer: bool) -> Self {
+        self.renderer_builder = self.renderer_builder.use_vulkan_debug_layer(use_vulkan_debug_layer);
+        self
+    }
+
+    pub fn present_mode_priority(mut self, present_mode_priority: Vec<PresentMode>) -> Self {
+        self.renderer_builder = self.renderer_builder.present_mode_priority(present_mode_priority);
+        self
+    }
+
+    pub fn physical_device_type_priority(mut self, physical_device_type_priority: Vec<PhysicalDeviceType>) -> Self {
+        self.renderer_builder = self.renderer_builder.physical_device_type_priority(physical_device_type_priority);
+        self
+    }
+
+    pub fn prefer_integrated_gpu(mut self) -> Self {
+        self.renderer_builder = self.renderer_builder.prefer_integrated_gpu();
+        self
+    }
+
+    pub fn prefer_discrete_gpu(mut self) -> Self {
+        self.renderer_builder = self.renderer_builder.prefer_discrete_gpu();
+        self
+    }
+
+    pub fn prefer_fifo_present_mode(mut self) -> Self {
+        self.renderer_builder = self.renderer_builder.prefer_fifo_present_mode();
+        self
+    }
+
+    pub fn prefer_mailbox_present_mode(mut self) -> Self{
+        self.renderer_builder = self.renderer_builder.prefer_mailbox_present_mode();
+        self
+    }
+
     pub fn run<T : 'static + AppHandler>(&self, app_handler: T) -> Result<(), Box<dyn std::error::Error>> {
         App::run(
             app_handler,
-            &self.app_name,
-            self.use_vulkan_debug_layer,
-            self.logical_size
+            self.logical_size,
+            &self.renderer_builder
         )
     }
 }
@@ -75,9 +104,8 @@ impl App {
     // of returning
     pub fn run<T : 'static + AppHandler>(
         mut app_handler: T,
-        app_name: &CString,
-        use_vulkan_debug_layer: bool,
-        logical_size: LogicalSize
+        logical_size: LogicalSize,
+        renderer_builder: &RendererBuilder
     )
         -> Result<(), Box<dyn std::error::Error>>
     {
@@ -94,10 +122,7 @@ impl App {
         let mut time_state = TimeState::default();
         let mut input_state = InputState::new(&window);
 
-        let mut renderer = RendererBuilder::new()
-            .use_vulkan_debug_layer(use_vulkan_debug_layer)
-            .app_name(app_name.clone())
-            .build(&window)?;
+        let mut renderer = renderer_builder.build(&window)?;
 
         // To print fps once per second
         let mut print_fps_event = PeriodicEvent::default();

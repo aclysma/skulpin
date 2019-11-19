@@ -26,6 +26,8 @@ pub use app::AppHandler;
 mod renderer;
 pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
+pub use renderer::PresentMode;
+pub use renderer::PhysicalDeviceType;
 
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;

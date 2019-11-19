@@ -8,6 +8,7 @@ use ash::version::DeviceV1_0;
 use super::VkInstance;
 use super::VkDevice;
 use super::QueueFamilyIndices;
+use crate::renderer::PresentMode;
 
 pub const MAX_FRAMES_IN_FLIGHT : usize = 2;
 
@@ -38,7 +39,8 @@ impl VkSwapchain {
         instance: &VkInstance,
         device: &VkDevice,
         window: &winit::window::Window,
-        old_swapchain: Option<vk::SwapchainKHR>
+        old_swapchain: Option<vk::SwapchainKHR>,
+        present_mode_priority: &[PresentMode]
     )
         -> VkResult<VkSwapchain>
     {
@@ -50,7 +52,8 @@ impl VkSwapchain {
             &device.surface,
             &device.queue_family_indices,
             window,
-            old_swapchain
+            old_swapchain,
+            present_mode_priority
         )?;
 
         let swapchain_images = unsafe {
@@ -108,7 +111,8 @@ impl VkSwapchain {
         surface: &ash::vk::SurfaceKHR,
         queue_family_indices: &QueueFamilyIndices,
         window: &winit::window::Window,
-        old_swapchain: Option<vk::SwapchainKHR>
+        old_swapchain: Option<vk::SwapchainKHR>,
+        present_mode_priority: &[PresentMode]
     )
         -> VkResult<(SwapchainInfo, khr::Swapchain, vk::SwapchainKHR)>
     {
@@ -120,12 +124,16 @@ impl VkSwapchain {
             )?;
 
         let surface_format = Self::choose_format(&available_formats);
-        let present_mode = Self::choose_present_mode(&available_present_modes);
-        let extents = Self::choose_extents(&surface_capabilities, window);
-
         info!("Surface format: {:?}", surface_format);
-        info!("Present mode: {:?}", present_mode);
+
+        let extents = Self::choose_extents(&surface_capabilities, window);
         info!("Extents: {:?}", extents);
+
+        let present_mode = Self::choose_present_mode(
+            &available_present_modes,
+            present_mode_priority
+        );
+        info!("Present mode: {:?}", present_mode);
 
         // "simply sticking to this minimum means that we may sometimes have to wait on the driver
         // to complete internal operations before we can acquire another image to render to.
@@ -227,18 +235,21 @@ impl VkSwapchain {
         }
     }
 
-    fn choose_present_mode(available_present_modes: &Vec<vk::PresentModeKHR>) -> vk::PresentModeKHR {
+    fn choose_present_mode(available_present_modes: &Vec<vk::PresentModeKHR>, present_mode_priority: &[PresentMode]) -> vk::PresentModeKHR {
+        info!("Available present modes: {:?}", available_present_modes);
+        info!("Preferred present modes: {:?}", present_mode_priority);
+
         let mut best_present_mode = None;
 
-        info!("Available present modes: {:?}", available_present_modes);
-        for available_present_mode in available_present_modes {
-            if *available_present_mode == ash::vk::PresentModeKHR::MAILBOX {
-                best_present_mode = Some(available_present_mode)
+        for present_mode in present_mode_priority.iter().map(|x| x.to_vk()) {
+            if available_present_modes.contains(&present_mode) {
+                best_present_mode = Some(present_mode);
+                break;
             }
         }
 
         match best_present_mode {
-            Some(present_mode) => *present_mode,
+            Some(present_mode) => present_mode,
             None => ash::vk::PresentModeKHR::FIFO // Per spec, FIFO always exists
         }
     }
