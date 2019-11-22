@@ -48,3 +48,7 @@ objc = "0.2"
 
 [dev-dependencies]
 env_logger = "0.6"
+
+nalgebra = "0.18"
+ncollide2d = "0.20"
+nphysics2d = "0.12"
