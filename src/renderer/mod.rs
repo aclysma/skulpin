@@ -21,6 +21,9 @@ pub use swapchain::VkSwapchain;
 pub use swapchain::SwapchainInfo;
 pub use swapchain::MAX_FRAMES_IN_FLIGHT;
 
+mod imgui_pipeline;
+pub use imgui_pipeline::VkImGuiPipeline;
+
 mod skia_renderpass;
 pub use skia_renderpass::VkSkiaRenderPass;
 
