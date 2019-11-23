@@ -157,11 +157,16 @@ impl VkDevice {
 
         let queue_family_indices = Self::find_queue_families(instance, device, surface_loader, surface);
         if let Some(queue_family_indices) = queue_family_indices {
+            // Determine the index of the device_type within physical_device_type_priority
             let index = physical_device_type_priority.iter().map(|x| x.to_vk()).position(|x| x == properties.device_type);
+
+            // Convert it to a score
             let rank = if let Some(index) = index {
+                // It's in the list, return a value between 1..n
                 physical_device_type_priority.len() - index
             } else {
-                physical_device_type_priority.len()
+                // Not in the list, return a zero
+                0
             } as i32;
 
             let mut score = 0;
