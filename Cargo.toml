@@ -40,6 +40,8 @@ raw-window-handle = "0.3"
 ash = "0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }
 
+imgui = { version = "0.2", optional = true }
+
 log="0.4"
 
 # From ash example code
