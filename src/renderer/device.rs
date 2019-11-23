@@ -204,16 +204,40 @@ impl VkDevice {
 
         let mut graphics_queue_family_index = None;
         let mut present_queue_family_index = None;
+
+        info!("Available queue families:");
+        for (queue_family_index, queue_family) in queue_families.iter().enumerate() {
+            info!("Queue Family {}", queue_family_index);
+            info!("{:#?}", queue_family);
+        }
+
         for (queue_family_index, queue_family) in queue_families.iter().enumerate() {
             let queue_family_index = queue_family_index as u32;
-            if queue_family.queue_flags & ash::vk::QueueFlags::GRAPHICS == ash::vk::QueueFlags::GRAPHICS {
+
+            let supports_graphics = queue_family.queue_flags & ash::vk::QueueFlags::GRAPHICS == ash::vk::QueueFlags::GRAPHICS;
+            let supports_present = unsafe {
+                surface_loader.get_physical_device_surface_support(*physical_device, queue_family_index, *surface)
+            };
+
+            // A queue family that supports both is ideal. If we find it, break out early.
+            if supports_graphics && supports_present {
+                graphics_queue_family_index = Some(queue_family_index);
+                present_queue_family_index = Some(queue_family_index);
+                break;
+            }
+
+            // Otherwise, remember the first graphics queue family we saw...
+            if supports_graphics && graphics_queue_family_index.is_none() {
                 graphics_queue_family_index = Some(queue_family_index);
             }
 
-            if unsafe {surface_loader.get_physical_device_surface_support(*physical_device, queue_family_index, *surface) } {
+            // and the first present queue family we saw
+            if supports_present && present_queue_family_index.is_none() {
                 present_queue_family_index = Some(queue_family_index);
             }
         }
+
+        info!("Graphics QF: {:?}  Present QF: {:?}", graphics_queue_family_index, present_queue_family_index);
 
         Some(QueueFamilyIndices {
             graphics_queue_family_index: graphics_queue_family_index?,

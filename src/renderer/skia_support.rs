@@ -29,14 +29,16 @@ impl VkSkiaContext {
             }
         };
 
+        info!("Setting up skia backend context with queue family index {}", device.queue_family_indices.graphics_queue_family_index);
+
         let backend_context = unsafe {
             skia_safe::gpu::vk::BackendContext::new(
                 instance.instance.handle().as_raw() as _,
                 device.physical_device.as_raw() as _,
                 device.logical_device.handle().as_raw() as _,
                 (
-                    device.queues.present_queue.as_raw() as _,
-                    device.queue_family_indices.present_queue_family_index as usize
+                    device.queues.graphics_queue.as_raw() as _,
+                    device.queue_family_indices.graphics_queue_family_index as usize
                 ),
                 &get_proc,
             )

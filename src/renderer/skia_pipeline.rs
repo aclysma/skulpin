@@ -518,6 +518,7 @@ impl VkPipeline {
     )
         -> VkResult<vk::CommandPool>
     {
+        info!("Creating command pool with queue family index {}", queue_family_indices.graphics_queue_family_index);
         let pool_create_info = vk::CommandPoolCreateInfo::builder()
             .queue_family_index(queue_family_indices.graphics_queue_family_index);
 
