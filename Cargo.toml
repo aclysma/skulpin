@@ -1,6 +1,6 @@
 [package]
 name = "skulpin"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."

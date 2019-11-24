@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2
+ * Initialize Vulkan to be the highest version that's available. This avoids triggering some validation code in Skia
+   (#13, #14, #21)
+ * Fixes for queue family handling (#5, #12, #14, #21)
+ * On MacOS, switch from the deprecated `metal-rs` crate to the replacement `metal` crate.
+ * Add support for choosing between integrated or discrete GPU (or other device types)
+ * Add support for choosing between FIFO, MAILBOX, or other presentation modes
+
 ## 0.2.1
  * Minimum supported Rust version is 1.36
  * Fix red/blue components being reversed on Windows
