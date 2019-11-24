@@ -34,13 +34,18 @@ svg = ["skia-safe/svg"]
 textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 
+[features]
+default = ["with_imgui"]
+with_imgui = ["imgui", "imgui-winit-support"]
+
 [dependencies]
 winit = "0.20.0-alpha6"
 raw-window-handle = "0.3"
 ash = "0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }
 
-imgui = { version = "0.2", optional = true }
+imgui = { version = "0.2.1", optional = true }
+imgui-winit-support = { version = "0.2", default-features = false, features = ["winit-20"], optional = true }
 
 log="0.4"
 
@@ -56,6 +61,7 @@ objc = "0.2"
 [dev-dependencies]
 env_logger = "0.6"
 
+# These are used for the physics demo only
 nalgebra = "0.18"
 ncollide2d = "0.20"
 nphysics2d = "0.12"

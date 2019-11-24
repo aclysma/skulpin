@@ -54,6 +54,7 @@ pub use renderer::PhysicalDeviceType;
 pub use renderer::CoordinateSystemHelper;
 pub use renderer::CoordinateSystem;
 pub use renderer::CreateRendererError;
+pub use renderer::ImguiManager;
 
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;

@@ -9,6 +9,7 @@ use skulpin::InputState;
 use skulpin::TimeState;
 use skulpin::VirtualKeyCode;
 use skulpin::LogicalSize;
+use skulpin::ImguiManager;
 
 use std::ffi::CString;
 
@@ -214,6 +215,7 @@ impl AppHandler for ExampleApp {
         _time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
         coordinate_system_helper: &CoordinateSystemHelper,
+        _imgui_manager: Option<&ImguiManager>
     ) {
         let x_half_extents = GROUND_HALF_EXTENTS_WIDTH * 1.5;
         let y_half_extents = x_half_extents

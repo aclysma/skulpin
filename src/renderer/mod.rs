@@ -21,6 +21,10 @@ pub use swapchain::VkSwapchain;
 pub use swapchain::SwapchainInfo;
 pub use swapchain::MAX_FRAMES_IN_FLIGHT;
 
+mod imgui_support;
+pub use imgui_support::init_imgui_manager;
+pub use imgui_support::ImguiManager;
+
 mod imgui_pipeline;
 pub use imgui_pipeline::VkImGuiPipeline;
 
@@ -32,6 +36,9 @@ pub use skia_support::VkSkiaContext;
 
 mod buffer;
 pub use buffer::VkBuffer;
+
+mod image;
+pub use self::image::VkImage;
 
 mod debug_reporter;
 pub use debug_reporter::VkDebugReporter;
