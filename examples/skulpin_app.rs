@@ -8,6 +8,7 @@ use skulpin::InputState;
 use skulpin::TimeState;
 use skulpin::VirtualKeyCode;
 use skulpin::LogicalSize;
+use skulpin::ImguiManager;
 use std::ffi::CString;
 
 fn main() {
@@ -65,6 +66,7 @@ impl AppHandler for ExampleApp {
         time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
         _coordinate_system_helper: &CoordinateSystemHelper,
+        _imgui_manager: Option<&ImguiManager>
     ) {
         // Generally would want to clear data every time we draw
         canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));

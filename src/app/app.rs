@@ -6,6 +6,10 @@ use super::time_state::TimeState;
 use super::util::PeriodicEvent;
 use std::ffi::CString;
 
+use crate::RendererBuilder;
+use crate::renderer::PresentMode;
+use crate::renderer::PhysicalDeviceType;
+use crate::renderer::ImguiManager;
 use winit::dpi::LogicalSize;
 use winit::dpi::Size;
 
@@ -91,6 +95,7 @@ pub trait AppHandler {
         time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
         coordinate_system_helper: &CoordinateSystemHelper,
+        imgui_manager: Option<&ImguiManager>
     );
 
     fn fatal_error(
@@ -291,7 +296,10 @@ impl App {
         let mut time_state = TimeState::new();
         let mut input_state = InputState::new(&window);
 
-        let renderer_result = renderer_builder.build(&window);
+        let mut imgui_manager = crate::renderer::init_imgui_manager(&window);
+        imgui_manager.begin_frame(&window);
+
+        let renderer_result = renderer_builder.build(&window, Some(&mut imgui_manager));
         let mut renderer = match renderer_result {
             Ok(renderer) => renderer,
             Err(e) => {
@@ -314,6 +322,8 @@ impl App {
         event_loop.run(move |event, window_target, control_flow| {
             input_state.handle_winit_event(&mut app_control, &event, window_target);
 
+            imgui_manager.handle_event(&window, &event);
+
             match event {
                 winit::event::Event::MainEventsCleared => {
                     time_state.update();
@@ -334,13 +344,14 @@ impl App {
                     window.request_redraw();
                 }
                 winit::event::Event::RedrawRequested(_window_id) => {
-                    if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
+                    if let Err(e) = renderer.draw(&window, Some(&mut imgui_manager), |canvas, coordinate_system_helper, imgui_ui| {
                         app_handler.draw(
                             &app_control,
                             &input_state,
                             &time_state,
                             canvas,
                             coordinate_system_helper,
+                            imgui_ui
                         );
                     }) {
                         warn!("Passing Renderer::draw() error to app {}", e);

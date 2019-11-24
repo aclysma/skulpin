@@ -38,7 +38,7 @@ fn main() {
             visible_range,
             scale_to_fit,
         ))
-        .build(&window);
+        .build(&window, None);
 
     // Check if there were error setting up vulkan
     if let Err(e) = renderer {
@@ -91,7 +91,7 @@ fn main() {
             // Redraw
             //
             winit::event::Event::RedrawRequested(_window_id) => {
-                if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
+                if let Err(e) = renderer.draw(&window, None, |canvas, coordinate_system_helper, _imgui| {
                     draw(canvas, coordinate_system_helper, frame_count);
                     frame_count += 1;
                 }) {

@@ -9,44 +9,22 @@ use ash::version::DeviceV1_0;
 
 use super::VkDevice;
 use super::VkSwapchain;
-use crate::offset_of;
+use crate::{offset_of, ImguiManager};
 use super::SwapchainInfo;
 use super::QueueFamilyIndices;
-use crate::renderer::VkBuffer;
-use crate::renderer::skia_support::{VkSkiaContext, VkSkiaSurface};
+use crate::renderer::{VkBuffer, VkImage};
+
+#[derive(Clone, Debug, Copy)]
+struct UniformBufferObject {
+    mvp: [[f32; 4]; 4]
+}
 
 #[derive(Clone, Debug, Copy)]
 struct Vertex {
     pos: [f32; 2],
     tex_coord: [f32; 2],
-    color: [f32; 4]
+    color: [u8; 4]
 }
-
-const VERTEX_LIST : [Vertex; 4] = [
-    Vertex {
-        pos: [-0.5, -0.5],
-        tex_coord: [0.0, 0.0],
-        color: [1.0, 0.0, 0.0, 0.4]
-    },
-    Vertex {
-        pos: [0.5, -0.5],
-        tex_coord: [1.0, 0.0],
-        color: [1.0, 1.0, 0.0, 0.4]
-
-    },
-    Vertex {
-        pos: [0.5, 0.5],
-        tex_coord: [1.0, 1.0],
-        color: [0.0, 1.0, 1.0, 0.4]
-    },
-    Vertex {
-        pos: [-0.5, 0.5],
-        tex_coord: [0.0, 1.0],
-        color: [0.0, 0.0, 1.0, 0.4]
-    }
-];
-
-const INDEX_LIST : [u16; 6] = [0, 1, 2, 2, 3, 0];
 
 struct FixedFunctionState<'a> {
     vertex_input_assembly_state_info: vk::PipelineInputAssemblyStateCreateInfoBuilder<'a>,
@@ -66,6 +44,7 @@ struct PipelineResources {
 
 pub struct VkImGuiPipeline {
     pub device : ash::Device, // This struct is not responsible for releasing this
+    pub swapchain_info: SwapchainInfo,
     pub descriptor_set_layout: vk::DescriptorSetLayout,
     pub pipeline_layout : vk::PipelineLayout,
     pub renderpass : vk::RenderPass,
@@ -73,15 +52,24 @@ pub struct VkImGuiPipeline {
     pub frame_buffers : Vec<vk::Framebuffer>,
     pub command_pool : vk::CommandPool,
     pub command_buffers : Vec<vk::CommandBuffer>,
-    pub vertex_buffer: ManuallyDrop<VkBuffer>,
-    pub index_buffer: ManuallyDrop<VkBuffer>,
+    pub vertex_buffers: Vec<Vec<ManuallyDrop<VkBuffer>>>,
+    pub index_buffers: Vec<Vec<ManuallyDrop<VkBuffer>>>,
+    pub staging_vertex_buffers: Vec<Vec<ManuallyDrop<VkBuffer>>>,
+    pub staging_index_buffers: Vec<Vec<ManuallyDrop<VkBuffer>>>,
+    pub uniform_buffers: Vec<ManuallyDrop<VkBuffer>>,
     pub descriptor_pool: vk::DescriptorPool,
     pub descriptor_sets: Vec<vk::DescriptorSet>,
+    pub image: ManuallyDrop<VkImage>,
+    pub image_view: vk::ImageView,
     pub image_sampler: vk::Sampler
 }
 
 impl VkImGuiPipeline {
-    pub fn new(device: &VkDevice, swapchain: &VkSwapchain, skia_context: &mut VkSkiaContext) -> VkResult<Self> {
+    pub fn new(
+        device: &VkDevice,
+        swapchain: &VkSwapchain,
+        imgui_manager: &mut ImguiManager
+    ) -> VkResult<Self> {
         let mut pipeline_resources = None;
 
         let descriptor_set_layout = Self::create_descriptor_set_layout(&device.logical_device)?;
@@ -125,37 +113,40 @@ impl VkImGuiPipeline {
             &command_pool
         )?;
 
-        let vertex_buffer = Self::create_vertex_buffer(
+        let mut vertex_buffers = Vec::with_capacity(swapchain.swapchain_info.image_count);
+        let mut index_buffers = Vec::with_capacity(swapchain.swapchain_info.image_count);
+        let mut staging_vertex_buffers = Vec::with_capacity(swapchain.swapchain_info.image_count);
+        let mut staging_index_buffers = Vec::with_capacity(swapchain.swapchain_info.image_count);
+        for _ in 0..swapchain.swapchain_info.image_count {
+            vertex_buffers.push(vec![]);
+            index_buffers.push(vec![]);
+            staging_vertex_buffers.push(vec![]);
+            staging_index_buffers.push(vec![]);
+        }
+
+        //TODO: Set up stenciling
+
+        let mut uniform_buffers = Vec::with_capacity(swapchain.swapchain_info.image_count);
+        for _ in 0..swapchain.swapchain_info.image_count {
+            uniform_buffers.push(Self::create_uniform_buffer(&device.logical_device, &device.memory_properties)?)
+        }
+
+        let image = Self::load_image(
             &device.logical_device,
             &device.queues.graphics_queue,
             &command_pool,
-            &device.memory_properties
+            &device.memory_properties,
+            imgui_manager
         )?;
 
-        let index_buffer = Self::create_index_buffer(
+        let image_view = Self::create_texture_image_view(
             &device.logical_device,
-            &device.queues.graphics_queue,
-            &command_pool,
-            &device.memory_properties
-        )?;
+            &image.image
+        );
 
-        info!("Create skia surfaces with extent: {:?}", swapchain.swapchain_info.extents);
-
-        // Force the skia surface size to be >0, otherwise the surface will fail to be created.
-        // I could fix this by not creating the canvas at all and having the upstream code
-        // check if the canvas is valid, but this is simpler.
-        let mut skia_surface_extents = swapchain.swapchain_info.extents;
-        skia_surface_extents.width = skia_surface_extents.width.max(1);
-        skia_surface_extents.height = skia_surface_extents.height.max(1);
-
-        //TODO: Figure out how to return error here
-        let skia_surfaces : Vec<_> = (0..swapchain.swapchain_info.image_count).map(|_| {
-            VkSkiaSurface::new(device, skia_context, &skia_surface_extents).unwrap()
-        }).collect();
-
-        let image_sampler = VkSkiaSurface::create_sampler(
+        let image_sampler = Self::create_texture_image_sampler(
             &device.logical_device
-        )?;
+        );
 
         let descriptor_pool = Self::create_descriptor_pool(
             &device.logical_device,
@@ -167,12 +158,15 @@ impl VkImGuiPipeline {
             &descriptor_pool,
             &descriptor_set_layout,
             swapchain.swapchain_info.image_count,
+            &uniform_buffers,
+            &image_view,
             &image_sampler,
-            &skia_surfaces
         )?;
 
         for i in 0..swapchain.swapchain_info.image_count {
             Self::record_command_buffer(
+                None,
+                &device.memory_properties,
                 &device.logical_device,
                 &swapchain.swapchain_info,
                 &renderpass,
@@ -180,15 +174,17 @@ impl VkImGuiPipeline {
                 &pipeline,
                 &pipeline_layout,
                 &command_buffers[i],
-                &vertex_buffer.buffer,
-                &index_buffer.buffer,
-                &descriptor_sets[i],
-                &skia_surfaces[i]
+                &mut vertex_buffers[i],
+                &mut index_buffers[i],
+                &mut staging_vertex_buffers[i],
+                &mut staging_index_buffers[i],
+                &descriptor_sets[i]
             )?;
         }
 
         Ok(VkImGuiPipeline {
             device: device.logical_device.clone(),
+            swapchain_info: swapchain.swapchain_info.clone(),
             descriptor_set_layout,
             pipeline_layout,
             renderpass,
@@ -196,10 +192,15 @@ impl VkImGuiPipeline {
             frame_buffers,
             command_pool,
             command_buffers,
-            vertex_buffer,
-            index_buffer,
+            vertex_buffers,
+            index_buffers,
+            staging_vertex_buffers,
+            staging_index_buffers,
+            uniform_buffers,
             descriptor_pool,
             descriptor_sets,
+            image,
+            image_view,
             image_sampler
         })
     }
@@ -210,8 +211,16 @@ impl VkImGuiPipeline {
         -> VkResult<vk::DescriptorSetLayout>
     {
         let descriptor_set_layout_bindings = [
+
             vk::DescriptorSetLayoutBinding::builder()
                 .binding(0)
+                .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
+                .descriptor_count(1)
+                .stage_flags(vk::ShaderStageFlags::VERTEX)
+                .build(),
+
+            vk::DescriptorSetLayoutBinding::builder()
+                .binding(1)
                 .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
                 .descriptor_count(1)
                 .stage_flags(vk::ShaderStageFlags::FRAGMENT)
@@ -259,7 +268,7 @@ impl VkImGuiPipeline {
             vk::VertexInputAttributeDescription {
                 binding: 0,
                 location: 2,
-                format: vk::Format::R32G32B32A32_SFLOAT,
+                format: vk::Format::R8G8B8A8_UNORM,
                 offset: offset_of!(Vertex, color) as u32,
             },
         ];
@@ -529,6 +538,7 @@ impl VkImGuiPipeline {
     {
         info!("Creating command pool with queue family index {}", queue_family_indices.graphics_queue_family_index);
         let pool_create_info = vk::CommandPoolCreateInfo::builder()
+            .flags(vk::CommandPoolCreateFlags::TRANSIENT | vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
             .queue_family_index(queue_family_indices.graphics_queue_family_index);
 
         unsafe {
@@ -554,38 +564,139 @@ impl VkImGuiPipeline {
         }
     }
 
-    fn create_vertex_buffer(
+    fn create_uniform_buffer(
         logical_device: &ash::Device,
-        queue: &vk::Queue,
-        command_pool: &vk::CommandPool,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties
     )
         -> VkResult<ManuallyDrop<VkBuffer>>
     {
-        VkBuffer::new_from_slice_device_local(
+        let buffer = VkBuffer::new(
             logical_device,
             device_memory_properties,
-            queue,
-            command_pool,
-            vk::BufferUsageFlags::VERTEX_BUFFER,
-            &VERTEX_LIST)
+            vk::BufferUsageFlags::UNIFORM_BUFFER,
+            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+            mem::size_of::<UniformBufferObject>() as u64);
+
+        Ok(ManuallyDrop::new(buffer?))
     }
 
-    fn create_index_buffer(
+    pub fn load_image(
         logical_device: &ash::Device,
         queue: &vk::Queue,
         command_pool: &vk::CommandPool,
-        device_memory_properties: &vk::PhysicalDeviceMemoryProperties
+        device_memory_properties: &vk::PhysicalDeviceMemoryProperties,
+        imgui_manager: &mut ImguiManager
     )
-        -> VkResult<ManuallyDrop<VkBuffer>>
+        -> VkResult<ManuallyDrop<VkImage>>
     {
-        VkBuffer::new_from_slice_device_local(
+        let font_atlas = imgui_manager.font_atlas_texture();
+
+        let extent = vk::Extent3D {
+            width: font_atlas.width,
+            height: font_atlas.height,
+            depth: 1
+        };
+
+        info!("Using imgui font atlas of size {:?}", extent);
+
+        let mut staging_buffer = VkBuffer::new(
             logical_device,
             device_memory_properties,
+            vk::BufferUsageFlags::TRANSFER_SRC,
+            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+            font_atlas.data.len() as u64)?;
+
+        staging_buffer.write_to_host_visible_buffer(&font_atlas.data)?;
+
+        let image = VkImage::new(
+            logical_device,
+            device_memory_properties,
+            extent,
+            vk::Format::R8G8B8A8_UNORM,
+            vk::ImageTiling::OPTIMAL,
+            vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::SAMPLED,
+            vk::MemoryPropertyFlags::DEVICE_LOCAL)?;
+
+        super::util::transition_image_layout(
+            logical_device,
             queue,
             command_pool,
-            vk::BufferUsageFlags::INDEX_BUFFER,
-            &INDEX_LIST)
+            &image.image,
+            vk::Format::R8G8B8A8_UNORM,
+            vk::ImageLayout::UNDEFINED,
+            vk::ImageLayout::TRANSFER_DST_OPTIMAL
+        )?;
+
+        super::util::copy_buffer_to_image(
+            logical_device,
+            queue,
+            command_pool,
+            &staging_buffer.buffer,
+            &image.image,
+            &image.extent
+        )?;
+
+        super::util::transition_image_layout(
+            logical_device,
+            queue,
+            command_pool,
+            &image.image,
+            vk::Format::R8G8B8A8_UNORM,
+            vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+            vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)?;
+
+        Ok(ManuallyDrop::new(image))
+    }
+
+    pub fn create_texture_image_view(
+        logical_device: &ash::Device,
+        image: &vk::Image
+    )
+        -> vk::ImageView
+    {
+        let subresource_range = vk::ImageSubresourceRange::builder()
+            .aspect_mask(vk::ImageAspectFlags::COLOR)
+            .base_mip_level(0)
+            .level_count(1)
+            .base_array_layer(0)
+            .layer_count(1);
+
+        let image_view_info = vk::ImageViewCreateInfo::builder()
+            .image(*image)
+            .view_type(vk::ImageViewType::TYPE_2D)
+            .format(vk::Format::R8G8B8A8_UNORM)
+            .subresource_range(*subresource_range);
+
+        unsafe {
+            logical_device.create_image_view(&image_view_info, None).unwrap()
+        }
+    }
+
+    pub fn create_texture_image_sampler(
+        logical_device: &ash::Device
+    )
+        -> vk::Sampler
+    {
+        let sampler_info = vk::SamplerCreateInfo::builder()
+            .mag_filter(vk::Filter::LINEAR)
+            .min_filter(vk::Filter::LINEAR)
+            .address_mode_u(vk::SamplerAddressMode::REPEAT)
+            .address_mode_v(vk::SamplerAddressMode::REPEAT)
+            .address_mode_w(vk::SamplerAddressMode::REPEAT)
+            .anisotropy_enable(false)
+            .max_anisotropy(1.0)
+            .border_color(vk::BorderColor::INT_OPAQUE_BLACK)
+            .unnormalized_coordinates(false)
+            .compare_enable(false)
+            .compare_op(vk::CompareOp::ALWAYS)
+            .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
+            .mip_lod_bias(0.0)
+            .min_lod(0.0)
+            .max_lod(0.0);
+
+        unsafe {
+            logical_device.create_sampler(&sampler_info, None).unwrap()
+        }
     }
 
     fn create_descriptor_pool(
@@ -596,7 +707,15 @@ impl VkImGuiPipeline {
     {
         let pool_sizes = [
             vk::DescriptorPoolSize::builder()
+                .ty(vk::DescriptorType::UNIFORM_BUFFER)
+                .descriptor_count(swapchain_image_count)
+                .build(),
+            vk::DescriptorPoolSize::builder()
                 .ty(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+                .descriptor_count(swapchain_image_count)
+                .build(),
+            vk::DescriptorPoolSize::builder()
+                .ty(vk::DescriptorType::SAMPLED_IMAGE)
                 .descriptor_count(swapchain_image_count)
                 .build()
         ];
@@ -615,8 +734,9 @@ impl VkImGuiPipeline {
         descriptor_pool: &vk::DescriptorPool,
         descriptor_set_layout: &vk::DescriptorSetLayout,
         swapchain_image_count: usize,
-        image_sampler: &vk::Sampler,
-        skia_surface: &Vec<VkSkiaSurface>
+        uniform_buffers: &Vec<ManuallyDrop<VkBuffer>>,
+        image_view: &vk::ImageView,
+        image_sampler: &vk::Sampler
     )
         -> VkResult<Vec<vk::DescriptorSet>>
     {
@@ -635,15 +755,30 @@ impl VkImGuiPipeline {
             let descriptor_image_infos = [
                 vk::DescriptorImageInfo::builder()
                     .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
-                    .image_view(skia_surface[i].image_view)
+                    .image_view(*image_view)
                     .sampler(*image_sampler)
                     .build(),
             ];
 
+            let descriptor_buffer_infos = [
+                vk::DescriptorBufferInfo::builder()
+                    .buffer(uniform_buffers[i as usize].buffer)
+                    .offset(0)
+                    .range(mem::size_of::<UniformBufferObject>() as u64)
+                    .build()
+            ];
+
             let descriptor_writes = [
                 vk::WriteDescriptorSet::builder()
-                    .dst_set(descriptor_sets[i])
+                    .dst_set(descriptor_sets[i as usize])
                     .dst_binding(0)
+                    .dst_array_element(0)
+                    .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
+                    .buffer_info(&descriptor_buffer_infos)
+                    .build(),
+                vk::WriteDescriptorSet::builder()
+                    .dst_set(descriptor_sets[i])
+                    .dst_binding(1)
                     .dst_array_element(0)
                     .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
                     .image_info(&descriptor_image_infos)
@@ -659,6 +794,8 @@ impl VkImGuiPipeline {
     }
 
     fn record_command_buffer(
+        imgui_draw_data: Option<&imgui::DrawData>,
+        device_memory_properties: &vk::PhysicalDeviceMemoryProperties,
         logical_device: &ash::Device,
         swapchain_info: &SwapchainInfo,
         renderpass: &vk::RenderPass,
@@ -666,10 +803,11 @@ impl VkImGuiPipeline {
         pipeline: &vk::Pipeline,
         pipeline_layout: &vk::PipelineLayout,
         command_buffer: &vk::CommandBuffer,
-        vertex_buffer: &vk::Buffer,
-        index_buffer: &vk::Buffer,
+        vertex_buffers: &mut Vec<ManuallyDrop<VkBuffer>>,
+        index_buffers: &mut Vec<ManuallyDrop<VkBuffer>>,
+        staging_vertex_buffers: &mut Vec<ManuallyDrop<VkBuffer>>,
+        staging_index_buffers: &mut Vec<ManuallyDrop<VkBuffer>>,
         descriptor_set: &vk::DescriptorSet,
-        skia_surface: &VkSkiaSurface
     )
         -> VkResult<()>
     {
@@ -682,6 +820,75 @@ impl VkImGuiPipeline {
                 },
             },
         ];
+
+        fn drop_old_buffers(buffers: &mut Vec<ManuallyDrop<VkBuffer>>) {
+            for b in buffers.iter_mut() {
+                unsafe {
+                    ManuallyDrop::drop(b);
+                }
+            }
+
+            buffers.clear();
+        }
+
+        drop_old_buffers(vertex_buffers);
+        drop_old_buffers(index_buffers);
+        drop_old_buffers(staging_vertex_buffers);
+        drop_old_buffers(staging_index_buffers);
+
+        let mut draw_list_count = 0;
+        if let Some(draw_data) = imgui_draw_data {
+            for draw_list in draw_data.draw_lists() {
+                let (vertex_buffer, staging_vertex_buffer) = {
+                    let vertex_buffer_size = draw_list.vtx_buffer().len() as u64 * std::mem::size_of::<imgui::DrawVert>() as u64;
+                    let mut staging_vertex_buffer = VkBuffer::new(
+                        logical_device,
+                        &device_memory_properties,
+                        vk::BufferUsageFlags::TRANSFER_SRC,
+                        vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+                        vertex_buffer_size)?;
+
+                    staging_vertex_buffer.write_to_host_visible_buffer(draw_list.vtx_buffer())?;
+
+                    let vertex_buffer = super::VkBuffer::new(
+                        &logical_device,
+                        &device_memory_properties,
+                        vk::BufferUsageFlags::TRANSFER_DST | vk::BufferUsageFlags::VERTEX_BUFFER,
+                        vk::MemoryPropertyFlags::DEVICE_LOCAL,
+                        vertex_buffer_size)?;
+
+                    (vertex_buffer, staging_vertex_buffer)
+                };
+
+                //TODO: Duplicated code here
+                let (index_buffer, staging_index_buffer) = {
+                    let index_buffer_size = draw_list.idx_buffer().len() as u64 * std::mem::size_of::<imgui::DrawIdx>() as u64;
+                    let mut staging_index_buffer = VkBuffer::new(
+                        logical_device,
+                        &device_memory_properties,
+                        vk::BufferUsageFlags::TRANSFER_SRC,
+                        vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+                        index_buffer_size)?;
+
+                    staging_index_buffer.write_to_host_visible_buffer(draw_list.idx_buffer())?;
+
+                    let index_buffer = super::VkBuffer::new(
+                        &logical_device,
+                        &device_memory_properties,
+                        vk::BufferUsageFlags::TRANSFER_DST | vk::BufferUsageFlags::INDEX_BUFFER,
+                        vk::MemoryPropertyFlags::DEVICE_LOCAL,
+                        index_buffer_size)?;
+
+                    (index_buffer, staging_index_buffer)
+                };
+
+                vertex_buffers.push(ManuallyDrop::new(vertex_buffer));
+                staging_vertex_buffers.push(ManuallyDrop::new(staging_vertex_buffer));
+                index_buffers.push(ManuallyDrop::new(index_buffer));
+                staging_index_buffers.push(ManuallyDrop::new(staging_index_buffer));
+                draw_list_count += 1;
+            }
+        }
 
         let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
             .render_pass(*renderpass)
@@ -697,15 +904,38 @@ impl VkImGuiPipeline {
             logical_device
                 .begin_command_buffer(*command_buffer, &command_buffer_begin_info)?;
 
-            let image = VkSkiaSurface::get_image_from_skia_texture(&skia_surface.texture);
+            for i in 0..draw_list_count {
+                {
+                    let buffer_copy_info = [
+                        vk::BufferCopy::builder()
+                            .size(staging_vertex_buffers[i].size)
+                            .build()
+                    ];
 
-            Self::add_image_barrier(
-                logical_device,
-                command_buffer,
-                &image,
-                vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL,
-                vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL
-            );
+                    logical_device.cmd_copy_buffer(
+                        *command_buffer,
+                        staging_vertex_buffers[i].buffer,
+                        vertex_buffers[i].buffer,
+                        &buffer_copy_info
+                    );
+                }
+
+                //TODO: Duplicated code here
+                {
+                    let buffer_copy_info = [
+                        vk::BufferCopy::builder()
+                            .size(staging_index_buffers[i].size)
+                            .build()
+                    ];
+
+                    logical_device.cmd_copy_buffer(
+                        *command_buffer,
+                        staging_index_buffers[i].buffer,
+                        index_buffers[i].buffer,
+                        &buffer_copy_info
+                    );
+                }
+            }
 
             logical_device.cmd_begin_render_pass(
                 *command_buffer,
@@ -719,20 +949,6 @@ impl VkImGuiPipeline {
                 *pipeline,
             );
 
-            logical_device.cmd_bind_vertex_buffers(
-                *command_buffer,
-                0, // first binding
-                &[*vertex_buffer],
-                &[0], // offsets
-            );
-
-            logical_device.cmd_bind_index_buffer(
-                *command_buffer,
-                *index_buffer,
-                0, // offset
-                vk::IndexType::UINT16
-            );
-
             logical_device.cmd_bind_descriptor_sets(
                 *command_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
@@ -742,52 +958,157 @@ impl VkImGuiPipeline {
                 &[]
             );
 
-            logical_device.cmd_draw_indexed(*command_buffer, INDEX_LIST.len() as u32, 1, 0, 0, 0);
-            logical_device.cmd_end_render_pass(*command_buffer);
+            let mut draw_list_index = 0;
+            if let Some(draw_data) = imgui_draw_data {
+                for draw_list in draw_data.draw_lists() {
+                    logical_device.cmd_bind_vertex_buffers(
+                        *command_buffer,
+                        0, // first binding
+                        &[vertex_buffers[draw_list_index].buffer],
+                        &[0], // offsets
+                    );
 
-            Self::add_image_barrier(
-                logical_device,
-                command_buffer,
-                &image,
-                vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
-                vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL
-            );
+                    logical_device.cmd_bind_index_buffer(
+                        *command_buffer,
+                        index_buffers[draw_list_index].buffer,
+                        0, // offset
+                        vk::IndexType::UINT16
+                    );
+
+                    let mut element_begin_index: u32 = 0;
+                    for cmd in draw_list.commands() {
+                        match cmd {
+                            imgui::DrawCmd::Elements {
+                                count,
+                                cmd_params: imgui::DrawCmdParams {
+                                    //clip_rect, //TODO: Set up clipping
+                                    //texture_id,
+                                    ..
+                                }
+                            } => {
+                                let element_end_index = element_begin_index + count as u32;
+
+//                                encoder.set_scissors(0, &[
+//                                    gfx_hal::pso::Rect {
+//                                        x: ((clip_rect[0] - draw_data.display_pos[0]) * draw_data.framebuffer_scale[0]) as i16,
+//                                        y: ((clip_rect[1] - draw_data.display_pos[1]) * draw_data.framebuffer_scale[1]) as i16,
+//                                        w: ((clip_rect[2] - clip_rect[0] - draw_data.display_pos[0]) * draw_data.framebuffer_scale[0]) as i16,
+//                                        h: ((clip_rect[3] - clip_rect[1] - draw_data.display_pos[1]) * draw_data.framebuffer_scale[1]) as i16,
+//                                    }
+//                                ]);
+//
+//                                encoder.draw_indexed(
+//                                    element_begin_index..element_end_index,
+//                                    0,
+//                                    0..1,
+//                                );
+
+                                logical_device.cmd_draw_indexed(
+                                    *command_buffer,
+                                    element_end_index - element_begin_index,
+                                    1,
+                                    element_begin_index,
+                                    0,
+                                    0
+                                );
+
+                                element_begin_index = element_end_index;
+                            }
+                            _ => panic!("unexpected draw command"),
+                        }
+                    }
+
+                    draw_list_index += 1;
+                }
+
+            }
+
+            logical_device.cmd_end_render_pass(*command_buffer);
 
             logical_device.end_command_buffer(*command_buffer)
         }
     }
 
-    fn add_image_barrier(
-        logical_device: &ash::Device,
-        command_buffer: &vk::CommandBuffer,
-        image: &vk::Image,
-        old_layout: vk::ImageLayout,
-        new_layout: vk::ImageLayout
-    ) {
-        let image_memory_barrier = ash::vk::ImageMemoryBarrier::builder()
-            .old_layout(old_layout)
-            .new_layout(new_layout)
-            .src_queue_family_index(ash::vk::QUEUE_FAMILY_IGNORED)
-            .dst_queue_family_index(ash::vk::QUEUE_FAMILY_IGNORED)
-            .image(*image)
-            .subresource_range(ash::vk::ImageSubresourceRange::builder()
-                .aspect_mask(ash::vk::ImageAspectFlags::COLOR)
-                .level_count(1/*VK_REMAINING_MIP_LEVELS*/)
-                .layer_count(1/*VK_REMAINING_ARRAY_LAYERS*/)
-                .build())
-            .build();
+    // This is almost copy-pasted from glam. I wanted to avoid pulling in the entire library for a
+    // single function
+    pub fn orthographic_rh_gl(
+        left: f32,
+        right: f32,
+        bottom: f32,
+        top: f32,
+        near: f32,
+        far: f32,
+    ) -> [[f32; 4]; 4] {
+        let a = 2.0 / (right - left);
+        let b = 2.0 / (top - bottom);
+        let c = -2.0 / (far - near);
+        let tx = -(right + left) / (right - left);
+        let ty = -(top + bottom) / (top - bottom);
+        let tz = -(far + near) / (far - near);
 
-        unsafe {
-            logical_device.cmd_pipeline_barrier(
-                *command_buffer,
-                vk::PipelineStageFlags::FRAGMENT_SHADER,
-                vk::PipelineStageFlags::FRAGMENT_SHADER,
-                vk::DependencyFlags::BY_REGION,
-                &[],//memory_barriers,
-                &[],//buffer_memory_barriers,
-                &[image_memory_barrier],//image_memory_barriers
-            );
-        }
+        [
+            [a, 0.0, 0.0, 0.0],
+            [0.0, b, 0.0, 0.0],
+            [0.0, 0.0, c, 0.0],
+            [tx, ty, tz, 1.0]
+        ]
+    }
+
+    //TODO: This is doing a GPU idle wait, would be better to integrate it into the command
+    // buffer
+    pub fn update_uniform_buffer(
+        &mut self,
+        swapchain_image_index: usize,
+        extents: vk::Extent2D,
+        hidpi_factor: f64
+    ) -> VkResult<()> {
+        let proj = Self::orthographic_rh_gl(
+            0.0,
+            (extents.width as f64 / hidpi_factor) as f32,
+            0.0,
+            (extents.height as f64 / hidpi_factor) as f32,
+            -100.0,
+            100.0,
+        );
+
+        let ubo = UniformBufferObject {
+            mvp: proj
+        };
+
+        self.uniform_buffers[swapchain_image_index].write_to_host_visible_buffer(&[ubo])
+    }
+
+    pub fn update(
+        &mut self,
+        device_memory_properties: &vk::PhysicalDeviceMemoryProperties,
+        imgui_draw_data: Option<&imgui::DrawData>,
+        present_index: usize,
+        hidpi_factor: f64
+    ) -> VkResult<()> {
+
+        //TODO: Integrate this into the command buffer we create below
+        self.update_uniform_buffer(
+            present_index,
+            self.swapchain_info.extents,
+            hidpi_factor
+        )?;
+
+        Self::record_command_buffer(
+            imgui_draw_data,
+            device_memory_properties,
+            &self.device,
+            &self.swapchain_info,
+            &self.renderpass,
+            &self.frame_buffers[present_index],
+            &self.pipeline,
+            &self.pipeline_layout,
+            &self.command_buffers[present_index],
+            &mut self.vertex_buffers[present_index],
+            &mut self.index_buffers[present_index],
+            &mut self.staging_vertex_buffers[present_index],
+            &mut self.staging_index_buffers[present_index],
+            &self.descriptor_sets[present_index],
+        )
     }
 }
 
@@ -795,11 +1116,29 @@ impl Drop for VkImGuiPipeline {
     fn drop(&mut self) {
         debug!("destroying VkImGuiPipeline");
 
+        fn drop_all_buffer_lists(buffer_list: &mut Vec<Vec<ManuallyDrop<VkBuffer>>>) {
+            for buffers in buffer_list {
+                for mut b in &mut *buffers {
+                    unsafe {
+                        ManuallyDrop::drop(&mut b);
+                    }
+                }
+            }
+        }
+
         unsafe {
             self.device.destroy_sampler(self.image_sampler, None);
+            self.device.destroy_image_view(self.image_view, None);
+            ManuallyDrop::drop(&mut self.image);
 
-            ManuallyDrop::drop(&mut self.vertex_buffer);
-            ManuallyDrop::drop(&mut self.index_buffer);
+            for uniform_buffer in &mut self.uniform_buffers {
+                ManuallyDrop::drop(uniform_buffer);
+            }
+
+            drop_all_buffer_lists(&mut self.vertex_buffers);
+            drop_all_buffer_lists(&mut self.index_buffers);
+            drop_all_buffer_lists(&mut self.staging_vertex_buffers);
+            drop_all_buffer_lists(&mut self.staging_index_buffers);
 
             self.device.destroy_command_pool(self.command_pool, None);
 

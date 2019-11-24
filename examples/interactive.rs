@@ -8,6 +8,7 @@ use skulpin::TimeState;
 use skulpin::MouseButton;
 use skulpin::VirtualKeyCode;
 use skulpin::LogicalSize;
+use skulpin::ImguiManager;
 
 use std::ffi::CString;
 use std::collections::VecDeque;
@@ -114,6 +115,7 @@ impl AppHandler for ExampleApp {
         time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
         _coordinate_system_helper: &CoordinateSystemHelper,
+        _imgui_manager: Option<&ImguiManager>
     ) {
         let now = time_state.current_instant();
 

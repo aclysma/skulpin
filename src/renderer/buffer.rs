@@ -148,13 +148,13 @@ impl VkBuffer {
 
 impl Drop for VkBuffer {
     fn drop(&mut self) {
-        debug!("destroying VkBuffer");
+        trace!("destroying VkBuffer");
 
         unsafe {
             self.device.destroy_buffer(self.buffer, None);
             self.device.free_memory(self.buffer_memory, None);
         }
 
-        debug!("destroyed VkBuffer");
+        trace!("destroyed VkBuffer");
     }
 }

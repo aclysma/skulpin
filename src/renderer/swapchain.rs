@@ -11,6 +11,7 @@ use crate::PresentMode;
 
 pub const MAX_FRAMES_IN_FLIGHT: usize = 2;
 
+#[derive(Clone)]
 pub struct SwapchainInfo {
     pub surface_format: vk::SurfaceFormatKHR,
     pub present_mode: vk::PresentModeKHR,
