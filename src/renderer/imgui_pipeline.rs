@@ -124,8 +124,6 @@ impl VkImGuiPipeline {
             staging_index_buffers.push(vec![]);
         }
 
-        //TODO: Set up stenciling
-
         let mut uniform_buffers = Vec::with_capacity(swapchain.swapchain_info.image_count);
         for _ in 0..swapchain.swapchain_info.image_count {
             uniform_buffers.push(Self::create_uniform_buffer(&device.logical_device, &device.memory_properties)?)
@@ -325,7 +323,7 @@ impl VkImGuiPipeline {
         let color_blend_state_info = vk::PipelineColorBlendStateCreateInfo::builder()
             .attachments(&color_blend_attachment_states);
 
-        let dynamic_state = vec![/*vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR, vk::DynamicState::LINE_WIDTH*/];
+        let dynamic_state = vec![vk::DynamicState::SCISSOR];
         let dynamic_state_info = vk::PipelineDynamicStateCreateInfo::builder()
             .dynamic_states(&dynamic_state);
 
@@ -981,27 +979,31 @@ impl VkImGuiPipeline {
                             imgui::DrawCmd::Elements {
                                 count,
                                 cmd_params: imgui::DrawCmdParams {
-                                    //clip_rect, //TODO: Set up clipping
+                                    clip_rect,
                                     //texture_id,
                                     ..
                                 }
                             } => {
                                 let element_end_index = element_begin_index + count as u32;
 
-//                                encoder.set_scissors(0, &[
-//                                    gfx_hal::pso::Rect {
-//                                        x: ((clip_rect[0] - draw_data.display_pos[0]) * draw_data.framebuffer_scale[0]) as i16,
-//                                        y: ((clip_rect[1] - draw_data.display_pos[1]) * draw_data.framebuffer_scale[1]) as i16,
-//                                        w: ((clip_rect[2] - clip_rect[0] - draw_data.display_pos[0]) * draw_data.framebuffer_scale[0]) as i16,
-//                                        h: ((clip_rect[3] - clip_rect[1] - draw_data.display_pos[1]) * draw_data.framebuffer_scale[1]) as i16,
-//                                    }
-//                                ]);
-//
-//                                encoder.draw_indexed(
-//                                    element_begin_index..element_end_index,
-//                                    0,
-//                                    0..1,
-//                                );
+                                let scissors = vk::Rect2D {
+                                    offset: vk::Offset2D {
+                                        x: ((clip_rect[0] - draw_data.display_pos[0]) * draw_data.framebuffer_scale[0]) as i32,
+                                        y: ((clip_rect[1] - draw_data.display_pos[1]) * draw_data.framebuffer_scale[1]) as i32
+                                    },
+                                    extent: vk::Extent2D {
+                                        width: ((clip_rect[2] - clip_rect[0] - draw_data.display_pos[0]) * draw_data.framebuffer_scale[0]) as u32,
+                                        height: ((clip_rect[3] - clip_rect[1] - draw_data.display_pos[1]) * draw_data.framebuffer_scale[1]) as u32
+                                    }
+                                };
+
+                                logical_device.cmd_set_scissor(
+                                    *command_buffer,
+                                    0,
+                                    &[
+                                        scissors
+                                    ]
+                                );
 
                                 logical_device.cmd_draw_indexed(
                                     *command_buffer,
