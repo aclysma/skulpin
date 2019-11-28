@@ -7,8 +7,6 @@ use ash::extensions::ext::DebugReport;
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
 
-//TODO: Move this to device?
-
 //
 // Callback for vulkan validation layer logging
 //

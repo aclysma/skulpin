@@ -20,7 +20,7 @@ pub struct SwapchainInfo {
 }
 
 pub struct VkSwapchain {
-    pub device: ash::Device, // This device is owned by VkDevice, not VkSwapchain. TODO: Consider using a ref
+    pub device: ash::Device, // VkDevice is responsible for cleaning this up
 
     pub swapchain_info: SwapchainInfo,
     pub swapchain_loader: khr::Swapchain,
@@ -63,32 +63,33 @@ impl VkSwapchain {
         let swapchain_image_views = Self::create_image_views(
             &device.logical_device,
             &swapchain_info,
-            &swapchain_images);
+            &swapchain_images)?;
 
-        let image_available_semaphores : Vec<_> = (0..MAX_FRAMES_IN_FLIGHT).map(|_| {
+        let mut image_available_semaphores = Vec::with_capacity(MAX_FRAMES_IN_FLIGHT);
+        for _ in 0..MAX_FRAMES_IN_FLIGHT {
             let semaphore_create_info = vk::SemaphoreCreateInfo::builder();
-            unsafe {
-                //TODO: Return this
-                device.logical_device.create_semaphore(&semaphore_create_info, None).unwrap()
-            }
-        }).collect();
+            image_available_semaphores.push(unsafe {
+                device.logical_device.create_semaphore(&semaphore_create_info, None)?
+            });
+        }
 
-        let render_finished_semaphores : Vec<_> = (0..MAX_FRAMES_IN_FLIGHT).map(|_| {
+        let mut render_finished_semaphores = Vec::with_capacity(MAX_FRAMES_IN_FLIGHT);
+        for _ in 0..MAX_FRAMES_IN_FLIGHT {
             let semaphore_create_info = vk::SemaphoreCreateInfo::builder();
-            unsafe {
-                //TODO: Return this
-                device.logical_device.create_semaphore(&semaphore_create_info, None).unwrap()
-            }
-        }).collect();
+            render_finished_semaphores.push(unsafe {
+                device.logical_device.create_semaphore(&semaphore_create_info, None)?
+            });
+        }
 
-        let in_flight_fences : Vec<_> = (0..MAX_FRAMES_IN_FLIGHT).map(|_| {
+        let mut in_flight_fences = Vec::with_capacity(MAX_FRAMES_IN_FLIGHT);
+        for _ in 0..MAX_FRAMES_IN_FLIGHT {
             let fence_create_info = vk::FenceCreateInfo::builder()
                 .flags(vk::FenceCreateFlags::SIGNALED);
-            unsafe {
-                //TODO: Return this
-                device.logical_device.create_fence(&fence_create_info, None).unwrap()
-            }
-        }).collect();
+
+            in_flight_fences.push(unsafe {
+                device.logical_device.create_fence(&fence_create_info, None)?
+            });
+        }
 
         Ok(VkSwapchain {
             device: device.logical_device.clone(),
@@ -280,35 +281,35 @@ impl VkSwapchain {
         swapchain_info: &SwapchainInfo,
         swapchain_images: &Vec<vk::Image>
     )
-        -> Vec<vk::ImageView>
+        -> VkResult<Vec<vk::ImageView>>
     {
-        swapchain_images
-            .iter()
-            .map(|&image| {
-                let create_view_info = vk::ImageViewCreateInfo::builder()
-                    .image(image)
-                    .view_type(vk::ImageViewType::TYPE_2D)
-                    .format(swapchain_info.surface_format.format)
-                    .components(vk::ComponentMapping {
-                        r: vk::ComponentSwizzle::IDENTITY,
-                        g: vk::ComponentSwizzle::IDENTITY,
-                        b: vk::ComponentSwizzle::IDENTITY,
-                        a: vk::ComponentSwizzle::IDENTITY,
-                    })
-                    .subresource_range(vk::ImageSubresourceRange {
-                        aspect_mask: vk::ImageAspectFlags::COLOR,
-                        base_mip_level: 0,
-                        level_count: 1,
-                        base_array_layer: 0,
-                        layer_count: 1,
-                    });
+        let mut image_views = Vec::with_capacity(swapchain_images.len());
 
-                unsafe {
-                    //TODO: Return this
-                    logical_device.create_image_view(&create_view_info, None).unwrap()
-                }
+        for swapchain_image in swapchain_images {
+            let create_view_info = vk::ImageViewCreateInfo::builder()
+            .image(*swapchain_image)
+            .view_type(vk::ImageViewType::TYPE_2D)
+            .format(swapchain_info.surface_format.format)
+            .components(vk::ComponentMapping {
+                r: vk::ComponentSwizzle::IDENTITY,
+                g: vk::ComponentSwizzle::IDENTITY,
+                b: vk::ComponentSwizzle::IDENTITY,
+                a: vk::ComponentSwizzle::IDENTITY,
             })
-            .collect()
+            .subresource_range(vk::ImageSubresourceRange {
+                aspect_mask: vk::ImageAspectFlags::COLOR,
+                base_mip_level: 0,
+                level_count: 1,
+                base_array_layer: 0,
+                layer_count: 1,
+            });
+
+            image_views.push(unsafe {
+                logical_device.create_image_view(&create_view_info, None)?
+            });
+        }
+
+        Ok(image_views)
     }
 }
 

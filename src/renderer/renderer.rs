@@ -8,6 +8,7 @@ use std::mem::ManuallyDrop;
 use ash::vk;
 
 use super::VkInstance;
+use super::CreateInstanceError;
 use super::VkDevice;
 use super::VkSkiaContext;
 use super::VkSwapchain;
@@ -16,10 +17,9 @@ use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
 
-
 pub struct RendererBuilder {
     app_name: CString,
-    use_vulkan_debug_layer: bool,
+    validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
     present_mode_priority: Vec<PresentMode>,
     physical_device_type_priority: Vec<PhysicalDeviceType>,
 }
@@ -28,7 +28,7 @@ impl RendererBuilder {
     pub fn new() -> Self {
         RendererBuilder {
             app_name: CString::new("Skulpin").unwrap(),
-            use_vulkan_debug_layer: false,
+            validation_layer_debug_report_flags: vk::DebugReportFlagsEXT::all(),
             present_mode_priority: vec![PresentMode::Fifo],
             physical_device_type_priority: vec![
                 PhysicalDeviceType::DiscreteGpu,
@@ -42,8 +42,16 @@ impl RendererBuilder {
         self
     }
 
-    pub fn use_vulkan_debug_layer(mut self, use_vulkan_debug_layer: bool) -> RendererBuilder {
-        self.use_vulkan_debug_layer = use_vulkan_debug_layer;
+    pub fn use_vulkan_debug_layer(self, use_vulkan_debug_layer: bool) -> RendererBuilder {
+        self.validation_layer_debug_report_flags(if use_vulkan_debug_layer {
+            vk::DebugReportFlagsEXT::empty()
+        } else {
+            vk::DebugReportFlagsEXT::all()
+        })
+    }
+
+    pub fn validation_layer_debug_report_flags(mut self, validation_layer_debug_report_flags: vk::DebugReportFlagsEXT) -> RendererBuilder {
+        self.validation_layer_debug_report_flags = validation_layer_debug_report_flags;
         self
     }
 
@@ -84,11 +92,11 @@ impl RendererBuilder {
         ])
     }
 
-    pub fn build(&self, window: &winit::window::Window) -> VkResult<Renderer> {
+    pub fn build(&self, window: &winit::window::Window) -> Result<Renderer, CreateRendererError> {
         Renderer::new(
             &self.app_name,
             window,
-            self.use_vulkan_debug_layer,
+            self.validation_layer_debug_report_flags,
             self.physical_device_type_priority.clone(),
             self.present_mode_priority.clone()
         )
@@ -110,15 +118,51 @@ pub struct Renderer {
     present_mode_priority: Vec<PresentMode>
 }
 
+#[derive(Debug)]
+pub enum CreateRendererError {
+    CreateInstanceError(CreateInstanceError),
+    VkError(vk::Result)
+}
+
+impl std::error::Error for CreateRendererError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            CreateRendererError::CreateInstanceError(ref e) => Some(e),
+            CreateRendererError::VkError(ref e) => Some(e)
+        }
+    }
+}
+
+impl core::fmt::Display for CreateRendererError {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match *self {
+            CreateRendererError::CreateInstanceError(ref e) => e.fmt(fmt),
+            CreateRendererError::VkError(ref e) => e.fmt(fmt)
+        }
+    }
+}
+
+impl From<CreateInstanceError> for CreateRendererError {
+    fn from(result: CreateInstanceError) -> Self {
+        CreateRendererError::CreateInstanceError(result)
+    }
+}
+
+impl From<vk::Result> for CreateRendererError {
+    fn from(result: vk::Result) -> Self {
+        CreateRendererError::VkError(result)
+    }
+}
+
 impl Renderer {
     pub fn new(
         app_name: &CString,
         window: &winit::window::Window,
-        use_vulkan_debug_layer: bool,
+        validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
         present_mode_priority: Vec<PresentMode>
-    ) -> VkResult<Renderer> {
-        let instance = ManuallyDrop::new(VkInstance::new(app_name, use_vulkan_debug_layer)?);
+    ) -> Result<Renderer, CreateRendererError> {
+        let instance = ManuallyDrop::new(VkInstance::new(app_name, validation_layer_debug_report_flags)?);
         let device = ManuallyDrop::new(VkDevice::new(&instance, window, &physical_device_type_priority)?);
         let mut skia_context = ManuallyDrop::new(VkSkiaContext::new(&instance, &device));
         let swapchain = ManuallyDrop::new(VkSwapchain::new(&instance, &device, window, None, &present_mode_priority)?);
@@ -145,9 +189,6 @@ impl Renderer {
         if let Err(e) = result {
             match e {
                 ash::vk::Result::ERROR_OUT_OF_DATE_KHR => {
-
-                    //TODO: Clean the do_draw stuff up
-                    //TODO: How does it work to render from another thread?
                     unsafe {
                         self.device.logical_device.device_wait_idle()?;
                         ManuallyDrop::drop(&mut self.pipeline);

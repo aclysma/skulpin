@@ -65,7 +65,7 @@ pub struct VkPipeline {
     pub pipeline_layout : vk::PipelineLayout,
     pub renderpass : vk::RenderPass,
     pub pipeline : vk::Pipeline,
-    pub frame_buffers : Vec<vk::Framebuffer>,
+    pub framebuffers : Vec<vk::Framebuffer>,
     pub command_pool : vk::CommandPool,
     pub command_buffers : Vec<vk::CommandBuffer>,
     pub vertex_buffer: ManuallyDrop<VkBuffer>,
@@ -78,37 +78,30 @@ pub struct VkPipeline {
 
 impl VkPipeline {
     pub fn new(device: &VkDevice, swapchain: &VkSwapchain, skia_context: &mut VkSkiaContext) -> VkResult<Self> {
-        let mut pipeline_resources = None;
-
         let descriptor_set_layout = Self::create_descriptor_set_layout(&device.logical_device)?;
 
-        Self::create_fixed_function_state(&swapchain.swapchain_info, |fixed_function_state| {
+        let pipeline_resources = Self::create_fixed_function_state(&swapchain.swapchain_info, |fixed_function_state| {
             Self::create_renderpass_create_info(&swapchain.swapchain_info, |renderpass_create_info| {
                 Self::create_pipeline(
                     &device.logical_device,
                     &swapchain.swapchain_info,
                     fixed_function_state,
                     renderpass_create_info,
-                    descriptor_set_layout,
-                    |resources| {
-                        pipeline_resources = Some(resources);
-                    }
+                    descriptor_set_layout
                 )
             })
         })?;
 
-        //TODO: Return error if not set
-        let pipeline_resources = pipeline_resources.unwrap();
         let pipeline_layout = pipeline_resources.pipeline_layout;
         let renderpass = pipeline_resources.renderpass;
         let pipeline = pipeline_resources.pipeline;
 
-        let frame_buffers = Self::create_framebuffers(
+        let framebuffers = Self::create_framebuffers(
             &device.logical_device,
             &swapchain.swapchain_image_views,
             &swapchain.swapchain_info,
             &pipeline_resources.renderpass
-        );
+        )?;
 
         let command_pool = Self::create_command_pool(
             &device.logical_device,
@@ -144,10 +137,10 @@ impl VkPipeline {
         skia_surface_extents.width = skia_surface_extents.width.max(1);
         skia_surface_extents.height = skia_surface_extents.height.max(1);
 
-        //TODO: Figure out how to return error here
-        let skia_surfaces : Vec<_> = (0..swapchain.swapchain_info.image_count).map(|_| {
-            VkSkiaSurface::new(device, skia_context, &skia_surface_extents).unwrap()
-        }).collect();
+        let mut skia_surfaces = Vec::with_capacity(swapchain.swapchain_info.image_count);
+        for _ in 0..swapchain.swapchain_info.image_count {
+            skia_surfaces.push(VkSkiaSurface::new(device, skia_context, &skia_surface_extents)?)
+        }
 
         let image_sampler = VkSkiaSurface::create_sampler(
             &device.logical_device
@@ -172,7 +165,7 @@ impl VkPipeline {
                 &device.logical_device,
                 &swapchain.swapchain_info,
                 &renderpass,
-                &frame_buffers[i],
+                &framebuffers[i],
                 &pipeline,
                 &pipeline_layout,
                 &command_buffers[i],
@@ -189,7 +182,7 @@ impl VkPipeline {
             pipeline_layout,
             renderpass,
             pipeline,
-            frame_buffers,
+            framebuffers,
             command_pool,
             command_buffers,
             vertex_buffer,
@@ -223,11 +216,11 @@ impl VkPipeline {
         }
     }
 
-    fn create_fixed_function_state<F : FnMut(&FixedFunctionState) -> VkResult<()>>(
+    fn create_fixed_function_state<F : FnMut(&FixedFunctionState) -> VkResult<PipelineResources>>(
         swapchain_info: &SwapchainInfo,
         mut f: F
     )
-        -> VkResult<()>
+        -> VkResult<PipelineResources>
     {
         let vertex_input_assembly_state_info = vk::PipelineInputAssemblyStateCreateInfo::builder()
             .topology(vk::PrimitiveTopology::TRIANGLE_LIST)
@@ -324,11 +317,11 @@ impl VkPipeline {
         f(&fixed_function_state)
     }
 
-    fn create_renderpass_create_info<F : FnMut(&vk::RenderPassCreateInfo) -> VkResult<()>>(
+    fn create_renderpass_create_info<F : FnMut(&vk::RenderPassCreateInfo) -> VkResult<PipelineResources>>(
         swapchain_info: &SwapchainInfo,
         mut f: F
     )
-        -> VkResult<()>
+        -> VkResult<PipelineResources>
     {
         let renderpass_attachments = [
             vk::AttachmentDescription::builder()
@@ -374,15 +367,14 @@ impl VkPipeline {
         f(&renderpass_create_info)
     }
 
-    fn create_pipeline<F : FnMut(PipelineResources)>(
+    fn create_pipeline(
         logical_device: &ash::Device,
         _swapchain_info: &SwapchainInfo,
         fixed_function_state: &FixedFunctionState,
         renderpass_create_info: &vk::RenderPassCreateInfo,
-        descriptor_set_layout: vk::DescriptorSetLayout,
-        mut f: F
+        descriptor_set_layout: vk::DescriptorSetLayout
     )
-        -> VkResult<()>
+        -> VkResult<PipelineResources>
     {
         //
         // Load Shaders
@@ -461,14 +453,11 @@ impl VkPipeline {
             logical_device.destroy_shader_module(fragment_shader_module, None);
         }
 
-        let resources = PipelineResources {
+        Ok(PipelineResources {
             pipeline_layout,
             renderpass,
             pipeline
-        };
-
-        f(resources);
-        Ok(())
+        })
     }
 
     fn load_shader_module(logical_device: &ash::Device, data: &[u8]) -> VkResult<vk::ShaderModule> {
@@ -489,27 +478,27 @@ impl VkPipeline {
         swapchain_info: &SwapchainInfo,
         renderpass: &vk::RenderPass
     )
-        -> Vec<vk::Framebuffer>
+        -> VkResult<Vec<vk::Framebuffer>>
     {
-        swapchain_image_views
-            .iter()
-            .map(|&swapchain_image_view| {
-                let framebuffer_attachments = [swapchain_image_view];
-                let frame_buffer_create_info = vk::FramebufferCreateInfo::builder()
-                    .render_pass(*renderpass)
-                    .attachments(&framebuffer_attachments)
-                    .width(swapchain_info.extents.width)
-                    .height(swapchain_info.extents.height)
-                    .layers(1);
+        let mut framebuffers = Vec::with_capacity(swapchain_image_views.len());
 
+        for swapchain_image_view in swapchain_image_views {
+            let framebuffer_attachments = [*swapchain_image_view];
+            let framebuffer_create_info = vk::FramebufferCreateInfo::builder()
+                .render_pass(*renderpass)
+                .attachments(&framebuffer_attachments)
+                .width(swapchain_info.extents.width)
+                .height(swapchain_info.extents.height)
+                .layers(1);
+
+            framebuffers.push(
                 unsafe {
-                    //TODO: Pass this error up
-                    logical_device
-                        .create_framebuffer(&frame_buffer_create_info, None)
-                        .unwrap()
+                    logical_device.create_framebuffer(&framebuffer_create_info, None)?
                 }
-            })
-            .collect()
+            );
+        }
+        
+        Ok(framebuffers)
     }
 
     fn create_command_pool(
@@ -798,8 +787,8 @@ impl Drop for VkPipeline {
 
             self.device.destroy_command_pool(self.command_pool, None);
 
-            for frame_buffer in &self.frame_buffers {
-                self.device.destroy_framebuffer(*frame_buffer, None);
+            for framebuffer in &self.framebuffers {
+                self.device.destroy_framebuffer(*framebuffer, None);
             }
 
             self.device.destroy_pipeline(self.pipeline, None);

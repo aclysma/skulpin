@@ -10,6 +10,7 @@ mod window_support;
 
 mod instance;
 pub use instance::VkInstance;
+pub use instance::CreateInstanceError; // TODO: Should this be re-exported like this? Name is very general.
 
 mod device;
 pub use device::VkDevice;

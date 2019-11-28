@@ -394,8 +394,6 @@ impl InputState {
             } => {
                 trace!("dpi scaling factor changed {:?}", hidpi_factor);
                 self.handle_hidpi_factor_changed(*hidpi_factor);
-                //TODO: fix old mouse positions? Could store as logical and only convert to physical
-                // on demand
             }
 
             Event::WindowEvent {

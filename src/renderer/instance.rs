@@ -15,14 +15,61 @@ pub struct VkInstance {
     pub debug_reporter: Option<VkDebugReporter>,
 }
 
+#[derive(Debug)]
+pub enum CreateInstanceError {
+    LoadingError(ash::LoadingError),
+    InstanceError(ash::InstanceError),
+    VkError(vk::Result)
+}
+
+impl std::error::Error for CreateInstanceError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            CreateInstanceError::LoadingError(ref e) => Some(e),
+            CreateInstanceError::InstanceError(ref e) => Some(e),
+            CreateInstanceError::VkError(ref e) => Some(e)
+        }
+    }
+}
+
+impl core::fmt::Display for CreateInstanceError {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match *self {
+            CreateInstanceError::LoadingError(ref e) => e.fmt(fmt),
+            CreateInstanceError::InstanceError(ref e) => e.fmt(fmt),
+            CreateInstanceError::VkError(ref e) => e.fmt(fmt)
+        }
+    }
+}
+
+impl From<ash::LoadingError> for CreateInstanceError {
+    fn from(result: ash::LoadingError) -> Self {
+        CreateInstanceError::LoadingError(result)
+    }
+}
+
+impl From<ash::InstanceError> for CreateInstanceError {
+    fn from(result: ash::InstanceError) -> Self {
+        CreateInstanceError::InstanceError(result)
+    }
+}
+
+impl From<vk::Result> for CreateInstanceError {
+    fn from(result: vk::Result) -> Self {
+        CreateInstanceError::VkError(result)
+    }
+}
+
 impl VkInstance {
     /// Creates a vulkan instance.
-    pub fn new(app_name: &CString, use_vulkan_debug_layer: bool) -> VkResult<VkInstance> {
+    pub fn new(
+        app_name: &CString, 
+        validation_layer_debug_report_flags: vk::DebugReportFlagsEXT
+    ) -> Result<VkInstance, CreateInstanceError> {
 
         // This loads the dll/so if needed
         info!("Finding vulkan entry point");
-        //TODO: Return this error
-        let entry = ash::Entry::new().expect("Could not find Vulkan entry point");
+        let entry = ash::Entry::new()?;
 
         // Determine the supported version of vulkan that's available
         let vulkan_version = match entry.try_enumerate_instance_version()? {
@@ -52,7 +99,6 @@ impl VkInstance {
         
         // Info that's exposed to the driver. In a real shipped product, this data might be used by
         // the driver to make specific adjustments to improve performance
-        //TODO: Review docs on usage of api_version:
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkApplicationInfo.html
         let appinfo = vk::ApplicationInfo::builder()
             .application_name(app_name)
@@ -65,7 +111,7 @@ impl VkInstance {
         let validation_layer_name = CString::new("VK_LAYER_LUNARG_standard_validation").unwrap();
 
         let mut layer_names = vec![];
-        if use_vulkan_debug_layer {
+        if !validation_layer_debug_report_flags.is_empty() {
             //TODO: Validate that the layer exists
             //if layers.iter().find(|x| CStr::from_bytes_with_nul(&x.layer_name) == &validation_layer_name) {
             layer_names.push(validation_layer_name);
@@ -88,15 +134,12 @@ impl VkInstance {
 
         info!("Creating vulkan instance");
         let instance: ash::Instance = unsafe {
-            //TODO: Return this error
-            entry
-                .create_instance(&create_info, None)
-                .expect("Instance creation error")
+            entry.create_instance(&create_info, None)?
         };
 
         // Setup the debug callback for the validation layer
-        let debug_reporter = if use_vulkan_debug_layer {
-            Some(Self::setup_vulkan_debug_callback(&entry, &instance)?)
+        let debug_reporter = if !validation_layer_debug_report_flags.is_empty() {
+            Some(Self::setup_vulkan_debug_callback(&entry, &instance, validation_layer_debug_report_flags)?)
         } else {
             None
         };
@@ -109,16 +152,14 @@ impl VkInstance {
     }
 
     /// This is used to setup a debug callback for logging validation errors
-    fn setup_vulkan_debug_callback(entry: &ash::Entry, instance: &ash::Instance) -> VkResult<VkDebugReporter> {
+    fn setup_vulkan_debug_callback(
+        entry: &ash::Entry, 
+        instance: &ash::Instance,
+        debug_report_flags: vk::DebugReportFlagsEXT
+    ) -> VkResult<VkDebugReporter> {
         info!("Seting up vulkan debug callback");
         let debug_info = vk::DebugReportCallbackCreateInfoEXT::builder()
-            .flags( //TODO: Allow configuring this
-                vk::DebugReportFlagsEXT::ERROR
-                    | vk::DebugReportFlagsEXT::WARNING
-                    | vk::DebugReportFlagsEXT::PERFORMANCE_WARNING
-                    | vk::DebugReportFlagsEXT::INFORMATION
-                    | vk::DebugReportFlagsEXT::DEBUG,
-            )
+            .flags(debug_report_flags)
             .pfn_callback(Some(debug_reporter::vulkan_debug_callback));
 
         let debug_report_loader = ash::extensions::ext::DebugReport::new(entry, instance);

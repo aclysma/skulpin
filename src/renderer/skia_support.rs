@@ -72,7 +72,7 @@ impl VkSkiaContext {
 }
 
 pub struct VkSkiaSurface {
-    pub device: ash::Device, // This device is owned by VkDevice, not VkSkiaSurface. TODO: Consider using a ref
+    pub device: ash::Device, // VkDevice is responsible for cleaning this up
 
     pub surface: skia_safe::Surface,
     pub texture: skia_safe::gpu::BackendTexture,
