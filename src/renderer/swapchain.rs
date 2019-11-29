@@ -46,10 +46,10 @@ impl VkSwapchain {
     {
         let (swapchain_info, swapchain_loader, swapchain) = Self::create_swapchain(
             &instance.instance,
-            &device.physical_device,
+            device.physical_device,
             &device.logical_device,
             &device.surface_loader,
-            &device.surface,
+            device.surface,
             &device.queue_family_indices,
             window,
             old_swapchain,
@@ -106,10 +106,10 @@ impl VkSwapchain {
 
     fn create_swapchain(
         instance: &ash::Instance,
-        physical_device: &ash::vk::PhysicalDevice,
+        physical_device: ash::vk::PhysicalDevice,
         logical_device: &ash::Device,
         surface_loader: &ash::extensions::khr::Surface,
-        surface: &ash::vk::SurfaceKHR,
+        surface: ash::vk::SurfaceKHR,
         queue_family_indices: &QueueFamilyIndices,
         window: &winit::window::Window,
         old_swapchain: Option<vk::SwapchainKHR>,
@@ -149,7 +149,7 @@ impl VkSwapchain {
         let swapchain_loader = khr::Swapchain::new(instance, logical_device);
 
         let mut swapchain_create_info = vk::SwapchainCreateInfoKHR::builder()
-            .surface(*surface)
+            .surface(surface)
             .min_image_count(image_count)
             .image_format(surface_format.format)
             .image_color_space(surface_format.color_space)
@@ -196,31 +196,31 @@ impl VkSwapchain {
     }
 
     fn query_swapchain_support(
-        physical_device: &ash::vk::PhysicalDevice,
+        physical_device: ash::vk::PhysicalDevice,
         surface_loader: &ash::extensions::khr::Surface,
-        surface: &ash::vk::SurfaceKHR
+        surface: ash::vk::SurfaceKHR
     )
         -> VkResult<(Vec<vk::SurfaceFormatKHR>, Vec<vk::PresentModeKHR>, vk::SurfaceCapabilitiesKHR)>
     {
         let available_formats : Vec<vk::SurfaceFormatKHR> = unsafe {
             surface_loader
-                .get_physical_device_surface_formats(*physical_device, *surface)?
+                .get_physical_device_surface_formats(physical_device, surface)?
         };
 
         let available_present_modes : Vec<vk::PresentModeKHR> = unsafe {
             surface_loader
-                .get_physical_device_surface_present_modes(*physical_device, *surface)?
+                .get_physical_device_surface_present_modes(physical_device, surface)?
         };
 
         let surface_capabilities : vk::SurfaceCapabilitiesKHR = unsafe {
             surface_loader
-                .get_physical_device_surface_capabilities(*physical_device, *surface)?
+                .get_physical_device_surface_capabilities(physical_device, surface)?
         };
 
         Ok((available_formats, available_present_modes, surface_capabilities))
     }
 
-    fn choose_format(available_formats: &Vec<vk::SurfaceFormatKHR>) -> vk::SurfaceFormatKHR {
+    fn choose_format(available_formats: &[vk::SurfaceFormatKHR]) -> vk::SurfaceFormatKHR {
         let mut best_format = None;
 
         for available_format in available_formats {
@@ -236,7 +236,7 @@ impl VkSwapchain {
         }
     }
 
-    fn choose_present_mode(available_present_modes: &Vec<vk::PresentModeKHR>, present_mode_priority: &[PresentMode]) -> vk::PresentModeKHR {
+    fn choose_present_mode(available_present_modes: &[vk::PresentModeKHR], present_mode_priority: &[PresentMode]) -> vk::PresentModeKHR {
         info!("Available present modes: {:?}", available_present_modes);
         info!("Preferred present modes: {:?}", present_mode_priority);
 
@@ -279,7 +279,7 @@ impl VkSwapchain {
     fn create_image_views(
         logical_device: &ash::Device,
         swapchain_info: &SwapchainInfo,
-        swapchain_images: &Vec<vk::Image>
+        swapchain_images: &[vk::Image]
     )
         -> VkResult<Vec<vk::ImageView>>
     {

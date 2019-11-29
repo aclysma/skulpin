@@ -6,8 +6,6 @@ use cocoa::base::id as cocoa_id;
 use metal::CoreAnimationLayer;
 #[cfg(target_os = "macos")]
 use objc::runtime::YES;
-#[cfg(target_os = "macos")]
-use std::mem;
 
 use std::os::raw::c_void;
 
@@ -62,7 +60,7 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
         raw_window_handle::RawWindowHandle::MacOS(window_handle) => {
             use std::ptr;
 
-            let wnd: cocoa_id = mem::transmute(window_handle.ns_window);
+            let wnd: cocoa_id = window_handle.ns_window as *mut objc::runtime::Object;
 
             let layer = CoreAnimationLayer::new();
 
@@ -73,7 +71,7 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
             let view = wnd.contentView();
 
             layer.set_contents_scale(view.backingScaleFactor());
-            view.setLayer(mem::transmute(layer.as_ref()));
+            view.setLayer(layer.as_ref() as *const metal::CoreAnimationLayerRef as *mut objc::runtime::Object);
             view.setWantsLayer(YES);
 
             let create_info = vk::MacOSSurfaceCreateInfoMVK {

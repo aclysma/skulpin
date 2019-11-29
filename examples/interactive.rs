@@ -99,7 +99,7 @@ impl AppHandler for ExampleApp {
         //
         // Pop old clicks from the previous_clicks list
         //
-        while self.previous_clicks.len() > 0 &&
+        while !self.previous_clicks.is_empty() &&
             (now - self.previous_clicks[0].time).as_secs_f32() >= 1.0 {
             self.previous_clicks.pop_front();
         }

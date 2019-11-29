@@ -87,7 +87,7 @@ impl VkSkiaSurface {
         }
     }
 
-    pub fn new(device: &VkDevice, context: &mut VkSkiaContext, extent: &vk::Extent2D) -> VkResult<Self> {
+    pub fn new(device: &VkDevice, context: &mut VkSkiaContext, extent: vk::Extent2D) -> VkResult<Self> {
         // The "native" color type is based on platform. For example, on Windows it's BGR and on
         // MacOS it's RGB
         let color_type = skia_safe::ColorType::n32();
@@ -128,7 +128,7 @@ impl VkSkiaSurface {
 
         let skia_tex_image_view_info = vk::ImageViewCreateInfo {
             view_type: vk::ImageViewType::TYPE_2D,
-            format: format,
+            format,
             components: vk::ComponentMapping {
                 r: vk::ComponentSwizzle::R,
                 g: vk::ComponentSwizzle::G,

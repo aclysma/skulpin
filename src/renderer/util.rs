@@ -44,12 +44,12 @@ pub fn read_spv<R: io::Read + io::Seek>(x: &mut R) -> io::Result<Vec<u32>> {
         result.set_len(words);
     }
     const MAGIC_NUMBER: u32 = 0x0723_0203;
-    if result.len() > 0 && result[0] == MAGIC_NUMBER.swap_bytes() {
+    if !result.is_empty() && result[0] == MAGIC_NUMBER.swap_bytes() {
         for word in &mut result {
             *word = word.swap_bytes();
         }
     }
-    if result.len() == 0 || result[0] != MAGIC_NUMBER {
+    if result.is_empty() || result[0] != MAGIC_NUMBER {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
             "input missing SPIR-V magic number",
@@ -58,15 +58,15 @@ pub fn read_spv<R: io::Read + io::Seek>(x: &mut R) -> io::Result<Vec<u32>> {
     Ok(result)
 }
 
-pub fn submit_single_use_command_buffer<F : Fn(&vk::CommandBuffer)>(
+pub fn submit_single_use_command_buffer<F : Fn(vk::CommandBuffer)>(
     logical_device: &ash::Device,
-    queue: &vk::Queue,
-    command_pool: &vk::CommandPool,
+    queue: vk::Queue,
+    command_pool: vk::CommandPool,
     f: F
 ) -> VkResult<()> {
     let alloc_info = vk::CommandBufferAllocateInfo::builder()
         .level(vk::CommandBufferLevel::PRIMARY)
-        .command_pool(*command_pool)
+        .command_pool(command_pool)
         .command_buffer_count(1);
 
     let begin_info = vk::CommandBufferBeginInfo::builder()
@@ -77,7 +77,7 @@ pub fn submit_single_use_command_buffer<F : Fn(&vk::CommandBuffer)>(
 
         logical_device.begin_command_buffer(command_buffer, &begin_info)?;
 
-        f(&command_buffer);
+        f(command_buffer);
 
         logical_device.end_command_buffer(command_buffer)?;
 
@@ -89,10 +89,10 @@ pub fn submit_single_use_command_buffer<F : Fn(&vk::CommandBuffer)>(
         .command_buffers(&command_buffers);
 
     unsafe {
-        logical_device.queue_submit(*queue, &[submit_info.build()], vk::Fence::null())?;
+        logical_device.queue_submit(queue, &[submit_info.build()], vk::Fence::null())?;
         logical_device.device_wait_idle()?;
 
-        logical_device.free_command_buffers(*command_pool, &command_buffers);
+        logical_device.free_command_buffers(command_pool, &command_buffers);
     }
 
     Ok(())

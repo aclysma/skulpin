@@ -268,8 +268,8 @@ impl Renderer {
             // window in physical pixels.
             let window_size = window.inner_size();
             let scale = (
-                (self.swapchain.swapchain_info.extents.width as f64 / window_size.width) as f32,
-                (self.swapchain.swapchain_info.extents.height as f64 / window_size.height) as f32
+                (f64::from(self.swapchain.swapchain_info.extents.width) / window_size.width) as f32,
+                (f64::from(self.swapchain.swapchain_info.extents.height) / window_size.height) as f32
             );
 
             canvas.reset_matrix();

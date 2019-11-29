@@ -70,8 +70,8 @@ impl VkBuffer {
     pub fn new_from_slice_device_local<T : Copy>(
         logical_device: &ash::Device,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties,
-        queue: &vk::Queue,
-        command_pool: &vk::CommandPool,
+        queue: vk::Queue,
+        command_pool: vk::CommandPool,
         usage: vk::BufferUsageFlags,
         data: &[T]
     )
@@ -136,8 +136,8 @@ impl VkBuffer {
 
     pub fn copy_buffer(
         logical_device: &ash::Device,
-        queue: &vk::Queue,
-        command_pool: &vk::CommandPool,
+        queue: vk::Queue,
+        command_pool: vk::CommandPool,
         src: &VkBuffer,
         dst: &VkBuffer
     ) -> VkResult<()> {
@@ -149,7 +149,7 @@ impl VkBuffer {
             ];
 
             unsafe {
-                logical_device.cmd_copy_buffer(*command_buffer, src.buffer, dst.buffer, &buffer_copy_info);
+                logical_device.cmd_copy_buffer(command_buffer, src.buffer, dst.buffer, &buffer_copy_info);
             }
         })
     }
