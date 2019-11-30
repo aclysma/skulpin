@@ -1,4 +1,3 @@
-
 // Re-export winit types
 pub use winit::event::VirtualKeyCode;
 pub use winit::event::MouseButton;
@@ -14,7 +13,7 @@ use winit::window::Window;
 impl InputState {
     pub const KEYBOARD_BUTTON_COUNT: usize = 255;
     pub const MOUSE_BUTTON_COUNT: usize = 7;
-    const MIN_DRAG_DISTANCE : f64 = 2.0;
+    const MIN_DRAG_DISTANCE: f64 = 2.0;
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -22,7 +21,7 @@ pub struct MouseDragState {
     pub begin_position: LogicalPosition,
     pub end_position: LogicalPosition,
     pub previous_frame_delta: LogicalPosition,
-    pub accumulated_frame_delta: LogicalPosition
+    pub accumulated_frame_delta: LogicalPosition,
 }
 
 pub struct InputState {
@@ -78,7 +77,10 @@ impl InputState {
         self.dpi_factor
     }
 
-    pub fn is_key_down(&self, key: VirtualKeyCode) -> bool {
+    pub fn is_key_down(
+        &self,
+        key: VirtualKeyCode,
+    ) -> bool {
         if let Some(index) = Self::keyboard_button_to_index(key) {
             self.key_is_down[index]
         } else {
@@ -86,7 +88,10 @@ impl InputState {
         }
     }
 
-    pub fn is_key_just_down(&self, key: VirtualKeyCode) -> bool {
+    pub fn is_key_just_down(
+        &self,
+        key: VirtualKeyCode,
+    ) -> bool {
         if let Some(index) = Self::keyboard_button_to_index(key) {
             self.key_just_down[index]
         } else {
@@ -94,7 +99,10 @@ impl InputState {
         }
     }
 
-    pub fn is_key_just_up(&self, key: VirtualKeyCode) -> bool {
+    pub fn is_key_just_up(
+        &self,
+        key: VirtualKeyCode,
+    ) -> bool {
         if let Some(index) = Self::keyboard_button_to_index(key) {
             self.key_just_up[index]
         } else {
@@ -106,7 +114,10 @@ impl InputState {
         self.mouse_position
     }
 
-    pub fn is_mouse_down(&self, mouse_button: MouseButton) -> bool {
+    pub fn is_mouse_down(
+        &self,
+        mouse_button: MouseButton,
+    ) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_is_down[index]
         } else {
@@ -114,7 +125,10 @@ impl InputState {
         }
     }
 
-    pub fn is_mouse_just_down(&self, mouse_button: MouseButton) -> bool {
+    pub fn is_mouse_just_down(
+        &self,
+        mouse_button: MouseButton,
+    ) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_down[index].is_some()
         } else {
@@ -122,7 +136,10 @@ impl InputState {
         }
     }
 
-    pub fn mouse_just_down_position(&self, mouse_button: MouseButton) -> Option<LogicalPosition> {
+    pub fn mouse_just_down_position(
+        &self,
+        mouse_button: MouseButton,
+    ) -> Option<LogicalPosition> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_down[index]
         } else {
@@ -130,7 +147,10 @@ impl InputState {
         }
     }
 
-    pub fn is_mouse_just_up(&self, mouse_button: MouseButton) -> bool {
+    pub fn is_mouse_just_up(
+        &self,
+        mouse_button: MouseButton,
+    ) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_up[index].is_some()
         } else {
@@ -138,7 +158,10 @@ impl InputState {
         }
     }
 
-    pub fn mouse_just_up_position(&self, mouse_button: MouseButton) -> Option<LogicalPosition> {
+    pub fn mouse_just_up_position(
+        &self,
+        mouse_button: MouseButton,
+    ) -> Option<LogicalPosition> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_up[index]
         } else {
@@ -146,7 +169,10 @@ impl InputState {
         }
     }
 
-    pub fn is_mouse_button_just_clicked(&self, mouse_button: MouseButton) -> bool {
+    pub fn is_mouse_button_just_clicked(
+        &self,
+        mouse_button: MouseButton,
+    ) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_clicked[index].is_some()
         } else {
@@ -165,7 +191,10 @@ impl InputState {
         }
     }
 
-    pub fn mouse_button_went_down_position(&self, mouse_button: MouseButton) -> Option<LogicalPosition> {
+    pub fn mouse_button_went_down_position(
+        &self,
+        mouse_button: MouseButton,
+    ) -> Option<LogicalPosition> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_went_down_position[index]
         } else {
@@ -173,7 +202,10 @@ impl InputState {
         }
     }
 
-    pub fn mouse_button_went_up_position(&self, mouse_button: MouseButton) -> Option<LogicalPosition> {
+    pub fn mouse_button_went_up_position(
+        &self,
+        mouse_button: MouseButton,
+    ) -> Option<LogicalPosition> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_went_up_position[index]
         } else {
@@ -181,7 +213,10 @@ impl InputState {
         }
     }
 
-    pub fn is_mouse_drag_in_progress(&self, mouse_button: MouseButton) -> bool {
+    pub fn is_mouse_drag_in_progress(
+        &self,
+        mouse_button: MouseButton,
+    ) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_drag_in_progress[index].is_some()
         } else {
@@ -189,7 +224,10 @@ impl InputState {
         }
     }
 
-    pub fn mouse_drag_in_progress(&self, mouse_button: MouseButton) -> Option<MouseDragState> {
+    pub fn mouse_drag_in_progress(
+        &self,
+        mouse_button: MouseButton,
+    ) -> Option<MouseDragState> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_drag_in_progress[index]
         } else {
@@ -197,7 +235,10 @@ impl InputState {
         }
     }
 
-    pub fn is_mouse_drag_just_finished(&self, mouse_button: MouseButton) -> bool {
+    pub fn is_mouse_drag_just_finished(
+        &self,
+        mouse_button: MouseButton,
+    ) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_drag_just_finished[index].is_some()
         } else {
@@ -205,7 +246,10 @@ impl InputState {
         }
     }
 
-    pub fn mouse_drag_just_finished(&self, mouse_button: MouseButton) -> Option<MouseDragState> {
+    pub fn mouse_drag_just_finished(
+        &self,
+        mouse_button: MouseButton,
+    ) -> Option<MouseDragState> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_drag_just_finished[index]
         } else {
@@ -248,18 +292,24 @@ impl InputState {
         }
     }
 
-    pub fn handle_hidpi_factor_changed(&mut self, dpi_factor: f64) {
+    pub fn handle_hidpi_factor_changed(
+        &mut self,
+        dpi_factor: f64,
+    ) {
         self.dpi_factor = dpi_factor;
     }
 
-    pub fn handle_window_size_changed(&mut self, window_size: LogicalSize) {
+    pub fn handle_window_size_changed(
+        &mut self,
+        window_size: LogicalSize,
+    ) {
         self.window_size = window_size;
     }
 
     pub fn handle_keyboard_event(
         &mut self,
         keyboard_button: VirtualKeyCode,
-        button_state: ElementState
+        button_state: ElementState,
     ) {
         if let Some(kc) = Self::keyboard_button_to_index(keyboard_button) {
             // Assign true if key is down, or false if key is up
@@ -280,7 +330,7 @@ impl InputState {
     pub fn handle_mouse_button_event(
         &mut self,
         button: MouseButton,
-        button_event: ElementState
+        button_event: ElementState,
     ) {
         if let Some(button_index) = Self::mouse_button_to_index(button) {
             assert!(button_index < InputState::MOUSE_BUTTON_COUNT);
@@ -301,12 +351,21 @@ impl InputState {
 
                     match self.mouse_drag_in_progress[button_index] {
                         Some(in_progress) => {
-                            let delta = Self::subtract(self.mouse_position, Self::add(in_progress.begin_position, in_progress.accumulated_frame_delta));
+                            let delta = Self::subtract(
+                                self.mouse_position,
+                                Self::add(
+                                    in_progress.begin_position,
+                                    in_progress.accumulated_frame_delta,
+                                ),
+                            );
                             self.mouse_drag_just_finished[button_index] = Some(MouseDragState {
                                 begin_position: in_progress.begin_position,
                                 end_position: self.mouse_position,
                                 previous_frame_delta: delta,
-                                accumulated_frame_delta: Self::add(in_progress.accumulated_frame_delta, delta)
+                                accumulated_frame_delta: Self::add(
+                                    in_progress.accumulated_frame_delta,
+                                    delta,
+                                ),
                             });
                         }
                         None => {
@@ -320,7 +379,10 @@ impl InputState {
         }
     }
 
-    pub fn handle_mouse_move_event(&mut self, position: LogicalPosition) {
+    pub fn handle_mouse_move_event(
+        &mut self,
+        position: LogicalPosition,
+    ) {
         //let old_mouse_position = self.mouse_position;
 
         // Update mouse position
@@ -341,8 +403,14 @@ impl InputState {
                                     Some(MouseDragState {
                                         begin_position: went_down_position,
                                         end_position: self.mouse_position,
-                                        previous_frame_delta: Self::subtract(self.mouse_position, went_down_position),
-                                        accumulated_frame_delta: Self::subtract(self.mouse_position, went_down_position)
+                                        previous_frame_delta: Self::subtract(
+                                            self.mouse_position,
+                                            went_down_position,
+                                        ),
+                                        accumulated_frame_delta: Self::subtract(
+                                            self.mouse_position,
+                                            went_down_position,
+                                        ),
                                     })
                                 } else {
                                     // Mouse moved too small an amount to be considered a drag
@@ -357,12 +425,21 @@ impl InputState {
                     Some(old_drag_state) => {
                         // We were already dragging, so just update the end position
 
-                        let delta = Self::subtract(self.mouse_position, Self::add(old_drag_state.begin_position, old_drag_state.accumulated_frame_delta));
+                        let delta = Self::subtract(
+                            self.mouse_position,
+                            Self::add(
+                                old_drag_state.begin_position,
+                                old_drag_state.accumulated_frame_delta,
+                            ),
+                        );
                         Some(MouseDragState {
                             begin_position: old_drag_state.begin_position,
                             end_position: self.mouse_position,
                             previous_frame_delta: delta,
-                            accumulated_frame_delta: Self::add(old_drag_state.accumulated_frame_delta, delta)
+                            accumulated_frame_delta: Self::add(
+                                old_drag_state.accumulated_frame_delta,
+                                delta,
+                            ),
                         })
                     }
                 };
@@ -374,7 +451,7 @@ impl InputState {
         &mut self,
         app_control: &mut AppControl,
         event: &winit::event::Event<T>,
-        _window_target: &winit::event_loop::EventLoopWindowTarget<T>
+        _window_target: &winit::event_loop::EventLoopWindowTarget<T>,
     ) {
         use winit::event::Event;
         use winit::event::WindowEvent;
@@ -399,9 +476,7 @@ impl InputState {
             Event::WindowEvent {
                 event: WindowEvent::Resized(window_size),
                 ..
-            } => {
-                self.handle_window_size_changed(*window_size)
-            }
+            } => self.handle_window_size_changed(*window_size),
 
             //Process keyboard input
             Event::WindowEvent {
@@ -416,12 +491,12 @@ impl InputState {
 
             Event::WindowEvent {
                 event:
-                WindowEvent::MouseInput {
-                    device_id,
-                    state,
-                    button,
-                    modifiers,
-                },
+                    WindowEvent::MouseInput {
+                        device_id,
+                        state,
+                        button,
+                        modifiers,
+                    },
                 ..
             } => {
                 trace!(
@@ -437,14 +512,19 @@ impl InputState {
 
             Event::WindowEvent {
                 event:
-                WindowEvent::CursorMoved {
-                    device_id,
-                    position,
-                    modifiers,
-                },
+                    WindowEvent::CursorMoved {
+                        device_id,
+                        position,
+                        modifiers,
+                    },
                 ..
             } => {
-                trace!("mouse move input {:?} {:?} {:?}", device_id, position, modifiers);
+                trace!(
+                    "mouse move input {:?} {:?} {:?}",
+                    device_id,
+                    position,
+                    modifiers
+                );
                 self.handle_mouse_move_event(*position);
             }
 
@@ -466,7 +546,7 @@ impl InputState {
             MouseButton::Left => 0,
             MouseButton::Right => 1,
             MouseButton::Middle => 2,
-            MouseButton::Other(x) => (x as usize) + 3
+            MouseButton::Other(x) => (x as usize) + 3,
         };
 
         if index >= Self::MOUSE_BUTTON_COUNT {
@@ -485,21 +565,24 @@ impl InputState {
         }
     }
 
-    fn add(p0: LogicalPosition, p1: LogicalPosition) -> LogicalPosition {
-        LogicalPosition::new(
-            p0.x + p1.x,
-            p0.y + p1.y
-        )
+    fn add(
+        p0: LogicalPosition,
+        p1: LogicalPosition,
+    ) -> LogicalPosition {
+        LogicalPosition::new(p0.x + p1.x, p0.y + p1.y)
     }
 
-    fn subtract(p0: LogicalPosition, p1: LogicalPosition) -> LogicalPosition {
-        LogicalPosition::new(
-            p0.x - p1.x,
-            p0.y - p1.y
-        )
+    fn subtract(
+        p0: LogicalPosition,
+        p1: LogicalPosition,
+    ) -> LogicalPosition {
+        LogicalPosition::new(p0.x - p1.x, p0.y - p1.y)
     }
 
-    fn distance(p0: LogicalPosition, p1: LogicalPosition) -> f64 {
+    fn distance(
+        p0: LogicalPosition,
+        p1: LogicalPosition,
+    ) -> f64 {
         let x_diff = p1.x - p0.x;
         let y_diff = p1.y - p0.y;
 

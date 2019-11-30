@@ -1,4 +1,3 @@
-
 // This example does a physics demo, because physics is fun :)
 
 extern crate nalgebra as na;
@@ -15,17 +14,20 @@ use std::ffi::CString;
 // Used for physics
 use na::{Point2, Vector2};
 use ncollide2d::shape::{Cuboid, ShapeHandle, Ball};
-use nphysics2d::object::{ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle, DefaultBodyHandle};
+use nphysics2d::object::{
+    ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle,
+    DefaultBodyHandle,
+};
 use nphysics2d::force_generator::DefaultForceGeneratorSet;
 use nphysics2d::joint::DefaultJointConstraintSet;
 use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 
-const GROUND_THICKNESS : f32 = 0.2;
-const GROUND_HALF_EXTENTS_WIDTH : f32 = 3.0;
-const BALL_RADIUS : f32 = 0.2;
-const VISUAL_SCALE : f32 = 100.0;
-const GRAVITY : f32 = -9.81;
-const BALL_COUNT : usize = 5;
+const GROUND_THICKNESS: f32 = 0.2;
+const GROUND_HALF_EXTENTS_WIDTH: f32 = 3.0;
+const BALL_RADIUS: f32 = 0.2;
+const VISUAL_SCALE: f32 = 100.0;
+const GRAVITY: f32 = -9.81;
+const BALL_COUNT: usize = 5;
 
 // Will contain all the physics simulation state
 struct Physics {
@@ -51,8 +53,10 @@ impl Physics {
         let force_generators = DefaultForceGeneratorSet::<f32>::new();
 
         // A rectangle that the balls will fall on
-        let ground_shape =
-            ShapeHandle::new(Cuboid::new(Vector2::new(GROUND_HALF_EXTENTS_WIDTH, GROUND_THICKNESS)));
+        let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
+            GROUND_HALF_EXTENTS_WIDTH,
+            GROUND_THICKNESS,
+        )));
 
         // Build a static ground body and add it to the body set.
         let ground_body_handle = bodies.insert(Ground::new());
@@ -80,9 +84,7 @@ impl Physics {
                 let y = j as f32 * shift + centery + height;
 
                 // Build the rigid body.
-                let rigid_body = RigidBodyDesc::new()
-                    .translation(Vector2::new(x, y))
-                    .build();
+                let rigid_body = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
 
                 // Insert the rigid body to the body set.
                 let rigid_body_handle = bodies.insert(rigid_body);
@@ -106,7 +108,7 @@ impl Physics {
             colliders,
             joint_constraints,
             force_generators,
-            circle_body_handles
+            circle_body_handles,
         }
     }
 
@@ -117,7 +119,7 @@ impl Physics {
             &mut self.bodies,
             &mut self.colliders,
             &mut self.joint_constraints,
-            &mut self.force_generators
+            &mut self.force_generators,
         );
     }
 }
@@ -142,7 +144,7 @@ struct ExampleApp {
     last_fps_text_change: Option<std::time::Instant>,
     fps_text: String,
     physics: Physics,
-    circle_colors: Vec<skia_safe::Paint>
+    circle_colors: Vec<skia_safe::Paint>,
 }
 
 impl ExampleApp {
@@ -166,7 +168,7 @@ impl ExampleApp {
             last_fps_text_change: None,
             fps_text: "".to_string(),
             physics: Physics::new(),
-            circle_colors
+            circle_colors,
         }
     }
 }
@@ -176,7 +178,7 @@ impl AppHandler for ExampleApp {
         &mut self,
         app_control: &mut AppControl,
         input_state: &InputState,
-        time_state: &TimeState
+        time_state: &TimeState,
     ) {
         let now = time_state.system().frame_start_instant;
 
@@ -191,10 +193,8 @@ impl AppHandler for ExampleApp {
         // Update FPS once a second
         //
         let update_text_string = match self.last_fps_text_change {
-            Some(last_update_instant) => {
-                (now - last_update_instant).as_secs_f32() >= 1.0
-            },
-            None => true
+            Some(last_update_instant) => (now - last_update_instant).as_secs_f32() >= 1.0,
+            None => true,
         };
 
         // Refresh FPS text
@@ -213,7 +213,7 @@ impl AppHandler for ExampleApp {
         _app_control: &AppControl,
         _input_state: &InputState,
         _time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas
+        canvas: &mut skia_safe::Canvas,
     ) {
         // Generally would want to clear data every time we draw
         canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
@@ -226,34 +226,39 @@ impl AppHandler for ExampleApp {
 
         // nphysics uses SI units and skulpin uses pixels (for now), so apply a transform
         // Ideally there would be a way to configure skulpin to allow an arbitrary coordinate system (#24)
-        let transform = na::Matrix3::new_translation(&Vector2::new(450.0, 500.0)) * na::Matrix3::new_nonuniform_scaling(&Vector2::new(VISUAL_SCALE, -VISUAL_SCALE));
+        let transform = na::Matrix3::new_translation(&Vector2::new(450.0, 500.0))
+            * na::Matrix3::new_nonuniform_scaling(&Vector2::new(VISUAL_SCALE, -VISUAL_SCALE));
 
         let tl = transform.transform_point(&Point2::new(-GROUND_HALF_EXTENTS_WIDTH, 0.0));
-        let br = transform.transform_point(&Point2::new(GROUND_HALF_EXTENTS_WIDTH, -GROUND_THICKNESS));
+        let br =
+            transform.transform_point(&Point2::new(GROUND_HALF_EXTENTS_WIDTH, -GROUND_THICKNESS));
 
         canvas.draw_rect(
             skia_safe::Rect {
                 left: tl.x,
                 top: tl.y,
                 right: br.x,
-                bottom: br.y
+                bottom: br.y,
             },
-            &paint
+            &paint,
         );
 
         let mut i = 0;
         for circle_body in &self.physics.circle_body_handles {
-            let position = self.physics.bodies.rigid_body(*circle_body).unwrap().position().translation;
+            let position = self
+                .physics
+                .bodies
+                .rigid_body(*circle_body)
+                .unwrap()
+                .position()
+                .translation;
             let p = transform.transform_point(&Point2::new(position.x, position.y));
             let paint = &self.circle_colors[i % self.circle_colors.len()];
 
             canvas.draw_circle(
-                skia_safe::Point::new(
-                    p.x,
-                    p.y
-                ),
+                skia_safe::Point::new(p.x, p.y),
                 BALL_RADIUS * VISUAL_SCALE,
-                paint
+                paint,
             );
 
             i += 1;
@@ -262,7 +267,8 @@ impl AppHandler for ExampleApp {
         //
         // Draw FPS text
         //
-        let mut text_paint = skia_safe::Paint::new(skia_safe::Color4f::new(1.0, 1.0, 0.0, 1.0), None);
+        let mut text_paint =
+            skia_safe::Paint::new(skia_safe::Color4f::new(1.0, 1.0, 0.0, 1.0), None);
         text_paint.set_anti_alias(true);
         text_paint.set_style(skia_safe::paint::Style::StrokeAndFill);
         text_paint.set_stroke_width(1.0);

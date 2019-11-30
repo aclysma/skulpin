@@ -1,4 +1,3 @@
-
 // This example shows how to use the renderer directly. This allows full control of winit
 // and the update loop
 
@@ -38,35 +37,29 @@ fn main() {
     // when important events happen.
     event_loop.run(move |event, _window_target, control_flow| {
         match event {
-
             //
             // Halt if the user requests to close the window
             //
             winit::event::Event::WindowEvent {
                 event: winit::event::WindowEvent::CloseRequested,
                 ..
-            } => {
-                *control_flow = winit::event_loop::ControlFlow::Exit
-            },
+            } => *control_flow = winit::event_loop::ControlFlow::Exit,
 
             //
             // Close if the escape key is hit
             //
             winit::event::Event::WindowEvent {
                 event:
-                winit::event::WindowEvent::KeyboardInput {
-                    input:
-                    winit::event::KeyboardInput {
-                        virtual_keycode:
-                        Some(winit::event::VirtualKeyCode::Escape),
+                    winit::event::WindowEvent::KeyboardInput {
+                        input:
+                            winit::event::KeyboardInput {
+                                virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
+                                ..
+                            },
                         ..
                     },
-                    ..
-                },
                 ..
-            } => {
-                *control_flow = winit::event_loop::ControlFlow::Exit
-            },
+            } => *control_flow = winit::event_loop::ControlFlow::Exit,
 
             //
             // Request a redraw any time we finish processing events
@@ -74,7 +67,7 @@ fn main() {
             winit::event::Event::EventsCleared => {
                 // Queue a RedrawRequested event.
                 window.request_redraw();
-            },
+            }
 
             //
             // Redraw
@@ -90,7 +83,7 @@ fn main() {
                     println!("Error during draw: {:?}", e);
                     *control_flow = winit::event_loop::ControlFlow::Exit
                 }
-            },
+            }
 
             //
             // Ignore all other events
@@ -103,7 +96,7 @@ fn main() {
 /// Called when winit passes us a WindowEvent::RedrawRequested
 fn draw(
     canvas: &mut skia_safe::Canvas,
-    frame_count: i32
+    frame_count: i32,
 ) {
     // Generally would want to clear data every time we draw
     canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
@@ -121,17 +114,14 @@ fn draw(
     canvas.draw_line(
         skia_safe::Point::new(100.0, 500.0),
         skia_safe::Point::new(800.0, 500.0),
-        &paint
+        &paint,
     );
 
     // Draw a circle
     canvas.draw_circle(
-        skia_safe::Point::new(
-            200.0 + (f * 500.0),
-            420.0
-        ),
+        skia_safe::Point::new(200.0 + (f * 500.0), 420.0),
         50.0,
-        &paint
+        &paint,
     );
 
     // Draw a rectangle
@@ -140,9 +130,9 @@ fn draw(
             left: 10.0,
             top: 10.0,
             right: 890.0,
-            bottom: 590.0
+            bottom: 590.0,
         },
-        &paint
+        &paint,
     );
 
     //TODO: draw_bitmap

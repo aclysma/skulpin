@@ -26,7 +26,10 @@ pub struct AlignIter<'a, T: 'a> {
 }
 
 impl<T: Copy> Align<T> {
-    pub fn copy_from_slice(&mut self, slice: &[T]) {
+    pub fn copy_from_slice(
+        &mut self,
+        slice: &[T],
+    ) {
         use std::slice::from_raw_parts_mut;
         if self.elem_size == size_of::<T>() as u64 {
             unsafe {
@@ -41,12 +44,19 @@ impl<T: Copy> Align<T> {
     }
 }
 
-fn calc_padding(adr: vk::DeviceSize, align: vk::DeviceSize) -> vk::DeviceSize {
+fn calc_padding(
+    adr: vk::DeviceSize,
+    align: vk::DeviceSize,
+) -> vk::DeviceSize {
     (align - adr % align) % align
 }
 
 impl<T> Align<T> {
-    pub unsafe fn new(ptr: *mut c_void, alignment: vk::DeviceSize, size: vk::DeviceSize) -> Self {
+    pub unsafe fn new(
+        ptr: *mut c_void,
+        alignment: vk::DeviceSize,
+        size: vk::DeviceSize,
+    ) -> Self {
         let padding = calc_padding(size_of::<T>() as vk::DeviceSize, alignment);
         let elem_size = size_of::<T>() as vk::DeviceSize + padding;
         assert!(calc_padding(size, alignment) == 0, "size must be aligned");

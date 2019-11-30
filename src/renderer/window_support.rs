@@ -11,10 +11,7 @@ use std::os::raw::c_void;
 
 #[cfg(all(unix, not(target_os = "android"), not(target_os = "macos")))]
 use ash::extensions::khr::XlibSurface;
-use ash::extensions::{
-    ext::DebugReport,
-    khr::Surface,
-};
+use ash::extensions::{ext::DebugReport, khr::Surface};
 
 #[cfg(target_os = "windows")]
 use ash::extensions::khr::Win32Surface;
@@ -30,9 +27,8 @@ use ash::vk;
 pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     entry: &E,
     instance: &I,
-    raw_window_handle: &raw_window_handle::RawWindowHandle
+    raw_window_handle: &raw_window_handle::RawWindowHandle,
 ) -> Result<vk::SurfaceKHR, vk::Result> {
-
     match raw_window_handle {
         raw_window_handle::RawWindowHandle::Xlib(window_handle) => {
             let x11_display = window_handle.display;
@@ -44,8 +40,8 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
 
             let xlib_surface_loader = XlibSurface::new(entry, instance);
             xlib_surface_loader.create_xlib_surface(&x11_create_info, None)
-        },
-        _ => unreachable!()
+        }
+        _ => unreachable!(),
     }
 }
 
@@ -53,9 +49,8 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
 pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     entry: &E,
     instance: &I,
-    raw_window_handle: &raw_window_handle::RawWindowHandle
+    raw_window_handle: &raw_window_handle::RawWindowHandle,
 ) -> Result<vk::SurfaceKHR, vk::Result> {
-
     match raw_window_handle {
         raw_window_handle::RawWindowHandle::MacOS(window_handle) => {
             use std::ptr;
@@ -71,7 +66,9 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
             let view = wnd.contentView();
 
             layer.set_contents_scale(view.backingScaleFactor());
-            view.setLayer(layer.as_ref() as *const metal::CoreAnimationLayerRef as *mut objc::runtime::Object);
+            view.setLayer(
+                layer.as_ref() as *const metal::CoreAnimationLayerRef as *mut objc::runtime::Object
+            );
             view.setWantsLayer(YES);
 
             let create_info = vk::MacOSSurfaceCreateInfoMVK {
@@ -83,24 +80,22 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
 
             let macos_surface_loader = MacOSSurface::new(entry, instance);
             macos_surface_loader.create_mac_os_surface_mvk(&create_info, None)
-        },
-        _ => unreachable!()
+        }
+        _ => unreachable!(),
     }
-
 }
 
 #[cfg(target_os = "windows")]
 pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     entry: &E,
     instance: &I,
-    raw_window_handle: &raw_window_handle::RawWindowHandle
+    raw_window_handle: &raw_window_handle::RawWindowHandle,
 ) -> Result<vk::SurfaceKHR, vk::Result> {
-    
     match raw_window_handle {
         raw_window_handle::RawWindowHandle::Windows(window_handle) => {
             let hwnd = window_handle.hwnd;
             let hinstance = window_handle.hinstance;
-                
+
             let win32_create_info = vk::Win32SurfaceCreateInfoKHR {
                 s_type: vk::StructureType::WIN32_SURFACE_CREATE_INFO_KHR,
                 p_next: std::ptr::null(),
@@ -108,11 +103,11 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
                 hinstance,
                 hwnd: hwnd as *const c_void,
             };
-            
+
             let win32_surface_loader = Win32Surface::new(entry, instance);
             win32_surface_loader.create_win32_surface(&win32_create_info, None)
-        },
-        _ => unreachable!()
+        }
+        _ => unreachable!(),
     }
 }
 

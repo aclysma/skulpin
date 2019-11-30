@@ -1,4 +1,3 @@
-
 use std::ffi::CString;
 
 use ash::version::DeviceV1_0;
@@ -32,17 +31,23 @@ impl RendererBuilder {
             present_mode_priority: vec![PresentMode::Fifo],
             physical_device_type_priority: vec![
                 PhysicalDeviceType::DiscreteGpu,
-                PhysicalDeviceType::IntegratedGpu
-            ]
+                PhysicalDeviceType::IntegratedGpu,
+            ],
         }
     }
 
-    pub fn app_name(mut self, app_name: CString) -> Self {
+    pub fn app_name(
+        mut self,
+        app_name: CString,
+    ) -> Self {
         self.app_name = app_name;
         self
     }
 
-    pub fn use_vulkan_debug_layer(self, use_vulkan_debug_layer: bool) -> RendererBuilder {
+    pub fn use_vulkan_debug_layer(
+        self,
+        use_vulkan_debug_layer: bool,
+    ) -> RendererBuilder {
         self.validation_layer_debug_report_flags(if use_vulkan_debug_layer {
             vk::DebugReportFlagsEXT::empty()
         } else {
@@ -50,17 +55,26 @@ impl RendererBuilder {
         })
     }
 
-    pub fn validation_layer_debug_report_flags(mut self, validation_layer_debug_report_flags: vk::DebugReportFlagsEXT) -> RendererBuilder {
+    pub fn validation_layer_debug_report_flags(
+        mut self,
+        validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
+    ) -> RendererBuilder {
         self.validation_layer_debug_report_flags = validation_layer_debug_report_flags;
         self
     }
 
-    pub fn present_mode_priority(mut self, present_mode_priority: Vec<PresentMode>) -> RendererBuilder {
+    pub fn present_mode_priority(
+        mut self,
+        present_mode_priority: Vec<PresentMode>,
+    ) -> RendererBuilder {
         self.present_mode_priority = present_mode_priority;
         self
     }
 
-    pub fn physical_device_type_priority(mut self, physical_device_type_priority: Vec<PhysicalDeviceType>) -> RendererBuilder {
+    pub fn physical_device_type_priority(
+        mut self,
+        physical_device_type_priority: Vec<PhysicalDeviceType>,
+    ) -> RendererBuilder {
         self.physical_device_type_priority = physical_device_type_priority;
         self
     }
@@ -68,37 +82,35 @@ impl RendererBuilder {
     pub fn prefer_integrated_gpu(self) -> RendererBuilder {
         self.physical_device_type_priority(vec![
             PhysicalDeviceType::IntegratedGpu,
-            PhysicalDeviceType::DiscreteGpu
+            PhysicalDeviceType::DiscreteGpu,
         ])
     }
 
     pub fn prefer_discrete_gpu(self) -> RendererBuilder {
         self.physical_device_type_priority(vec![
             PhysicalDeviceType::DiscreteGpu,
-            PhysicalDeviceType::IntegratedGpu
+            PhysicalDeviceType::IntegratedGpu,
         ])
     }
 
     pub fn prefer_fifo_present_mode(self) -> RendererBuilder {
-        self.present_mode_priority(vec![
-            PresentMode::Fifo
-        ])
+        self.present_mode_priority(vec![PresentMode::Fifo])
     }
 
-    pub fn prefer_mailbox_present_mode(self) -> RendererBuilder{
-        self.present_mode_priority(vec![
-            PresentMode::Mailbox,
-            PresentMode::Fifo
-        ])
+    pub fn prefer_mailbox_present_mode(self) -> RendererBuilder {
+        self.present_mode_priority(vec![PresentMode::Mailbox, PresentMode::Fifo])
     }
 
-    pub fn build(&self, window: &winit::window::Window) -> Result<Renderer, CreateRendererError> {
+    pub fn build(
+        &self,
+        window: &winit::window::Window,
+    ) -> Result<Renderer, CreateRendererError> {
         Renderer::new(
             &self.app_name,
             window,
             self.validation_layer_debug_report_flags,
             self.physical_device_type_priority.clone(),
-            self.present_mode_priority.clone()
+            self.present_mode_priority.clone(),
         )
     }
 }
@@ -115,29 +127,32 @@ pub struct Renderer {
     // Increase until > MAX_FRAMES_IN_FLIGHT, then set to 0, or -1 if no frame drawn yet
     sync_frame_index: usize,
 
-    present_mode_priority: Vec<PresentMode>
+    present_mode_priority: Vec<PresentMode>,
 }
 
 #[derive(Debug)]
 pub enum CreateRendererError {
     CreateInstanceError(CreateInstanceError),
-    VkError(vk::Result)
+    VkError(vk::Result),
 }
 
 impl std::error::Error for CreateRendererError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
             CreateRendererError::CreateInstanceError(ref e) => Some(e),
-            CreateRendererError::VkError(ref e) => Some(e)
+            CreateRendererError::VkError(ref e) => Some(e),
         }
     }
 }
 
 impl core::fmt::Display for CreateRendererError {
-    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+    fn fmt(
+        &self,
+        fmt: &mut core::fmt::Formatter,
+    ) -> core::fmt::Result {
         match *self {
             CreateRendererError::CreateInstanceError(ref e) => e.fmt(fmt),
-            CreateRendererError::VkError(ref e) => e.fmt(fmt)
+            CreateRendererError::VkError(ref e) => e.fmt(fmt),
         }
     }
 }
@@ -160,12 +175,25 @@ impl Renderer {
         window: &winit::window::Window,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
-        present_mode_priority: Vec<PresentMode>
+        present_mode_priority: Vec<PresentMode>,
     ) -> Result<Renderer, CreateRendererError> {
-        let instance = ManuallyDrop::new(VkInstance::new(app_name, validation_layer_debug_report_flags)?);
-        let device = ManuallyDrop::new(VkDevice::new(&instance, window, &physical_device_type_priority)?);
+        let instance = ManuallyDrop::new(VkInstance::new(
+            app_name,
+            validation_layer_debug_report_flags,
+        )?);
+        let device = ManuallyDrop::new(VkDevice::new(
+            &instance,
+            window,
+            &physical_device_type_priority,
+        )?);
         let mut skia_context = ManuallyDrop::new(VkSkiaContext::new(&instance, &device));
-        let swapchain = ManuallyDrop::new(VkSwapchain::new(&instance, &device, window, None, &present_mode_priority)?);
+        let swapchain = ManuallyDrop::new(VkSwapchain::new(
+            &instance,
+            &device,
+            window,
+            None,
+            &present_mode_priority,
+        )?);
         let pipeline = ManuallyDrop::new(VkPipeline::new(&device, &swapchain, &mut skia_context)?);
         let sync_frame_index = 0;
 
@@ -176,14 +204,14 @@ impl Renderer {
             swapchain,
             pipeline,
             sync_frame_index,
-            present_mode_priority
+            present_mode_priority,
         })
     }
 
-    pub fn draw<F : FnOnce(&mut skia_safe::Canvas)>(
+    pub fn draw<F: FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
         window: &winit::window::Window,
-        f: F
+        f: F,
     ) -> VkResult<()> {
         let result = self.do_draw(window, f);
         if let Err(e) = result {
@@ -194,30 +222,28 @@ impl Renderer {
                         ManuallyDrop::drop(&mut self.pipeline);
                     }
 
-                    let new_swapchain = ManuallyDrop::new(
-                        VkSwapchain::new(
-                            &self.instance,
-                            &self.device,
-                            window,
-                            Some(self.swapchain.swapchain),
-                            &self.present_mode_priority
-                        )?
-                    );
+                    let new_swapchain = ManuallyDrop::new(VkSwapchain::new(
+                        &self.instance,
+                        &self.device,
+                        window,
+                        Some(self.swapchain.swapchain),
+                        &self.present_mode_priority,
+                    )?);
 
                     unsafe {
                         ManuallyDrop::drop(&mut self.swapchain);
                     }
 
                     self.swapchain = new_swapchain;
-                    self.pipeline = ManuallyDrop::new(VkPipeline::new(&self.device, &self.swapchain, &mut self.skia_context)?);
+                    self.pipeline = ManuallyDrop::new(VkPipeline::new(
+                        &self.device,
+                        &self.swapchain,
+                        &mut self.skia_context,
+                    )?);
                     Ok(())
-                },
-                ash::vk::Result::SUCCESS => {
-                    Ok(())
-                },
-                ash::vk::Result::SUBOPTIMAL_KHR => {
-                    Ok(())
-                },
+                }
+                ash::vk::Result::SUCCESS => Ok(()),
+                ash::vk::Result::SUBOPTIMAL_KHR => Ok(()),
                 _ => {
                     warn!("Unexpected rendering error");
                     Err(e)
@@ -228,13 +254,11 @@ impl Renderer {
         }
     }
 
-    fn do_draw<F : FnOnce(&mut skia_safe::Canvas)>(
+    fn do_draw<F: FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
         window: &winit::window::Window,
-        f: F
-    )
-        -> VkResult<()>
-    {
+        f: F,
+    ) -> VkResult<()> {
         let frame_fence = self.swapchain.in_flight_fences[self.sync_frame_index];
 
         //TODO: Dont lock up forever (don't use std::u64::MAX)
@@ -244,19 +268,19 @@ impl Renderer {
 
         // Wait if two frame are already in flight
         unsafe {
-            self.device.logical_device.wait_for_fences(&[frame_fence], true, std::u64::MAX)?;
+            self.device
+                .logical_device
+                .wait_for_fences(&[frame_fence], true, std::u64::MAX)?;
             self.device.logical_device.reset_fences(&[frame_fence])?;
         }
 
         let (present_index, _is_suboptimal) = unsafe {
-            self.swapchain
-                .swapchain_loader
-                .acquire_next_image(
-                    self.swapchain.swapchain,
-                    std::u64::MAX,
-                    self.swapchain.image_available_semaphores[self.sync_frame_index],
-                    vk::Fence::null(),
-                )?
+            self.swapchain.swapchain_loader.acquire_next_image(
+                self.swapchain.swapchain,
+                std::u64::MAX,
+                self.swapchain.image_available_semaphores[self.sync_frame_index],
+                vk::Fence::null(),
+            )?
         };
 
         {
@@ -269,7 +293,8 @@ impl Renderer {
             let window_size = window.inner_size();
             let scale = (
                 (f64::from(self.swapchain.swapchain_info.extents.width) / window_size.width) as f32,
-                (f64::from(self.swapchain.swapchain_info.extents.height) / window_size.height) as f32
+                (f64::from(self.swapchain.swapchain_info.extents.height) / window_size.height)
+                    as f32,
             );
 
             canvas.reset_matrix();
@@ -287,18 +312,19 @@ impl Renderer {
         let command_buffers = [self.pipeline.command_buffers[present_index as usize]];
 
         //add fence to queue submit
-        let submit_info = [
-            vk::SubmitInfo::builder()
-                .wait_semaphores(&wait_semaphores)
-                .signal_semaphores(&signal_semaphores)
-                .wait_dst_stage_mask(&wait_dst_stage_mask)
-                .command_buffers(&command_buffers)
-                .build()
-        ];
+        let submit_info = [vk::SubmitInfo::builder()
+            .wait_semaphores(&wait_semaphores)
+            .signal_semaphores(&signal_semaphores)
+            .wait_dst_stage_mask(&wait_dst_stage_mask)
+            .command_buffers(&command_buffers)
+            .build()];
 
         unsafe {
-            self.device.logical_device
-                .queue_submit(self.device.queues.graphics_queue, &submit_info, frame_fence)?;
+            self.device.logical_device.queue_submit(
+                self.device.queues.graphics_queue,
+                &submit_info,
+                frame_fence,
+            )?;
         }
 
         let wait_semaphors = [self.swapchain.render_finished_semaphores[self.sync_frame_index]];
@@ -310,7 +336,8 @@ impl Renderer {
             .image_indices(&image_indices);
 
         unsafe {
-            self.swapchain.swapchain_loader
+            self.swapchain
+                .swapchain_loader
                 .queue_present(self.device.queues.present_queue, &present_info)?;
         }
 

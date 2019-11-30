@@ -26,4 +26,3 @@ pub use time_state::TimeContext;
 mod util;
 pub use util::PeriodicEvent;
 pub use util::ScopeTimer;
-

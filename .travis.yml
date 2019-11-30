@@ -6,6 +6,7 @@ rust:
   - nightly
 script:
   - cargo build --verbose --all
+  - cargo fmt --all -- --check
 os:
   - windows
   - osx

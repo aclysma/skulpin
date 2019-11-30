@@ -1,4 +1,3 @@
-
 use ash::vk;
 
 mod alignment;
@@ -44,7 +43,7 @@ pub enum PresentMode {
     Immediate = 0,
     Mailbox = 1,
     Fifo = 2,
-    FifoRelaxed = 3
+    FifoRelaxed = 3,
 }
 
 impl PresentMode {
@@ -65,9 +64,8 @@ pub enum PhysicalDeviceType {
     IntegratedGpu = 1,
     DiscreteGpu = 2,
     VirtualGpu = 3,
-    Cpu = 4
+    Cpu = 4,
 }
-
 
 impl PhysicalDeviceType {
     pub fn to_vk(self) -> vk::PhysicalDeviceType {

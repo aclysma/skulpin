@@ -19,7 +19,7 @@ pub struct VkInstance {
 pub enum CreateInstanceError {
     LoadingError(ash::LoadingError),
     InstanceError(ash::InstanceError),
-    VkError(vk::Result)
+    VkError(vk::Result),
 }
 
 impl std::error::Error for CreateInstanceError {
@@ -27,17 +27,20 @@ impl std::error::Error for CreateInstanceError {
         match *self {
             CreateInstanceError::LoadingError(ref e) => Some(e),
             CreateInstanceError::InstanceError(ref e) => Some(e),
-            CreateInstanceError::VkError(ref e) => Some(e)
+            CreateInstanceError::VkError(ref e) => Some(e),
         }
     }
 }
 
 impl core::fmt::Display for CreateInstanceError {
-    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+    fn fmt(
+        &self,
+        fmt: &mut core::fmt::Formatter,
+    ) -> core::fmt::Result {
         match *self {
             CreateInstanceError::LoadingError(ref e) => e.fmt(fmt),
             CreateInstanceError::InstanceError(ref e) => e.fmt(fmt),
-            CreateInstanceError::VkError(ref e) => e.fmt(fmt)
+            CreateInstanceError::VkError(ref e) => e.fmt(fmt),
         }
     }
 }
@@ -63,10 +66,9 @@ impl From<vk::Result> for CreateInstanceError {
 impl VkInstance {
     /// Creates a vulkan instance.
     pub fn new(
-        app_name: &CString, 
-        validation_layer_debug_report_flags: vk::DebugReportFlagsEXT
+        app_name: &CString,
+        validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
     ) -> Result<VkInstance, CreateInstanceError> {
-
         // This loads the dll/so if needed
         info!("Finding vulkan entry point");
         let entry = ash::Entry::new()?;
@@ -80,7 +82,7 @@ impl VkInstance {
                 let patch = ash::vk_version_patch!(version);
 
                 (major, minor, patch)
-            },
+            }
             // Vulkan 1.0
             None => (1, 0, 0),
         };
@@ -96,7 +98,7 @@ impl VkInstance {
         // Expected to be 1.1.0 or 1.0.0 depeneding on what we found in try_enumerate_instance_version
         // https://vulkan.lunarg.com/doc/view/1.1.70.1/windows/tutorial/html/16-vulkan_1_1_changes.html
         let api_version = ash::vk_make_version!(vulkan_version.0, vulkan_version.1, 0);
-        
+
         // Info that's exposed to the driver. In a real shipped product, this data might be used by
         // the driver to make specific adjustments to improve performance
         // https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkApplicationInfo.html
@@ -133,13 +135,15 @@ impl VkInstance {
             .enabled_extension_names(&extension_names_raw);
 
         info!("Creating vulkan instance");
-        let instance: ash::Instance = unsafe {
-            entry.create_instance(&create_info, None)?
-        };
+        let instance: ash::Instance = unsafe { entry.create_instance(&create_info, None)? };
 
         // Setup the debug callback for the validation layer
         let debug_reporter = if !validation_layer_debug_report_flags.is_empty() {
-            Some(Self::setup_vulkan_debug_callback(&entry, &instance, validation_layer_debug_report_flags)?)
+            Some(Self::setup_vulkan_debug_callback(
+                &entry,
+                &instance,
+                validation_layer_debug_report_flags,
+            )?)
         } else {
             None
         };
@@ -153,9 +157,9 @@ impl VkInstance {
 
     /// This is used to setup a debug callback for logging validation errors
     fn setup_vulkan_debug_callback(
-        entry: &ash::Entry, 
+        entry: &ash::Entry,
         instance: &ash::Instance,
-        debug_report_flags: vk::DebugReportFlagsEXT
+        debug_report_flags: vk::DebugReportFlagsEXT,
     ) -> VkResult<VkDebugReporter> {
         info!("Seting up vulkan debug callback");
         let debug_info = vk::DebugReportCallbackCreateInfoEXT::builder()
@@ -163,14 +167,12 @@ impl VkInstance {
             .pfn_callback(Some(debug_reporter::vulkan_debug_callback));
 
         let debug_report_loader = ash::extensions::ext::DebugReport::new(entry, instance);
-        let debug_callback = unsafe {
-            debug_report_loader
-                .create_debug_report_callback(&debug_info, None)?
-        };
+        let debug_callback =
+            unsafe { debug_report_loader.create_debug_report_callback(&debug_info, None)? };
 
         Ok(VkDebugReporter {
             debug_report_loader,
-            debug_callback
+            debug_callback,
         })
     }
 }
@@ -187,4 +189,3 @@ impl Drop for VkInstance {
         debug!("destroyed VkInstance");
     }
 }
-

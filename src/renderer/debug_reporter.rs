@@ -1,4 +1,3 @@
-
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_void};
 
@@ -20,7 +19,6 @@ pub unsafe extern "system" fn vulkan_debug_callback(
     p_message: *const c_char,
     _: *mut c_void,
 ) -> u32 {
-
     let msg = CStr::from_ptr(p_message);
     if flags.intersects(vk::DebugReportFlagsEXT::ERROR) {
         error!("{:?}", msg);

@@ -6,7 +6,7 @@ pub enum TimeContext {
     System,
 }
 
-const TIME_CONTEXT_COUNT : usize = TIMECONTEXT_COUNT;
+const TIME_CONTEXT_COUNT: usize = TIMECONTEXT_COUNT;
 
 const NANOS_PER_SEC: u32 = 1_000_000_000;
 
@@ -46,7 +46,10 @@ impl Default for TimeState {
 }
 
 impl TimeState {
-    pub fn update(&mut self, time_context: TimeContext) {
+    pub fn update(
+        &mut self,
+        time_context: TimeContext,
+    ) {
         // Cache the mode we are in this frame
         self.previous_time_context = time_context;
 
@@ -65,11 +68,11 @@ impl TimeState {
             self.time_context_states[time_context_index].update(mode_elapsed);
         }
 
-//        trace!(
-//            "fps: {:.1}  dt: {:.2}ms",
-//            self.time_context_states[0].fps,
-//            self.time_context_states[0].previous_frame_dt * 1000.0
-//        );
+        //        trace!(
+        //            "fps: {:.1}  dt: {:.2}ms",
+        //            self.time_context_states[0].fps,
+        //            self.time_context_states[0].previous_frame_dt * 1000.0
+        //        );
 
         if self.time_context_states[0].previous_frame_dt > 1.0 / 30.0 {
             //warn!("slow frame (dt: {:.2}ms)", dt);
@@ -116,7 +119,10 @@ impl ModeTimeState {
         }
     }
 
-    pub fn update(&mut self, elapsed: std::time::Duration) {
+    pub fn update(
+        &mut self,
+        elapsed: std::time::Duration,
+    ) {
         self.total_time += elapsed;
         self.frame_start_instant += elapsed;
         self.previous_frame_time = elapsed;
