@@ -4,6 +4,8 @@ rust:
   - stable
   - beta
   - nightly
+before_script:
+  - rustup component add rustfmt
 script:
   - cargo build --verbose --all
   - cargo fmt --all -- --check
