@@ -23,6 +23,7 @@ use ash::vk;
 //
 // Code for creating surfaces
 //
+#[allow(clippy::missing_safety_doc)]
 #[cfg(all(unix, not(target_os = "android"), not(target_os = "macos")))]
 pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     entry: &E,
@@ -45,6 +46,7 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     }
 }
 
+#[allow(clippy::missing_safety_doc)]
 #[cfg(target_os = "macos")]
 pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     entry: &E,
@@ -85,6 +87,7 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     }
 }
 
+#[allow(clippy::missing_safety_doc)]
 #[cfg(target_os = "windows")]
 pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
     entry: &E,

@@ -9,7 +9,7 @@ use ash::vk;
 //
 // Callback for vulkan validation layer logging
 //
-pub unsafe extern "system" fn vulkan_debug_callback(
+pub extern "system" fn vulkan_debug_callback(
     flags: vk::DebugReportFlagsEXT,
     _: vk::DebugReportObjectTypeEXT,
     _: u64,
@@ -19,7 +19,7 @@ pub unsafe extern "system" fn vulkan_debug_callback(
     p_message: *const c_char,
     _: *mut c_void,
 ) -> u32 {
-    let msg = CStr::from_ptr(p_message);
+    let msg = unsafe { CStr::from_ptr(p_message) };
     if flags.intersects(vk::DebugReportFlagsEXT::ERROR) {
         error!("{:?}", msg);
     } else if flags.intersects(vk::DebugReportFlagsEXT::WARNING) {
