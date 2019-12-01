@@ -1,15 +1,56 @@
 language: rust
-rust:
-  - 1.36.0
-  - stable
-  - beta
-  - nightly
 before_script:
   - rustup component add rustfmt
 script:
   - cargo build --verbose --all
-  - cargo fmt --all -- --check
-os:
-  - windows
-  - osx
-  - linux
+  - if [ $SKIP_FORMAT_CHECK = 0 ]; then cargo fmt --all -- --check; fi
+matrix:
+  include:
+    - name: "Windows 1.36.0"
+      rust: 1.36.0
+      os: windows
+      env: SKIP_FORMAT_CHECK=1
+    - name: "OSX 1.36.0"
+      rust: 1.36.0
+      os: osx
+      env: SKIP_FORMAT_CHECK=1
+    - name: "Linux 1.36.0"
+      rust: 1.36.0
+      os: linux
+      env: SKIP_FORMAT_CHECK=1
+    - name: "Windows Stable"
+      rust: stable
+      os: windows
+      env: SKIP_FORMAT_CHECK=0
+    - name: "OSX Stable"
+      rust: stable
+      os: osx
+      env: SKIP_FORMAT_CHECK=0
+    - name: "Linux Stable"
+      rust: stable
+      os: linux
+      env: SKIP_FORMAT_CHECK=0
+    - name: "Windows Beta"
+      rust: beta
+      os: windows
+      env: SKIP_FORMAT_CHECK=0
+    - name: "OSX Beta"
+      rust: beta
+      os: osx
+      env: SKIP_FORMAT_CHECK=0
+    - name: "Linux Beta"
+      rust: beta
+      os: linux
+      env: SKIP_FORMAT_CHECK=0
+    - name: "Windows Nightly"
+      rust: nightly
+      os: windows
+      env: SKIP_FORMAT_CHECK=0
+    - name: "OSX Nightly"
+      rust: nightly
+      os: osx
+      env: SKIP_FORMAT_CHECK=0
+    - name: "Linux Nightly"
+      rust: nightly
+      os: linux
+      env: SKIP_FORMAT_CHECK=0
