@@ -7,8 +7,6 @@ use metal::CoreAnimationLayer;
 #[cfg(target_os = "macos")]
 use objc::runtime::YES;
 
-use std::os::raw::c_void;
-
 #[cfg(all(unix, not(target_os = "android"), not(target_os = "macos")))]
 use ash::extensions::khr::XlibSurface;
 use ash::extensions::{ext::DebugReport, khr::Surface};
@@ -77,7 +75,7 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
                 s_type: vk::StructureType::MACOS_SURFACE_CREATE_INFO_M,
                 p_next: ptr::null(),
                 flags: Default::default(),
-                p_view: window_handle.ns_view as *const c_void,
+                p_view: window_handle.ns_view as *const std::os::raw::c_void,
             };
 
             let macos_surface_loader = MacOSSurface::new(entry, instance);
@@ -104,7 +102,7 @@ pub unsafe fn create_surface<E: EntryV1_0, I: InstanceV1_0>(
                 p_next: std::ptr::null(),
                 flags: Default::default(),
                 hinstance,
-                hwnd: hwnd as *const c_void,
+                hwnd: hwnd as *const std::os::raw::c_void,
             };
 
             let win32_surface_loader = Win32Surface::new(entry, instance);

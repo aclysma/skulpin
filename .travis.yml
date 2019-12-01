@@ -1,7 +1,7 @@
 language: rust
 before_script:
-  - rustup component add rustfmt
-  - rustup component add clippy
+  - if [ $SKIP_FORMAT_CHECK = 0 ]; then rustup component add rustfmt; fi
+  - if [ $SKIP_CLIPPY = 0 ]; then rustup component add clippy; fi
 script:
   - cargo build --verbose --all
   - if [ $SKIP_FORMAT_CHECK = 0 ]; then cargo fmt --all -- --check; fi
