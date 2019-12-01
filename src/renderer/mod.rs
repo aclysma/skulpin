@@ -33,6 +33,7 @@ pub use buffer::VkBuffer;
 mod debug_reporter;
 pub use debug_reporter::VkDebugReporter;
 
+#[allow(clippy::module_inception)]
 mod renderer;
 pub use renderer::RendererBuilder;
 pub use renderer::Renderer;

@@ -107,6 +107,7 @@ impl VkSwapchain {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn create_swapchain(
         instance: &ash::Instance,
         physical_device: ash::vk::PhysicalDevice,

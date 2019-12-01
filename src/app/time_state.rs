@@ -30,8 +30,9 @@ pub struct TimeState {
     time_context_states: [ModeTimeState; TIME_CONTEXT_COUNT],
 }
 
-impl Default for TimeState {
-    fn default() -> TimeState {
+impl TimeState {
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> TimeState {
         let now_instant = time::Instant::now();
         let now_system_time = time::SystemTime::now();
 
@@ -43,9 +44,7 @@ impl Default for TimeState {
             time_context_states: [ModeTimeState::new(); TIME_CONTEXT_COUNT],
         }
     }
-}
 
-impl TimeState {
     pub fn update(
         &mut self,
         time_context: TimeContext,
@@ -66,16 +65,6 @@ impl TimeState {
             };
 
             self.time_context_states[time_context_index].update(mode_elapsed);
-        }
-
-        //        trace!(
-        //            "fps: {:.1}  dt: {:.2}ms",
-        //            self.time_context_states[0].fps,
-        //            self.time_context_states[0].previous_frame_dt * 1000.0
-        //        );
-
-        if self.time_context_states[0].previous_frame_dt > 1.0 / 30.0 {
-            //warn!("slow frame (dt: {:.2}ms)", dt);
         }
     }
 
@@ -105,6 +94,7 @@ pub struct ModeTimeState {
 }
 
 impl ModeTimeState {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let now_instant = time::Instant::now();
         let zero_duration = time::Duration::from_secs(0);

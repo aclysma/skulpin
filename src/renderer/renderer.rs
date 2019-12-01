@@ -16,6 +16,7 @@ use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
 
+#[derive(Default)]
 pub struct RendererBuilder {
     app_name: CString,
     validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,

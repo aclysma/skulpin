@@ -32,6 +32,12 @@ pub struct AppBuilder {
     renderer_builder: RendererBuilder,
 }
 
+impl Default for AppBuilder {
+    fn default() -> Self {
+        AppBuilder::new()
+    }
+}
+
 impl AppBuilder {
     pub fn new() -> Self {
         AppBuilder {
@@ -134,7 +140,7 @@ impl App {
             .build(&event_loop)?;
 
         let mut app_control = AppControl::default();
-        let mut time_state = TimeState::default();
+        let mut time_state = TimeState::new();
         let mut input_state = InputState::new(&window);
 
         let mut renderer = renderer_builder.build(&window)?;

@@ -597,6 +597,7 @@ impl VkPipeline {
         Ok(descriptor_sets)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn record_command_buffer(
         logical_device: &ash::Device,
         swapchain_info: &SwapchainInfo,
