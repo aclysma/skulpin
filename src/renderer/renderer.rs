@@ -15,6 +15,7 @@ use super::VkPipeline;
 use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
+use winit::dpi::LogicalSize;
 
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
@@ -170,6 +171,8 @@ pub struct Renderer {
     sync_frame_index: usize,
 
     present_mode_priority: Vec<PresentMode>,
+
+    previous_inner_size: LogicalSize,
 }
 
 /// Represents an error from creating the renderer
@@ -241,6 +244,8 @@ impl Renderer {
         let pipeline = ManuallyDrop::new(VkPipeline::new(&device, &swapchain, &mut skia_context)?);
         let sync_frame_index = 0;
 
+        let previous_inner_size = window.inner_size();
+
         Ok(Renderer {
             instance,
             device,
@@ -249,6 +254,7 @@ impl Renderer {
             pipeline,
             sync_frame_index,
             present_mode_priority,
+            previous_inner_size,
         })
     }
 
@@ -259,35 +265,15 @@ impl Renderer {
         window: &winit::window::Window,
         f: F,
     ) -> VkResult<()> {
+        if window.inner_size() != self.previous_inner_size {
+            debug!("Detected window inner size change, rebuilding swapchain");
+            self.rebuild_swapchain(window)?;
+        }
+
         let result = self.do_draw(window, f);
         if let Err(e) = result {
             match e {
-                ash::vk::Result::ERROR_OUT_OF_DATE_KHR => {
-                    unsafe {
-                        self.device.logical_device.device_wait_idle()?;
-                        ManuallyDrop::drop(&mut self.pipeline);
-                    }
-
-                    let new_swapchain = ManuallyDrop::new(VkSwapchain::new(
-                        &self.instance,
-                        &self.device,
-                        window,
-                        Some(self.swapchain.swapchain),
-                        &self.present_mode_priority,
-                    )?);
-
-                    unsafe {
-                        ManuallyDrop::drop(&mut self.swapchain);
-                    }
-
-                    self.swapchain = new_swapchain;
-                    self.pipeline = ManuallyDrop::new(VkPipeline::new(
-                        &self.device,
-                        &self.swapchain,
-                        &mut self.skia_context,
-                    )?);
-                    Ok(())
-                }
+                ash::vk::Result::ERROR_OUT_OF_DATE_KHR => self.rebuild_swapchain(window),
                 ash::vk::Result::SUCCESS => Ok(()),
                 ash::vk::Result::SUBOPTIMAL_KHR => Ok(()),
                 _ => {
@@ -298,6 +284,39 @@ impl Renderer {
         } else {
             Ok(())
         }
+    }
+
+    fn rebuild_swapchain(
+        &mut self,
+        window: &winit::window::Window,
+    ) -> VkResult<()> {
+        unsafe {
+            self.device.logical_device.device_wait_idle()?;
+            ManuallyDrop::drop(&mut self.pipeline);
+        }
+
+        let new_swapchain = ManuallyDrop::new(VkSwapchain::new(
+            &self.instance,
+            &self.device,
+            window,
+            Some(self.swapchain.swapchain),
+            &self.present_mode_priority,
+        )?);
+
+        unsafe {
+            ManuallyDrop::drop(&mut self.swapchain);
+        }
+
+        self.swapchain = new_swapchain;
+        self.pipeline = ManuallyDrop::new(VkPipeline::new(
+            &self.device,
+            &self.swapchain,
+            &mut self.skia_context,
+        )?);
+
+        self.previous_inner_size = window.inner_size();
+
+        Ok(())
     }
 
     /// Do the render
