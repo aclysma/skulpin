@@ -6,9 +6,7 @@ use ash::extensions::ext::DebugReport;
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
 
-//
-// Callback for vulkan validation layer logging
-//
+/// Callback for vulkan validation layer logging
 pub extern "system" fn vulkan_debug_callback(
     flags: vk::DebugReportFlagsEXT,
     _: vk::DebugReportObjectTypeEXT,
@@ -35,6 +33,7 @@ pub extern "system" fn vulkan_debug_callback(
     vk::FALSE
 }
 
+/// Handles dropping vulkan debug reporting
 pub struct VkDebugReporter {
     pub debug_report_loader: DebugReport,
     pub debug_callback: vk::DebugReportCallbackEXT,

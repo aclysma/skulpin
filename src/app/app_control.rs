@@ -1,3 +1,6 @@
+//! Serves as the interface for an app implementation to affect the behavior of the app that's
+//! hosting it
+
 /// State that drives high-level decision making for the app
 #[derive(Default)]
 pub struct AppControl {

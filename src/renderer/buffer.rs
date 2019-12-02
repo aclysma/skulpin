@@ -6,6 +6,7 @@ use ash::prelude::VkResult;
 
 use ash::version::DeviceV1_0;
 
+/// Represents a vulkan buffer (vertex, index, image, etc.)
 pub struct VkBuffer {
     pub device: ash::Device, // This struct is not responsible for releasing this
     pub buffer: vk::Buffer,

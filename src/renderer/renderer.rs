@@ -16,6 +16,8 @@ use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
 
+/// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
+/// initializing the renderer and maintaining the window yourself allows for more customization
 #[derive(Default)]
 pub struct RendererBuilder {
     app_name: CString,
@@ -25,6 +27,7 @@ pub struct RendererBuilder {
 }
 
 impl RendererBuilder {
+    /// Construct the renderer builder with default options
     pub fn new() -> Self {
         RendererBuilder {
             app_name: CString::new("Skulpin").unwrap(),
@@ -37,6 +40,9 @@ impl RendererBuilder {
         }
     }
 
+    /// Name of the app. This is passed into the vulkan layer. I believe it can hint things to the
+    /// vulkan driver, but it's unlikely this makes a real difference. Still a good idea to set this
+    /// to something meaningful though.
     pub fn app_name(
         mut self,
         app_name: CString,
@@ -45,6 +51,9 @@ impl RendererBuilder {
         self
     }
 
+    /// If true, initialize the vulkan debug layers. This will require the vulkan SDK to be
+    /// installed and the app will fail to launch if it isn't. This turns on ALL logging. For
+    /// more control, see `validation_layer_debug_report_flags()`
     pub fn use_vulkan_debug_layer(
         self,
         use_vulkan_debug_layer: bool,
@@ -56,6 +65,9 @@ impl RendererBuilder {
         })
     }
 
+    /// Sets the desired debug layer flags. If any flag is set, the vulkan debug layers will be
+    /// loaded, which requires the Vulkan SDK to be installed. The app will fail to launch if it
+    /// isn't.
     pub fn validation_layer_debug_report_flags(
         mut self,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
@@ -64,6 +76,15 @@ impl RendererBuilder {
         self
     }
 
+    /// Specify which PresentMode is preferred. Some of this is hardware/platform dependent and
+    /// it's a good idea to read the Vulkan spec. You
+    ///
+    /// `present_mode_priority` should be a list of desired present modes, in descending order of
+    /// preference. In other words, passing `[Mailbox, Fifo]` will direct Skulpin to use mailbox
+    /// where available, but otherwise use `Fifo`.
+    ///
+    /// Since `Fifo` is always available, this is the mode that will be chosen if no desired mode is
+    /// available.
     pub fn present_mode_priority(
         mut self,
         present_mode_priority: Vec<PresentMode>,
@@ -72,6 +93,17 @@ impl RendererBuilder {
         self
     }
 
+    /// Specify which type of physical device is preferred. It's recommended to read the Vulkan spec
+    /// to understand precisely what these types mean
+    ///
+    /// `physical_device_type_priority` should be a list of desired present modes, in descending
+    /// order of preference. In other words, passing `[Discrete, Integrated]` will direct Skulpin to
+    /// use the discrete GPU where available, otherwise integrated.
+    ///
+    /// If the desired device type can't be found, Skulpin will try to use whatever device is
+    /// available. By default `Discrete` is favored, then `Integrated`, then anything that's
+    /// available. It could make sense to favor `Integrated` over `Discrete` when minimizing
+    /// power consumption is important. (Although I haven't tested this myself)
     pub fn physical_device_type_priority(
         mut self,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
@@ -80,6 +112,7 @@ impl RendererBuilder {
         self
     }
 
+    /// Easy shortcut to set device type priority to `Integrated`, then `Discrete`, then any.
     pub fn prefer_integrated_gpu(self) -> RendererBuilder {
         self.physical_device_type_priority(vec![
             PhysicalDeviceType::IntegratedGpu,
@@ -87,6 +120,8 @@ impl RendererBuilder {
         ])
     }
 
+    /// Easy shortcut to set device type priority to `Discrete`, then `Integrated`, than any.
+    /// (This is the default behavior)
     pub fn prefer_discrete_gpu(self) -> RendererBuilder {
         self.physical_device_type_priority(vec![
             PhysicalDeviceType::DiscreteGpu,
@@ -94,14 +129,18 @@ impl RendererBuilder {
         ])
     }
 
+    /// Prefer using `Fifo` presentation mode. This presentation mode is always available on a
+    /// device that complies with the vulkan spec.
     pub fn prefer_fifo_present_mode(self) -> RendererBuilder {
         self.present_mode_priority(vec![PresentMode::Fifo])
     }
 
+    /// Prefer using `Mailbox` presentation mode, and fall back to `Fifo` when not available.
     pub fn prefer_mailbox_present_mode(self) -> RendererBuilder {
         self.present_mode_priority(vec![PresentMode::Mailbox, PresentMode::Fifo])
     }
 
+    /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
         &self,
         window: &winit::window::Window,
@@ -116,6 +155,8 @@ impl RendererBuilder {
     }
 }
 
+/// Vulkan renderer that creates and manages the vulkan instance, device, swapchain, and
+/// render passes.
 pub struct Renderer {
     instance: ManuallyDrop<VkInstance>,
     device: ManuallyDrop<VkDevice>,
@@ -131,6 +172,7 @@ pub struct Renderer {
     present_mode_priority: Vec<PresentMode>,
 }
 
+/// Represents an error from creating the renderer
 #[derive(Debug)]
 pub enum CreateRendererError {
     CreateInstanceError(CreateInstanceError),
@@ -171,6 +213,7 @@ impl From<vk::Result> for CreateRendererError {
 }
 
 impl Renderer {
+    /// Create the renderer
     pub fn new(
         app_name: &CString,
         window: &winit::window::Window,
@@ -209,6 +252,8 @@ impl Renderer {
         })
     }
 
+    /// Call to render a frame. This can block for certain presentation modes. This will rebuild
+    /// the swapchain if necessary.
     pub fn draw<F: FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
         window: &winit::window::Window,
@@ -255,6 +300,7 @@ impl Renderer {
         }
     }
 
+    /// Do the render
     fn do_draw<F: FnOnce(&mut skia_safe::Canvas)>(
         &mut self,
         window: &winit::window::Window,

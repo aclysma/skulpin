@@ -3,6 +3,7 @@ use ash::vk;
 use ash::prelude::VkResult;
 use ash::version::DeviceV1_0;
 
+/// Find a memory type index that meets the requirements
 pub fn find_memorytype_index(
     memory_req: &vk::MemoryRequirements,
     memory_prop: &vk::PhysicalDeviceMemoryProperties,
@@ -21,6 +22,7 @@ pub fn find_memorytype_index(
     None
 }
 
+/// Loads a shader into a buffer
 pub fn read_spv<R: io::Read + io::Seek>(x: &mut R) -> io::Result<Vec<u32>> {
     let size = x.seek(io::SeekFrom::End(0))?;
     if size % 4 != 0 {
@@ -57,6 +59,7 @@ pub fn read_spv<R: io::Read + io::Seek>(x: &mut R) -> io::Result<Vec<u32>> {
     Ok(result)
 }
 
+/// Fires off a command buffer and then waits for the device to be idle
 pub fn submit_single_use_command_buffer<F: Fn(vk::CommandBuffer)>(
     logical_device: &ash::Device,
     queue: vk::Queue,

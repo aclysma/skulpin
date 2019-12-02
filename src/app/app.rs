@@ -1,3 +1,5 @@
+//! Contains the main types a user needs to interact with to configure and run a skulpin app
+
 use super::app_control::AppControl;
 use super::input_state::InputState;
 use super::time_state::TimeState;
@@ -10,7 +12,17 @@ use crate::renderer::PresentMode;
 use crate::renderer::PhysicalDeviceType;
 use winit::dpi::LogicalSize;
 
+/// A skulpin app requires implementing the AppHandler. A separate update and draw call must be
+/// implemented.
+///
+/// `update` is called when winit provides a `winit::event::Event::EventsCleared` message
+///
+/// `draw` is called when winit provides a `winit::event::WindowEvent::RedrawRequested` message
+///
+/// I would recommend putting general logic you always want to run in the `update` and just
+/// rendering code in the `draw`.
 pub trait AppHandler {
+    /// Called frequently, this is the intended place to put non-rendering logic
     fn update(
         &mut self,
         app_control: &mut AppControl,
@@ -18,6 +30,7 @@ pub trait AppHandler {
         time_state: &TimeState,
     );
 
+    /// Called frequently, this is the intended place to put drawing code
     fn draw(
         &mut self,
         app_control: &AppControl,
@@ -27,6 +40,7 @@ pub trait AppHandler {
     );
 }
 
+/// Used to configure the app behavior and create the app
 pub struct AppBuilder {
     logical_size: LogicalSize,
     renderer_builder: RendererBuilder,
@@ -39,6 +53,7 @@ impl Default for AppBuilder {
 }
 
 impl AppBuilder {
+    /// Construct the app builder initialized with default options
     pub fn new() -> Self {
         AppBuilder {
             logical_size: LogicalSize::new(900.0, 600.0),
@@ -46,6 +61,9 @@ impl AppBuilder {
         }
     }
 
+    /// Specifies the logical size of the window. The physical size of the window will depend on
+    /// dpi settings. For example, a 500x300 window on a 2x dpi screen could be 1000x600 in
+    /// physical pixel size
     pub fn logical_size(
         mut self,
         logical_size: LogicalSize,
@@ -54,6 +72,9 @@ impl AppBuilder {
         self
     }
 
+    /// Name of the app. This is passed into the vulkan layer. I believe it can hint things to the
+    /// vulkan driver, but it's unlikely this makes a real difference. Still a good idea to set this
+    /// to something meaningful though.
     pub fn app_name(
         mut self,
         app_name: CString,
@@ -62,6 +83,9 @@ impl AppBuilder {
         self
     }
 
+    /// If true, initialize the vulkan debug layers. This will require the vulkan SDK to be
+    /// installed and the app will fail to launch if it isn't. This turns on ALL logging. For
+    /// more control, see `validation_layer_debug_report_flags()`
     pub fn use_vulkan_debug_layer(
         mut self,
         use_vulkan_debug_layer: bool,
@@ -72,6 +96,28 @@ impl AppBuilder {
         self
     }
 
+    /// Sets the desired debug layer flags. If any flag is set, the vulkan debug layers will be
+    /// loaded, which requires the Vulkan SDK to be installed. The app will fail to launch if it
+    /// isn't.
+    pub fn validation_layer_debug_report_flags(
+        mut self,
+        validation_layer_debug_report_flags: ash::vk::DebugReportFlagsEXT,
+    ) -> Self {
+        self.renderer_builder = self
+            .renderer_builder
+            .validation_layer_debug_report_flags(validation_layer_debug_report_flags);
+        self
+    }
+
+    /// Specify which PresentMode is preferred. Some of this is hardware/platform dependent and
+    /// it's a good idea to read the Vulkan spec. You
+    ///
+    /// `present_mode_priority` should be a list of desired present modes, in descending order of
+    /// preference. In other words, passing `[Mailbox, Fifo]` will direct Skulpin to use mailbox
+    /// where available, but otherwise use `Fifo`.
+    ///
+    /// Since `Fifo` is always available, this is the mode that will be chosen if no desired mode is
+    /// available.
     pub fn present_mode_priority(
         mut self,
         present_mode_priority: Vec<PresentMode>,
@@ -82,6 +128,17 @@ impl AppBuilder {
         self
     }
 
+    /// Specify which type of physical device is preferred. It's recommended to read the Vulkan spec
+    /// to understand precisely what these types mean
+    ///
+    /// `physical_device_type_priority` should be a list of desired present modes, in descending
+    /// order of preference. In other words, passing `[Discrete, Integrated]` will direct Skulpin to
+    /// use the discrete GPU where available, otherwise integrated.
+    ///
+    /// If the desired device type can't be found, Skulpin will try to use whatever device is
+    /// available. By default `Discrete` is favored, then `Integrated`, then anything that's
+    /// available. It could make sense to favor `Integrated` over `Discrete` when minimizing
+    /// power consumption is important. (Although I haven't tested this myself)
     pub fn physical_device_type_priority(
         mut self,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
@@ -92,26 +149,33 @@ impl AppBuilder {
         self
     }
 
+    /// Easy shortcut to set device type priority to `Integrated`, then `Discrete`, then any.
     pub fn prefer_integrated_gpu(mut self) -> Self {
         self.renderer_builder = self.renderer_builder.prefer_integrated_gpu();
         self
     }
 
+    /// Easy shortcut to set device type priority to `Discrete`, then `Integrated`, than any.
+    /// (This is the default behavior)
     pub fn prefer_discrete_gpu(mut self) -> Self {
         self.renderer_builder = self.renderer_builder.prefer_discrete_gpu();
         self
     }
 
+    /// Prefer using `Fifo` presentation mode. This presentation mode is always available on a
+    /// device that complies with the vulkan spec.
     pub fn prefer_fifo_present_mode(mut self) -> Self {
         self.renderer_builder = self.renderer_builder.prefer_fifo_present_mode();
         self
     }
 
+    /// Prefer using `Mailbox` presentation mode, and fall back to `Fifo` when not available.
     pub fn prefer_mailbox_present_mode(mut self) -> Self {
         self.renderer_builder = self.renderer_builder.prefer_mailbox_present_mode();
         self
     }
 
+    /// Start the app. `app_handler` must be an implementation of [skulpin::app::AppHandler].
     pub fn run<T: 'static + AppHandler>(
         &self,
         app_handler: T,
@@ -120,9 +184,11 @@ impl AppBuilder {
     }
 }
 
+/// Constructed by `AppBuilder` which immediately calls `run`.
 pub struct App {}
 
 impl App {
+    /// Runs the app. This is called by `AppBuilder::run`
     //TODO: Since winit returns !, we should just take a callback here for handling errors instead
     // of returning
     pub fn run<T: 'static + AppHandler>(

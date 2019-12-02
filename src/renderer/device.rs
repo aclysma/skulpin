@@ -26,6 +26,8 @@ pub struct Queues {
     pub present_queue: ash::vk::Queue,
 }
 
+/// Represents the surface/physical device/logical device. Most of the code here has to do with
+/// picking a good device that's compatible with the window we're given.
 pub struct VkDevice {
     pub surface: ash::vk::SurfaceKHR,
     pub surface_loader: ash::extensions::khr::Surface,

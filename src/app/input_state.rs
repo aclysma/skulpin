@@ -1,3 +1,7 @@
+//! Handles input tracking and provides an easy way to detect clicks, dragging, etc.
+
+//TODO: Remove the "went" from method/member names
+
 // Re-export winit types
 pub use winit::event::VirtualKeyCode;
 pub use winit::event::MouseButton;
@@ -10,20 +14,23 @@ pub use winit::dpi::PhysicalPosition;
 use super::AppControl;
 use winit::window::Window;
 
-impl InputState {
-    pub const KEYBOARD_BUTTON_COUNT: usize = 255;
-    pub const MOUSE_BUTTON_COUNT: usize = 7;
-    const MIN_DRAG_DISTANCE: f64 = 2.0;
-}
-
+/// Encapsulates the state of a mouse drag
 #[derive(Copy, Clone, Debug)]
 pub struct MouseDragState {
+    /// Logical position where the drag began
     pub begin_position: LogicalPosition,
+
+    /// Logical position where the drag ended
     pub end_position: LogicalPosition,
+
+    /// Amount of mouse movement in the previous frame
     pub previous_frame_delta: LogicalPosition,
+
+    /// Amount of mouse movement in total
     pub accumulated_frame_delta: LogicalPosition,
 }
 
+/// State of input devices. This is maintained by processing events from winit
 pub struct InputState {
     window_size: LogicalSize,
     dpi_factor: f64,
@@ -47,6 +54,20 @@ pub struct InputState {
 }
 
 impl InputState {
+    /// Number of keyboard buttons we will track. Any button with a higher virtual key code will be
+    /// ignored
+    pub const KEYBOARD_BUTTON_COUNT: usize = 255;
+
+    /// Number of mouse buttons we will track. Any button with a higher index will be ignored.
+    pub const MOUSE_BUTTON_COUNT: usize = 7;
+
+    /// Distance in LogicalPosition units that the mouse has to be dragged to be considered a drag
+    /// rather than a click
+    const MIN_DRAG_DISTANCE: f64 = 2.0;
+}
+
+impl InputState {
+    /// Create a new input state to track the given window
     pub fn new(window: &Window) -> InputState {
         InputState {
             window_size: window.inner_size(),
@@ -69,14 +90,18 @@ impl InputState {
     //
     // Accessors
     //
+
+    /// Current size of window
     pub fn window_size(&self) -> LogicalSize {
         self.window_size
     }
 
+    /// The scaling factor due to high-dpi screens
     pub fn dpi_factor(&self) -> f64 {
         self.dpi_factor
     }
 
+    /// Returns true if the given key is down
     pub fn is_key_down(
         &self,
         key: VirtualKeyCode,
@@ -88,6 +113,7 @@ impl InputState {
         }
     }
 
+    /// Returns true if the key went down during this frame
     pub fn is_key_just_down(
         &self,
         key: VirtualKeyCode,
@@ -99,6 +125,7 @@ impl InputState {
         }
     }
 
+    /// Returns true if the key went up during this frame
     pub fn is_key_just_up(
         &self,
         key: VirtualKeyCode,
@@ -110,10 +137,12 @@ impl InputState {
         }
     }
 
+    /// Get the current mouse position
     pub fn mouse_position(&self) -> LogicalPosition {
         self.mouse_position
     }
 
+    /// Returns true if the given button is down
     pub fn is_mouse_down(
         &self,
         mouse_button: MouseButton,
@@ -125,6 +154,7 @@ impl InputState {
         }
     }
 
+    /// Returns true if the button went down during this frame
     pub fn is_mouse_just_down(
         &self,
         mouse_button: MouseButton,
@@ -136,6 +166,7 @@ impl InputState {
         }
     }
 
+    /// Returns the position the mouse just went down at, otherwise returns None
     pub fn mouse_just_down_position(
         &self,
         mouse_button: MouseButton,
@@ -147,6 +178,7 @@ impl InputState {
         }
     }
 
+    /// Returns true if the button went up during this frame
     pub fn is_mouse_just_up(
         &self,
         mouse_button: MouseButton,
@@ -158,6 +190,7 @@ impl InputState {
         }
     }
 
+    /// Returns the position the mouse just went up at, otherwise returns None
     pub fn mouse_just_up_position(
         &self,
         mouse_button: MouseButton,
@@ -169,6 +202,8 @@ impl InputState {
         }
     }
 
+    /// Returns true if the button was just clicked. "Clicked" means the button went down and came
+    /// back up without being moved much. If it was moved, it would be considered a drag.
     pub fn is_mouse_button_just_clicked(
         &self,
         mouse_button: MouseButton,
@@ -180,6 +215,9 @@ impl InputState {
         }
     }
 
+    /// Returns the position the button was just clicked at, otherwise None. "Clicked" means the
+    /// button went down and came back up without being moved much. If it was moved, it would be
+    /// considered a drag.
     pub fn mouse_button_just_clicked_position(
         &self,
         mouse_button: MouseButton,
@@ -191,6 +229,7 @@ impl InputState {
         }
     }
 
+    /// Returns the position the button went down at previously. This could have been some time ago.
     pub fn mouse_button_went_down_position(
         &self,
         mouse_button: MouseButton,
@@ -202,6 +241,7 @@ impl InputState {
         }
     }
 
+    /// Returns the position the button went up at previously. This could have been some time ago.
     pub fn mouse_button_went_up_position(
         &self,
         mouse_button: MouseButton,
@@ -213,6 +253,8 @@ impl InputState {
         }
     }
 
+    /// Return true if the mouse is being dragged. (A drag means the button went down and mouse
+    /// moved, but button hasn't come back up yet)
     pub fn is_mouse_drag_in_progress(
         &self,
         mouse_button: MouseButton,
@@ -224,6 +266,7 @@ impl InputState {
         }
     }
 
+    /// Returns the mouse drag state if a drag is in process, otherwise None.
     pub fn mouse_drag_in_progress(
         &self,
         mouse_button: MouseButton,
@@ -235,6 +278,7 @@ impl InputState {
         }
     }
 
+    /// Return true if a mouse drag completed in the previous frame, otherwise false
     pub fn is_mouse_drag_just_finished(
         &self,
         mouse_button: MouseButton,
@@ -246,6 +290,7 @@ impl InputState {
         }
     }
 
+    /// Returns information about a mouse drag if it just completed, otherwise None
     pub fn mouse_drag_just_finished(
         &self,
         mouse_button: MouseButton,
@@ -260,6 +305,8 @@ impl InputState {
     //
     // Handlers for significant events
     //
+
+    /// Call at the end of every frame. This clears events that were "just" completed.
     pub fn end_frame(&mut self) {
         for value in self.key_just_down.iter_mut() {
             *value = false;
@@ -292,21 +339,24 @@ impl InputState {
         }
     }
 
-    pub fn handle_hidpi_factor_changed(
+    /// Call when DPI factor changes
+    fn handle_hidpi_factor_changed(
         &mut self,
         dpi_factor: f64,
     ) {
         self.dpi_factor = dpi_factor;
     }
 
-    pub fn handle_window_size_changed(
+    /// Call when window size changes
+    fn handle_window_size_changed(
         &mut self,
         window_size: LogicalSize,
     ) {
         self.window_size = window_size;
     }
 
-    pub fn handle_keyboard_event(
+    /// Call when a key event occurs
+    fn handle_keyboard_event(
         &mut self,
         keyboard_button: VirtualKeyCode,
         button_state: ElementState,
@@ -327,7 +377,8 @@ impl InputState {
         }
     }
 
-    pub fn handle_mouse_button_event(
+    /// Call when a mouse button event occurs
+    fn handle_mouse_button_event(
         &mut self,
         button: MouseButton,
         button_event: ElementState,
@@ -379,7 +430,8 @@ impl InputState {
         }
     }
 
-    pub fn handle_mouse_move_event(
+    /// Call when a mouse move occurs
+    fn handle_mouse_move_event(
         &mut self,
         position: LogicalPosition,
     ) {
@@ -447,6 +499,7 @@ impl InputState {
         }
     }
 
+    /// Call when winit sends an event
     pub fn handle_winit_event<T>(
         &mut self,
         app_control: &mut AppControl,
@@ -541,6 +594,8 @@ impl InputState {
     //
     // Helper functions
     //
+
+    /// Convert the winit mouse button enum into a numerical index
     fn mouse_button_to_index(button: MouseButton) -> Option<usize> {
         let index = match button {
             MouseButton::Left => 0,
@@ -556,6 +611,7 @@ impl InputState {
         }
     }
 
+    /// Convert the winit virtual key code into a numerical index
     fn keyboard_button_to_index(button: VirtualKeyCode) -> Option<usize> {
         let index = button as usize;
         if index >= Self::KEYBOARD_BUTTON_COUNT {
@@ -565,6 +621,7 @@ impl InputState {
         }
     }
 
+    /// Adds two logical positions (p0 + p1)
     fn add(
         p0: LogicalPosition,
         p1: LogicalPosition,
@@ -572,6 +629,7 @@ impl InputState {
         LogicalPosition::new(p0.x + p1.x, p0.y + p1.y)
     }
 
+    /// Subtracts two logical positions (p0 - p1)
     fn subtract(
         p0: LogicalPosition,
         p1: LogicalPosition,
@@ -579,6 +637,7 @@ impl InputState {
         LogicalPosition::new(p0.x - p1.x, p0.y - p1.y)
     }
 
+    /// Gets the distance between two logical positions
     fn distance(
         p0: LogicalPosition,
         p1: LogicalPosition,

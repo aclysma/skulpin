@@ -14,6 +14,8 @@ use super::QueueFamilyIndices;
 use crate::renderer::VkBuffer;
 use crate::renderer::skia_support::{VkSkiaContext, VkSkiaSurface};
 
+//TODO: Rename to SkiaRenderpass
+
 #[derive(Clone, Debug, Copy)]
 struct Vertex {
     pos: [f32; 2],
@@ -57,6 +59,7 @@ struct PipelineResources {
     pipeline: vk::Pipeline,
 }
 
+/// Handles the skia renderpass
 pub struct VkPipeline {
     pub device: ash::Device, // This struct is not responsible for releasing this
     pub descriptor_set_layout: vk::DescriptorSetLayout,

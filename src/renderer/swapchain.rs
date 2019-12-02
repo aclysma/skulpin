@@ -18,6 +18,7 @@ pub struct SwapchainInfo {
     pub image_count: usize,
 }
 
+/// Handles setting up the swapchain resources required to present
 pub struct VkSwapchain {
     pub device: ash::Device, // VkDevice is responsible for cleaning this up
 

@@ -1,9 +1,13 @@
+//! Handy utilities
+
+/// Records time when created and logs amount of time passed when dropped
 pub struct ScopeTimer<'a> {
     start_time: std::time::Instant,
     name: &'a str,
 }
 
 impl<'a> ScopeTimer<'a> {
+    /// Records the current time. When dropped, the amount of time passed will be logged.
     #[allow(unused_must_use)]
     pub fn new(name: &'a str) -> Self {
         ScopeTimer {
@@ -24,12 +28,15 @@ impl<'a> Drop for ScopeTimer<'a> {
     }
 }
 
+/// Useful for cases where you want to do something once per time interval.
 #[derive(Default)]
 pub struct PeriodicEvent {
     last_time_triggered: Option<std::time::Instant>,
 }
 
 impl PeriodicEvent {
+    /// Call try_take_event to see if the required time has elapsed. It will return true only once
+    /// enough time has passed since it last returned true.
     pub fn try_take_event(
         &mut self,
         current_time: std::time::Instant,

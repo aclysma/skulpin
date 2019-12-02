@@ -10,6 +10,7 @@ use ash::version::EntryV1_0;
 use ash::version::DeviceV1_0;
 use ash::version::InstanceV1_0;
 
+/// Handles setting up skia to use the same vulkan instance we initialize
 pub struct VkSkiaContext {
     pub context: skia_safe::gpu::Context,
 }
@@ -73,6 +74,7 @@ impl VkSkiaContext {
     }
 }
 
+/// Wraps a skia surface/canvas that can be drawn on and makes the vulkan resources accessible
 pub struct VkSkiaSurface {
     pub device: ash::Device, // VkDevice is responsible for cleaning this up
 

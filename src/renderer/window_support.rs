@@ -1,3 +1,5 @@
+//! OS-specific code required to get a surface for our swapchain
+
 #[cfg(target_os = "macos")]
 use cocoa::appkit::{NSView, NSWindow};
 #[cfg(target_os = "macos")]
