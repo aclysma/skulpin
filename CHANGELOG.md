@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.3
+ * Allow configuring PresentMode, PhysicalDeviceType, and vulkan debug layer
+ * Swapchain is explicitly rebuilt when the window is resized
+ * Improve error handling (more errors are passed up the chain rather than unwrapped)
+
 ## 0.2.2
  * Initialize Vulkan to be the highest version that's available. This avoids triggering some validation code in Skia
    (#13, #14, #21)

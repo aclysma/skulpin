@@ -29,13 +29,19 @@ Don't forget to install the prerequisites below appropriate to your platform! (S
 
 ## Running the Examples
 
-First, ensure that the below requirements are met depending on OS. Afterwards, the examples can be run normally:
-
-`cargo run --example interactive`
-`cargo run --example physics`
+First, ensure that the below requirements are met depending on OS. Afterwards, the examples can be run normally.
 
 The [interactive](examples/interactive.rs) example is good to look at for an easy way to get keyboard/mouse input.
+
+`cargo run --example interactive`
+
 The [physics](examples/physics.rs) demo is fun too.
+
+`cargo run --example physics`
+
+Here's a video of the physics and interactive examples.
+
+[![IMAGE ALT TEXT](http://img.youtube.com/vi/El99FgGSzfg/0.jpg)](https://www.youtube.com/watch?v=El99FgGSzfg "Video of Skulpin")
 
 ## Documentation
 
