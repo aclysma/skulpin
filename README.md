@@ -89,6 +89,35 @@ Internally, the skia surface will match the swapchain size, but this size is not
 PhysicalSize of the window. In order to produce consistently-sized results, the renderer will apply a scaling factor to
 the skia canvas before handing it off to your draw implementation. 
 
+## Important configuration choices
+
+There are two main choices you should consider when configuring how your app runs
+ * Presentation Mode - You'll likely either want Fifo (default) or Mailbox
+   - `Fifo` (`VK_PRESENT_MODE_FIFO_KHR`) is the default behavior and is always present on devices that fully comply to 
+     spec. This will be VSync,shouldn't ever screen tear, and will generally run at display refresh rate.
+   - `Mailbox` (`VK_PRESENT_MODE_MAILBOX_KHR`) will render as quickly as possible. The frames are queued and the latest 
+     complete frame will be drawn. Other frames will be dropped. This rendering method will produce the lowest latency, 
+     but is not always available, and could be an unnecessary drain on battery life for laptops and mobile devices.
+   - See `prefer_fifo_present_mode`/`prefer_mailbox_present_mode` for a simple way to choose between the two recommended 
+     options or `present_mode_priority` for full control.
+   - For full details see documentation for `PresentMode` and the Vulkan spec.
+ * Device Type - The most common device types will be Dedicated or Integrated. By default, a Dedicated device is chosen
+   when available.
+   - `Discrete` (`VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU`) - When available, this is likely to be the device with best
+     performance
+   - `Integrated` (`VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU`) - This will generally be more power efficient that a
+     Discrete GPU.
+   - I suspect the most likely case of having both would be a laptop with a discrete GPU. I would expect that
+     favoring the integrated GPU would be better for battery life, at the cost of some performance. However I don't have
+     a suitable device to test this.
+   - See `prefer_integrated_gpu`/`prefer_discrete_gpu` for a simple way to choose between the two recommended options or
+     `physical_device_type_priority` for full control
+   - For full details see documentation for `PhysicalDeviceType` and the Vulkan spec.
+ * Vulkan Debug Layer - Debug logging is fully enabled by default
+   - `use_vulkan_debug_layer` turns all logging on/off
+   - `validation_layer_debug_report_flags` allows choosing specific log levels
+   - If the Vulkan SDK is not installed, the app will fail to start if any vulkan debugging is enabled
+
 ## License
 
 Licensed under either of
