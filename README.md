@@ -15,14 +15,15 @@ This crate mainly depends on:
  * [skia-safe](https://github.com/rust-skia/rust-skia) - [Skia](https://skia.org) bindings for Rust
  * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling
  
+NOTE: See [skia-bindings](https://crates.io/crates/skia-bindings) for more info on how a skia binary acquired. In many
+cases, this crate will download a binary created by their project's CI.
+ 
 ## Usage
 
 Currently there are two ways to use this library.
  * [app](examples/skulpin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
  * [renderer_only](examples/renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to 
    draw to it.
- 
-The [interactive](examples/interactive.rs) example is good to look at for an easy way to get keyboard/mouse input.
 
 Don't forget to install the prerequisites below appropriate to your platform! (See "Requirements")
 
@@ -31,6 +32,17 @@ Don't forget to install the prerequisites below appropriate to your platform! (S
 First, ensure that the below requirements are met depending on OS. Afterwards, the examples can be run normally:
 
 `cargo run --example interactive`
+`cargo run --example physics`
+
+The [interactive](examples/interactive.rs) example is good to look at for an easy way to get keyboard/mouse input.
+The [physics](examples/physics.rs) demo is fun too.
+
+## Documentation
+
+Documentation fails to build on docs.rs because the skia_safe crate requires an internet connection to build. (It will
+either grab skia source code, or grab a prebuilt binary.) So the best way to view docs is to build them yourself:
+
+`cargo doc -p skulpin --open`
 
 ## Requirements
 
