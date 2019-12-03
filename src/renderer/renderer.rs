@@ -15,7 +15,9 @@ use super::VkPipeline;
 use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
+use super::CoordinateSystemHelper;
 use winit::dpi::LogicalSize;
+use crate::CoordinateSystem;
 
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
@@ -25,6 +27,7 @@ pub struct RendererBuilder {
     validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
     present_mode_priority: Vec<PresentMode>,
     physical_device_type_priority: Vec<PhysicalDeviceType>,
+    coordinate_system: CoordinateSystem,
 }
 
 impl RendererBuilder {
@@ -38,6 +41,7 @@ impl RendererBuilder {
                 PhysicalDeviceType::DiscreteGpu,
                 PhysicalDeviceType::IntegratedGpu,
             ],
+            coordinate_system: Default::default(),
         }
     }
 
@@ -58,7 +62,7 @@ impl RendererBuilder {
     pub fn use_vulkan_debug_layer(
         self,
         use_vulkan_debug_layer: bool,
-    ) -> RendererBuilder {
+    ) -> Self {
         self.validation_layer_debug_report_flags(if use_vulkan_debug_layer {
             vk::DebugReportFlagsEXT::empty()
         } else {
@@ -72,8 +76,18 @@ impl RendererBuilder {
     pub fn validation_layer_debug_report_flags(
         mut self,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
-    ) -> RendererBuilder {
+    ) -> Self {
         self.validation_layer_debug_report_flags = validation_layer_debug_report_flags;
+        self
+    }
+
+    /// Determine the coordinate system to use for the canvas. This can be overridden by using the
+    /// canvas sizer passed into the draw callback
+    pub fn coordinate_system(
+        mut self,
+        coordinate_system: CoordinateSystem,
+    ) -> Self {
+        self.coordinate_system = coordinate_system;
         self
     }
 
@@ -89,7 +103,7 @@ impl RendererBuilder {
     pub fn present_mode_priority(
         mut self,
         present_mode_priority: Vec<PresentMode>,
-    ) -> RendererBuilder {
+    ) -> Self {
         self.present_mode_priority = present_mode_priority;
         self
     }
@@ -108,13 +122,13 @@ impl RendererBuilder {
     pub fn physical_device_type_priority(
         mut self,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
-    ) -> RendererBuilder {
+    ) -> Self {
         self.physical_device_type_priority = physical_device_type_priority;
         self
     }
 
     /// Easy shortcut to set device type priority to `Integrated`, then `Discrete`, then any.
-    pub fn prefer_integrated_gpu(self) -> RendererBuilder {
+    pub fn prefer_integrated_gpu(self) -> Self {
         self.physical_device_type_priority(vec![
             PhysicalDeviceType::IntegratedGpu,
             PhysicalDeviceType::DiscreteGpu,
@@ -123,7 +137,7 @@ impl RendererBuilder {
 
     /// Easy shortcut to set device type priority to `Discrete`, then `Integrated`, than any.
     /// (This is the default behavior)
-    pub fn prefer_discrete_gpu(self) -> RendererBuilder {
+    pub fn prefer_discrete_gpu(self) -> Self {
         self.physical_device_type_priority(vec![
             PhysicalDeviceType::DiscreteGpu,
             PhysicalDeviceType::IntegratedGpu,
@@ -132,12 +146,12 @@ impl RendererBuilder {
 
     /// Prefer using `Fifo` presentation mode. This presentation mode is always available on a
     /// device that complies with the vulkan spec.
-    pub fn prefer_fifo_present_mode(self) -> RendererBuilder {
+    pub fn prefer_fifo_present_mode(self) -> Self {
         self.present_mode_priority(vec![PresentMode::Fifo])
     }
 
     /// Prefer using `Mailbox` presentation mode, and fall back to `Fifo` when not available.
-    pub fn prefer_mailbox_present_mode(self) -> RendererBuilder {
+    pub fn prefer_mailbox_present_mode(self) -> Self {
         self.present_mode_priority(vec![PresentMode::Mailbox, PresentMode::Fifo])
     }
 
@@ -152,6 +166,7 @@ impl RendererBuilder {
             self.validation_layer_debug_report_flags,
             self.physical_device_type_priority.clone(),
             self.present_mode_priority.clone(),
+            self.coordinate_system,
         )
     }
 }
@@ -173,6 +188,8 @@ pub struct Renderer {
     present_mode_priority: Vec<PresentMode>,
 
     previous_inner_size: LogicalSize,
+
+    coordinate_system: CoordinateSystem,
 }
 
 /// Represents an error from creating the renderer
@@ -223,6 +240,7 @@ impl Renderer {
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
         present_mode_priority: Vec<PresentMode>,
+        coordinate_system: CoordinateSystem,
     ) -> Result<Renderer, CreateRendererError> {
         let instance = ManuallyDrop::new(VkInstance::new(
             app_name,
@@ -255,12 +273,13 @@ impl Renderer {
             sync_frame_index,
             present_mode_priority,
             previous_inner_size,
+            coordinate_system,
         })
     }
 
     /// Call to render a frame. This can block for certain presentation modes. This will rebuild
     /// the swapchain if necessary.
-    pub fn draw<F: FnOnce(&mut skia_safe::Canvas)>(
+    pub fn draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
         &mut self,
         window: &winit::window::Window,
         f: F,
@@ -320,7 +339,7 @@ impl Renderer {
     }
 
     /// Do the render
-    fn do_draw<F: FnOnce(&mut skia_safe::Canvas)>(
+    fn do_draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
         &mut self,
         window: &winit::window::Window,
         f: F,
@@ -353,20 +372,35 @@ impl Renderer {
             let surface = self.pipeline.skia_surface(present_index as usize);
             let mut canvas = surface.surface.canvas();
 
-            // To handle hi-dpi displays, we need to compare the logical size of the window with the
-            // actual canvas size. Critically, the canvas size won't necessarily be the size of the
-            // window in physical pixels.
-            let window_size = window.inner_size();
-            let scale = (
-                (f64::from(self.swapchain.swapchain_info.extents.width) / window_size.width) as f32,
-                (f64::from(self.swapchain.swapchain_info.extents.height) / window_size.height)
-                    as f32,
+            let surface_extents = self.swapchain.swapchain_info.extents;
+            let window_logical_size = window.inner_size();
+            let hidpi_factor = window.hidpi_factor();
+            let window_physical_size = window_logical_size.to_physical(hidpi_factor);
+
+            let coordinate_system_helper = CoordinateSystemHelper::new(
+                surface_extents,
+                window_logical_size,
+                window_physical_size,
+                hidpi_factor,
             );
 
-            canvas.reset_matrix();
-            canvas.scale(scale);
+            match self.coordinate_system {
+                CoordinateSystem::None => {}
+                CoordinateSystem::Physical => {
+                    coordinate_system_helper.use_physical_coordinates(&mut canvas)
+                }
+                CoordinateSystem::Logical => {
+                    coordinate_system_helper.use_logical_coordinates(&mut canvas)
+                }
+                CoordinateSystem::VisibleRange(range, scale_to_fit) => coordinate_system_helper
+                    .use_visible_range(&mut canvas, range, scale_to_fit)
+                    .unwrap(),
+                CoordinateSystem::FixedWidth(center, x_half_extents) => coordinate_system_helper
+                    .use_fixed_width(&mut canvas, center, x_half_extents)
+                    .unwrap(),
+            }
 
-            f(&mut canvas);
+            f(&mut canvas, &coordinate_system_helper);
 
             canvas.flush();
         }

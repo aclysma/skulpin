@@ -1,6 +1,7 @@
 // This example shows a bit more interaction with mouse input
 
 use skulpin::AppHandler;
+use skulpin::CoordinateSystemHelper;
 use skulpin::AppControl;
 use skulpin::InputState;
 use skulpin::TimeState;
@@ -113,6 +114,7 @@ impl AppHandler for ExampleApp {
         input_state: &InputState,
         time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
+        _coordinate_system_helper: &CoordinateSystemHelper,
     ) {
         let now = time_state.system().frame_start_instant;
 

@@ -3,6 +3,7 @@
 extern crate nalgebra as na;
 
 use skulpin::AppHandler;
+use skulpin::CoordinateSystemHelper;
 use skulpin::AppControl;
 use skulpin::InputState;
 use skulpin::TimeState;
@@ -12,7 +13,7 @@ use skulpin::LogicalSize;
 use std::ffi::CString;
 
 // Used for physics
-use na::{Point2, Vector2};
+use na::Vector2;
 use ncollide2d::shape::{Cuboid, ShapeHandle, Ball};
 use nphysics2d::object::{
     ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle,
@@ -25,7 +26,6 @@ use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 const GROUND_THICKNESS: f32 = 0.2;
 const GROUND_HALF_EXTENTS_WIDTH: f32 = 3.0;
 const BALL_RADIUS: f32 = 0.2;
-const VISUAL_SCALE: f32 = 100.0;
 const GRAVITY: f32 = -9.81;
 const BALL_COUNT: usize = 5;
 
@@ -153,7 +153,7 @@ impl ExampleApp {
             let mut paint = skia_safe::Paint::new(color, None);
             paint.set_anti_alias(true);
             paint.set_style(skia_safe::paint::Style::Stroke);
-            paint.set_stroke_width(2.0);
+            paint.set_stroke_width(0.02);
             paint
         }
 
@@ -214,7 +214,26 @@ impl AppHandler for ExampleApp {
         _input_state: &InputState,
         _time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
+        coordinate_system_helper: &CoordinateSystemHelper,
     ) {
+        let x_half_extents = GROUND_HALF_EXTENTS_WIDTH * 1.5;
+        let y_half_extents = x_half_extents
+            / (coordinate_system_helper.surface_extents().width as f32
+                / coordinate_system_helper.surface_extents().height as f32);
+
+        coordinate_system_helper
+            .use_visible_range(
+                canvas,
+                skia_safe::Rect {
+                    left: -x_half_extents,
+                    right: x_half_extents,
+                    top: y_half_extents + 1.0,
+                    bottom: -y_half_extents + 1.0,
+                },
+                skia_safe::matrix::ScaleToFit::Center,
+            )
+            .unwrap();
+
         // Generally would want to clear data every time we draw
         canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
 
@@ -222,23 +241,14 @@ impl AppHandler for ExampleApp {
         let mut paint = skia_safe::Paint::new(skia_safe::Color4f::new(0.0, 1.0, 0.0, 1.0), None);
         paint.set_anti_alias(true);
         paint.set_style(skia_safe::paint::Style::Stroke);
-        paint.set_stroke_width(2.0);
-
-        // nphysics uses SI units and skulpin uses pixels (for now), so apply a transform
-        // Ideally there would be a way to configure skulpin to allow an arbitrary coordinate system (#24)
-        let transform = na::Matrix3::new_translation(&Vector2::new(450.0, 500.0))
-            * na::Matrix3::new_nonuniform_scaling(&Vector2::new(VISUAL_SCALE, -VISUAL_SCALE));
-
-        let tl = transform.transform_point(&Point2::new(-GROUND_HALF_EXTENTS_WIDTH, 0.0));
-        let br =
-            transform.transform_point(&Point2::new(GROUND_HALF_EXTENTS_WIDTH, -GROUND_THICKNESS));
+        paint.set_stroke_width(0.02);
 
         canvas.draw_rect(
             skia_safe::Rect {
-                left: tl.x,
-                top: tl.y,
-                right: br.x,
-                bottom: br.y,
+                left: -GROUND_HALF_EXTENTS_WIDTH,
+                top: 0.0,
+                right: GROUND_HALF_EXTENTS_WIDTH,
+                bottom: -GROUND_THICKNESS,
             },
             &paint,
         );
@@ -252,17 +262,19 @@ impl AppHandler for ExampleApp {
                 .unwrap()
                 .position()
                 .translation;
-            let p = transform.transform_point(&Point2::new(position.x, position.y));
+
             let paint = &self.circle_colors[i % self.circle_colors.len()];
 
             canvas.draw_circle(
-                skia_safe::Point::new(p.x, p.y),
-                BALL_RADIUS * VISUAL_SCALE,
+                skia_safe::Point::new(position.x, position.y),
+                BALL_RADIUS,
                 paint,
             );
 
             i += 1;
         }
+
+        coordinate_system_helper.use_logical_coordinates(canvas);
 
         //
         // Draw FPS text

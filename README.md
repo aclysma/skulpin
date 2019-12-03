@@ -97,7 +97,13 @@ the skia canvas before handing it off to your draw implementation.
 
 ## Important configuration choices
 
-There are two main choices you should consider when configuring how your app runs
+There are a few primary choices you should consider when configuring how your app runs
+ * Coordinate System - This library can be configured to use a few different coordinate systems.
+   - `Logical` - Use logical coordinates, which are pixels with a factor applied to count for high resolution displays
+   - `Physical` - Use raw pixels for coordinates
+   - `VisibleRange` - Try to fit the given range to the window
+   - `FixedWidth` - Use the given X extents and aspect ratio to calculate Y extents
+   - `None` - Do not modify the canvas matrix
  * Presentation Mode - You'll likely either want Fifo (default) or Mailbox
    - `Fifo` (`VK_PRESENT_MODE_FIFO_KHR`) is the default behavior and is always present on devices that fully comply to 
      spec. This will be VSync,shouldn't ever screen tear, and will generally run at display refresh rate.

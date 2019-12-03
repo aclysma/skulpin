@@ -1,6 +1,8 @@
 // This example shows how to use the renderer directly. This allows full control of winit
 // and the update loop
 
+use skulpin::CoordinateSystemHelper;
+
 fn main() {
     // Setup logging
     env_logger::Builder::from_default_env()
@@ -76,8 +78,8 @@ fn main() {
                 event: winit::event::WindowEvent::RedrawRequested,
                 ..
             } => {
-                if let Err(e) = renderer.draw(&window, |canvas| {
-                    draw(canvas, frame_count);
+                if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
+                    draw(canvas, coordinate_system_helper, frame_count);
                     frame_count += 1;
                 }) {
                     println!("Error during draw: {:?}", e);
@@ -96,6 +98,7 @@ fn main() {
 /// Called when winit passes us a WindowEvent::RedrawRequested
 fn draw(
     canvas: &mut skia_safe::Canvas,
+    _coordinate_system_helper: &CoordinateSystemHelper,
     frame_count: i32,
 ) {
     // Generally would want to clear data every time we draw

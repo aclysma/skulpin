@@ -7,7 +7,7 @@ use ash::version::DeviceV1_0;
 use super::VkInstance;
 use super::VkDevice;
 use super::QueueFamilyIndices;
-use crate::renderer::PresentMode;
+use crate::PresentMode;
 
 pub const MAX_FRAMES_IN_FLIGHT: usize = 2;
 

@@ -10,7 +10,7 @@ use std::ffi::CStr;
 
 //use ash::extensions::ext as ash_ext;
 use ash::extensions::khr;
-use crate::renderer::PhysicalDeviceType;
+use crate::PhysicalDeviceType;
 
 /// Has the indexes for all the queue families we will need. It's possible a single family
 /// is used for both graphics and presentation, in which case the index will be the same

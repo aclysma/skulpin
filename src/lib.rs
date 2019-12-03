@@ -50,6 +50,8 @@ pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::PresentMode;
 pub use renderer::PhysicalDeviceType;
+pub use renderer::CoordinateSystemHelper;
+pub use renderer::CoordinateSystem;
 
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;

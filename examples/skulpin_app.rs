@@ -2,6 +2,7 @@
 // It's not as flexible as working with winit directly, but it's quick and simple
 
 use skulpin::AppHandler;
+use skulpin::CoordinateSystemHelper;
 use skulpin::AppControl;
 use skulpin::InputState;
 use skulpin::TimeState;
@@ -51,6 +52,7 @@ impl AppHandler for ExampleApp {
         _input_state: &InputState,
         time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
+        _coordinate_system_helper: &CoordinateSystemHelper,
     ) {
         // Generally would want to clear data every time we draw
         canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));

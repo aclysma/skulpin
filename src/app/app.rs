@@ -7,10 +7,13 @@ use super::time_state::TimeContext;
 use super::util::PeriodicEvent;
 use std::ffi::CString;
 
-use crate::RendererBuilder;
-use crate::renderer::PresentMode;
-use crate::renderer::PhysicalDeviceType;
 use winit::dpi::LogicalSize;
+
+use crate::RendererBuilder;
+use crate::CoordinateSystem;
+use crate::CoordinateSystemHelper;
+use crate::PresentMode;
+use crate::PhysicalDeviceType;
 
 /// A skulpin app requires implementing the AppHandler. A separate update and draw call must be
 /// implemented.
@@ -37,6 +40,7 @@ pub trait AppHandler {
         input_state: &InputState,
         time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
+        coordinate_system_helper: &CoordinateSystemHelper,
     );
 }
 
@@ -106,6 +110,16 @@ impl AppBuilder {
         self.renderer_builder = self
             .renderer_builder
             .validation_layer_debug_report_flags(validation_layer_debug_report_flags);
+        self
+    }
+
+    /// Determine the coordinate system to use for the canvas. This can be overridden by using the
+    /// canvas sizer passed into the draw callback
+    pub fn coordinate_system(
+        mut self,
+        coordinate_system: CoordinateSystem,
+    ) -> Self {
+        self.renderer_builder = self.renderer_builder.coordinate_system(coordinate_system);
         self
     }
 
@@ -242,8 +256,14 @@ impl App {
                     event: winit::event::WindowEvent::RedrawRequested,
                     ..
                 } => {
-                    if let Err(e) = renderer.draw(&window, |canvas| {
-                        app_handler.draw(&app_control, &input_state, &time_state, canvas);
+                    if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
+                        app_handler.draw(
+                            &app_control,
+                            &input_state,
+                            &time_state,
+                            canvas,
+                            coordinate_system_helper,
+                        );
                     }) {
                         //TODO: Handle Error
                         warn!("{:?}", e);
