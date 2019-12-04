@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+ * Added support for selecting from among several coordinate systems, and mechanism for turning this off.
+ * Error handling is now done via a new callback on AppHandler `fatal_error()`. The app will no longer return, which
+   mirrors `winit` functionality
+ * Simplification to `TimeState`
+ * Removed dependency on several crates (`num-traits`, `strum`)
+ * Some internal types used in rendering code were renamed to have a Vk prefix
+
 ## 0.2.3
  * Allow configuring PresentMode, PhysicalDeviceType, and vulkan debug layer
  * Swapchain is explicitly rebuilt when the window is resized
