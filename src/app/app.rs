@@ -10,10 +10,60 @@ use std::ffi::CString;
 use winit::dpi::LogicalSize;
 
 use crate::RendererBuilder;
+use crate::CreateRendererError;
 use crate::CoordinateSystem;
 use crate::CoordinateSystemHelper;
 use crate::PresentMode;
 use crate::PhysicalDeviceType;
+
+/// Represents an error from creating the renderer
+#[derive(Debug)]
+pub enum AppError {
+    CreateRendererError(CreateRendererError),
+    VkError(ash::vk::Result),
+    WinitError(winit::error::OsError),
+}
+
+impl std::error::Error for AppError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match *self {
+            AppError::CreateRendererError(ref e) => Some(e),
+            AppError::VkError(ref e) => Some(e),
+            AppError::WinitError(ref e) => Some(e),
+        }
+    }
+}
+
+impl core::fmt::Display for AppError {
+    fn fmt(
+        &self,
+        fmt: &mut core::fmt::Formatter,
+    ) -> core::fmt::Result {
+        match *self {
+            AppError::CreateRendererError(ref e) => e.fmt(fmt),
+            AppError::VkError(ref e) => e.fmt(fmt),
+            AppError::WinitError(ref e) => e.fmt(fmt),
+        }
+    }
+}
+
+impl From<CreateRendererError> for AppError {
+    fn from(result: CreateRendererError) -> Self {
+        AppError::CreateRendererError(result)
+    }
+}
+
+impl From<ash::vk::Result> for AppError {
+    fn from(result: ash::vk::Result) -> Self {
+        AppError::VkError(result)
+    }
+}
+
+impl From<winit::error::OsError> for AppError {
+    fn from(result: winit::error::OsError) -> Self {
+        AppError::WinitError(result)
+    }
+}
 
 /// A skulpin app requires implementing the AppHandler. A separate update and draw call must be
 /// implemented.
@@ -41,6 +91,11 @@ pub trait AppHandler {
         time_state: &TimeState,
         canvas: &mut skia_safe::Canvas,
         coordinate_system_helper: &CoordinateSystemHelper,
+    );
+
+    fn fatal_error(
+        &mut self,
+        error: &crate::AppError,
     );
 }
 
@@ -190,10 +245,12 @@ impl AppBuilder {
     }
 
     /// Start the app. `app_handler` must be an implementation of [skulpin::app::AppHandler].
+    /// This does not return because winit does not return. For consistency, we use the
+    /// fatal_error() callback on the passed in AppHandler.
     pub fn run<T: 'static + AppHandler>(
         &self,
         app_handler: T,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> ! {
         App::run(app_handler, self.logical_size, &self.renderer_builder)
     }
 }
@@ -202,28 +259,54 @@ impl AppBuilder {
 pub struct App {}
 
 impl App {
-    /// Runs the app. This is called by `AppBuilder::run`
-    //TODO: Since winit returns !, we should just take a callback here for handling errors instead
-    // of returning
+    /// Runs the app. This is called by `AppBuilder::run`. This does not return because winit does
+    /// not return. For consistency, we use the fatal_error() callback on the passed in AppHandler.
     pub fn run<T: 'static + AppHandler>(
         mut app_handler: T,
         logical_size: LogicalSize,
         renderer_builder: &RendererBuilder,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> ! {
         // Create the event loop
         let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
 
         // Create a single window
-        let window = winit::window::WindowBuilder::new()
+        let window_result = winit::window::WindowBuilder::new()
             .with_title("Skulpin")
             .with_inner_size(logical_size)
-            .build(&event_loop)?;
+            .build(&event_loop);
+
+        let window = match window_result {
+            Ok(window) => window,
+            Err(e) => {
+                warn!("Passing WindowBuilder::build() error to app {}", e);
+
+                let app_error = e.into();
+                app_handler.fatal_error(&app_error);
+
+                // Exiting in this way is consistent with how we will exit if we fail within the
+                // input loop
+                std::process::exit(0);
+            }
+        };
 
         let mut app_control = AppControl::default();
         let mut time_state = TimeState::new();
         let mut input_state = InputState::new(&window);
 
-        let mut renderer = renderer_builder.build(&window)?;
+        let renderer_result = renderer_builder.build(&window);
+        let mut renderer = match renderer_result {
+            Ok(renderer) => renderer,
+            Err(e) => {
+                warn!("Passing RendererBuilder::build() error to app {}", e);
+
+                let app_error = e.into();
+                app_handler.fatal_error(&app_error);
+
+                // Exiting in this way is consistent with how we will exit if we fail within the
+                // input loop
+                std::process::exit(0);
+            }
+        };
 
         // To print fps once per second
         let mut print_fps_event = PeriodicEvent::default();
@@ -265,8 +348,8 @@ impl App {
                             coordinate_system_helper,
                         );
                     }) {
-                        //TODO: Handle Error
-                        warn!("{:?}", e);
+                        warn!("Passing Renderer::draw() error to app {}", e);
+                        app_handler.fatal_error(&e.into());
                         app_control.enqueue_terminate_process();
                     }
                 }

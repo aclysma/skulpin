@@ -22,8 +22,7 @@ fn main() {
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
         .logical_size(LogicalSize::new(900.0, 600.0))
-        .run(example_app)
-        .expect("The app failed with an error");
+        .run(example_app);
 }
 
 struct ExampleApp {}
@@ -99,5 +98,12 @@ impl AppHandler for ExampleApp {
         canvas.draw_str("Hello Skulpin", (65, 200), &font, &paint);
         canvas.draw_str("Hello Skulpin", (68, 203), &font, &paint);
         canvas.draw_str("Hello Skulpin", (71, 206), &font, &paint);
+    }
+
+    fn fatal_error(
+        &mut self,
+        error: &skulpin::AppError,
+    ) {
+        println!("{}", error);
     }
 }

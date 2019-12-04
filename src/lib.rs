@@ -25,6 +25,7 @@
 extern crate log;
 
 mod app;
+pub use app::AppError;
 pub use app::InputState;
 pub use app::MouseDragState;
 
@@ -52,6 +53,7 @@ pub use renderer::PresentMode;
 pub use renderer::PhysicalDeviceType;
 pub use renderer::CoordinateSystemHelper;
 pub use renderer::CoordinateSystem;
+pub use renderer::CreateRendererError;
 
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;

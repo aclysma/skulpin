@@ -3,6 +3,7 @@ mod app;
 pub use app::App;
 pub use app::AppHandler;
 pub use app::AppBuilder;
+pub use app::AppError;
 
 mod app_control;
 pub use app_control::AppControl;

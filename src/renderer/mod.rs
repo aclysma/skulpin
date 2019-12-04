@@ -37,6 +37,7 @@ pub use debug_reporter::VkDebugReporter;
 mod renderer;
 pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
+pub use renderer::CreateRendererError;
 
 use winit::dpi::{LogicalSize, PhysicalSize};
 

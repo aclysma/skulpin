@@ -136,8 +136,7 @@ fn main() {
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
         .logical_size(LogicalSize::new(900.0, 600.0))
-        .run(example_app)
-        .expect("The app failed with an error");
+        .run(example_app);
 }
 
 struct ExampleApp {
@@ -288,5 +287,12 @@ impl AppHandler for ExampleApp {
         let mut font = skia_safe::Font::default();
         font.set_size(20.0);
         canvas.draw_str(self.fps_text.clone(), (50, 50), &font, &text_paint);
+    }
+
+    fn fatal_error(
+        &mut self,
+        error: &skulpin::AppError,
+    ) {
+        println!("{}", error);
     }
 }
