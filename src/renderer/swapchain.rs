@@ -59,41 +59,9 @@ impl VkSwapchain {
         let swapchain_image_views =
             Self::create_image_views(&device.logical_device, &swapchain_info, &swapchain_images)?;
 
-        let mut image_available_semaphores = Vec::with_capacity(MAX_FRAMES_IN_FLIGHT);
-        for _ in 0..MAX_FRAMES_IN_FLIGHT {
-            let semaphore_create_info = vk::SemaphoreCreateInfo::builder();
-            let semaphore = unsafe {
-                device
-                    .logical_device
-                    .create_semaphore(&semaphore_create_info, None)?
-            };
-            image_available_semaphores.push(semaphore);
-        }
-
-        //TODO: Seems like a lot of duplicated code here
-        let mut render_finished_semaphores = Vec::with_capacity(MAX_FRAMES_IN_FLIGHT);
-        for _ in 0..MAX_FRAMES_IN_FLIGHT {
-            let semaphore_create_info = vk::SemaphoreCreateInfo::builder();
-            let semaphore = unsafe {
-                device
-                    .logical_device
-                    .create_semaphore(&semaphore_create_info, None)?
-            };
-            render_finished_semaphores.push(semaphore);
-        }
-
-        let mut in_flight_fences = Vec::with_capacity(MAX_FRAMES_IN_FLIGHT);
-        for _ in 0..MAX_FRAMES_IN_FLIGHT {
-            let fence_create_info =
-                vk::FenceCreateInfo::builder().flags(vk::FenceCreateFlags::SIGNALED);
-
-            let fence = unsafe {
-                device
-                    .logical_device
-                    .create_fence(&fence_create_info, None)?
-            };
-            in_flight_fences.push(fence);
-        }
+        let image_available_semaphores = Self::allocate_semaphores_per_frame(&device)?;
+        let render_finished_semaphores = Self::allocate_semaphores_per_frame(&device)?;
+        let in_flight_fences = Self::allocate_fences_per_frame(&device)?;
 
         Ok(VkSwapchain {
             device: device.logical_device.clone(),
@@ -106,6 +74,38 @@ impl VkSwapchain {
             render_finished_semaphores,
             in_flight_fences,
         })
+    }
+
+    fn allocate_semaphores_per_frame(device: &VkDevice) -> VkResult<Vec<vk::Semaphore>> {
+        let mut semaphores = Vec::with_capacity(MAX_FRAMES_IN_FLIGHT);
+        for _ in 0..MAX_FRAMES_IN_FLIGHT {
+            let semaphore_create_info = vk::SemaphoreCreateInfo::builder();
+            let semaphore = unsafe {
+                device
+                    .logical_device
+                    .create_semaphore(&semaphore_create_info, None)?
+            };
+            semaphores.push(semaphore);
+        }
+
+        Ok(semaphores)
+    }
+
+    fn allocate_fences_per_frame(device: &VkDevice) -> VkResult<Vec<vk::Fence>> {
+        let mut fences = Vec::with_capacity(MAX_FRAMES_IN_FLIGHT);
+        for _ in 0..MAX_FRAMES_IN_FLIGHT {
+            let fence_create_info =
+                vk::FenceCreateInfo::builder().flags(vk::FenceCreateFlags::SIGNALED);
+
+            let fence = unsafe {
+                device
+                    .logical_device
+                    .create_fence(&fence_create_info, None)?
+            };
+            fences.push(fence);
+        }
+
+        Ok(fences)
     }
 
     #[allow(clippy::too_many_arguments)]
