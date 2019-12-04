@@ -7,7 +7,7 @@ use std::mem::ManuallyDrop;
 use ash::vk;
 
 use super::VkInstance;
-use super::CreateInstanceError;
+use super::VkCreateInstanceError;
 use super::VkDevice;
 use super::VkSkiaContext;
 use super::VkSwapchain;
@@ -195,7 +195,7 @@ pub struct Renderer {
 /// Represents an error from creating the renderer
 #[derive(Debug)]
 pub enum CreateRendererError {
-    CreateInstanceError(CreateInstanceError),
+    CreateInstanceError(VkCreateInstanceError),
     VkError(vk::Result),
 }
 
@@ -220,8 +220,8 @@ impl core::fmt::Display for CreateRendererError {
     }
 }
 
-impl From<CreateInstanceError> for CreateRendererError {
-    fn from(result: CreateInstanceError) -> Self {
+impl From<VkCreateInstanceError> for CreateRendererError {
+    fn from(result: VkCreateInstanceError) -> Self {
         CreateRendererError::CreateInstanceError(result)
     }
 }

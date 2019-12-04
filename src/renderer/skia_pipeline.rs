@@ -10,7 +10,7 @@ use super::VkDevice;
 use super::VkSwapchain;
 use crate::offset_of;
 use super::SwapchainInfo;
-use super::QueueFamilyIndices;
+use super::VkQueueFamilyIndices;
 use crate::renderer::VkBuffer;
 use crate::renderer::skia_support::{VkSkiaContext, VkSkiaSurface};
 
@@ -487,7 +487,7 @@ impl VkPipeline {
 
     fn create_command_pool(
         logical_device: &ash::Device,
-        queue_family_indices: &QueueFamilyIndices,
+        queue_family_indices: &VkQueueFamilyIndices,
     ) -> VkResult<vk::CommandPool> {
         info!(
             "Creating command pool with queue family index {}",

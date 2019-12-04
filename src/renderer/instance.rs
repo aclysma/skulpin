@@ -16,50 +16,50 @@ pub struct VkInstance {
 }
 
 #[derive(Debug)]
-pub enum CreateInstanceError {
+pub enum VkCreateInstanceError {
     LoadingError(ash::LoadingError),
     InstanceError(ash::InstanceError),
     VkError(vk::Result),
 }
 
-impl std::error::Error for CreateInstanceError {
+impl std::error::Error for VkCreateInstanceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match *self {
-            CreateInstanceError::LoadingError(ref e) => Some(e),
-            CreateInstanceError::InstanceError(ref e) => Some(e),
-            CreateInstanceError::VkError(ref e) => Some(e),
+            VkCreateInstanceError::LoadingError(ref e) => Some(e),
+            VkCreateInstanceError::InstanceError(ref e) => Some(e),
+            VkCreateInstanceError::VkError(ref e) => Some(e),
         }
     }
 }
 
-impl core::fmt::Display for CreateInstanceError {
+impl core::fmt::Display for VkCreateInstanceError {
     fn fmt(
         &self,
         fmt: &mut core::fmt::Formatter,
     ) -> core::fmt::Result {
         match *self {
-            CreateInstanceError::LoadingError(ref e) => e.fmt(fmt),
-            CreateInstanceError::InstanceError(ref e) => e.fmt(fmt),
-            CreateInstanceError::VkError(ref e) => e.fmt(fmt),
+            VkCreateInstanceError::LoadingError(ref e) => e.fmt(fmt),
+            VkCreateInstanceError::InstanceError(ref e) => e.fmt(fmt),
+            VkCreateInstanceError::VkError(ref e) => e.fmt(fmt),
         }
     }
 }
 
-impl From<ash::LoadingError> for CreateInstanceError {
+impl From<ash::LoadingError> for VkCreateInstanceError {
     fn from(result: ash::LoadingError) -> Self {
-        CreateInstanceError::LoadingError(result)
+        VkCreateInstanceError::LoadingError(result)
     }
 }
 
-impl From<ash::InstanceError> for CreateInstanceError {
+impl From<ash::InstanceError> for VkCreateInstanceError {
     fn from(result: ash::InstanceError) -> Self {
-        CreateInstanceError::InstanceError(result)
+        VkCreateInstanceError::InstanceError(result)
     }
 }
 
-impl From<vk::Result> for CreateInstanceError {
+impl From<vk::Result> for VkCreateInstanceError {
     fn from(result: vk::Result) -> Self {
-        CreateInstanceError::VkError(result)
+        VkCreateInstanceError::VkError(result)
     }
 }
 
@@ -68,7 +68,7 @@ impl VkInstance {
     pub fn new(
         app_name: &CString,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
-    ) -> Result<VkInstance, CreateInstanceError> {
+    ) -> Result<VkInstance, VkCreateInstanceError> {
         // This loads the dll/so if needed
         info!("Finding vulkan entry point");
         let entry = ash::Entry::new()?;

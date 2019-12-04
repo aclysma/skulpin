@@ -6,7 +6,7 @@ use ash::version::DeviceV1_0;
 
 use super::VkInstance;
 use super::VkDevice;
-use super::QueueFamilyIndices;
+use super::VkQueueFamilyIndices;
 use crate::PresentMode;
 
 pub const MAX_FRAMES_IN_FLIGHT: usize = 2;
@@ -115,7 +115,7 @@ impl VkSwapchain {
         logical_device: &ash::Device,
         surface_loader: &ash::extensions::khr::Surface,
         surface: ash::vk::SurfaceKHR,
-        queue_family_indices: &QueueFamilyIndices,
+        queue_family_indices: &VkQueueFamilyIndices,
         window: &winit::window::Window,
         old_swapchain: Option<vk::SwapchainKHR>,
         present_mode_priority: &[PresentMode],

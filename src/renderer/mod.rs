@@ -9,12 +9,12 @@ mod window_support;
 
 mod instance;
 pub use instance::VkInstance;
-pub use instance::CreateInstanceError; // TODO: Should this be re-exported like this? Name is very general.
+pub use instance::VkCreateInstanceError;
 
 mod device;
 pub use device::VkDevice;
-pub use device::QueueFamilyIndices; // TODO: Should this be re-exported like this? Name is very general.
-pub use device::Queues; // TODO: Should this be re-exported like this? Name is very general.
+pub use device::VkQueueFamilyIndices;
+pub use device::VkQueues;
 
 mod swapchain;
 pub use swapchain::VkSwapchain;

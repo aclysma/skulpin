@@ -15,13 +15,13 @@ use crate::PhysicalDeviceType;
 /// Has the indexes for all the queue families we will need. It's possible a single family
 /// is used for both graphics and presentation, in which case the index will be the same
 #[derive(Default)]
-pub struct QueueFamilyIndices {
+pub struct VkQueueFamilyIndices {
     pub graphics_queue_family_index: u32,
     pub present_queue_family_index: u32,
 }
 
 /// An instantiated queue per queue family. We only need one queue per family.
-pub struct Queues {
+pub struct VkQueues {
     pub graphics_queue: ash::vk::Queue,
     pub present_queue: ash::vk::Queue,
 }
@@ -33,8 +33,8 @@ pub struct VkDevice {
     pub surface_loader: ash::extensions::khr::Surface,
     pub physical_device: ash::vk::PhysicalDevice,
     pub logical_device: ash::Device,
-    pub queue_family_indices: QueueFamilyIndices,
-    pub queues: Queues,
+    pub queue_family_indices: VkQueueFamilyIndices,
+    pub queues: VkQueues,
     pub memory_properties: vk::PhysicalDeviceMemoryProperties,
 }
 
@@ -93,7 +93,7 @@ impl VkDevice {
         surface_loader: &ash::extensions::khr::Surface,
         surface: ash::vk::SurfaceKHR,
         physical_device_type_priority: &[PhysicalDeviceType],
-    ) -> VkResult<(ash::vk::PhysicalDevice, QueueFamilyIndices)> {
+    ) -> VkResult<(ash::vk::PhysicalDevice, VkQueueFamilyIndices)> {
         let physical_devices = unsafe { instance.enumerate_physical_devices()? };
 
         if physical_devices.is_empty() {
@@ -143,7 +143,7 @@ impl VkDevice {
         surface_loader: &ash::extensions::khr::Surface,
         surface: ash::vk::SurfaceKHR,
         physical_device_type_priority: &[PhysicalDeviceType],
-    ) -> VkResult<Option<(i32, QueueFamilyIndices)>> {
+    ) -> VkResult<Option<(i32, VkQueueFamilyIndices)>> {
         info!(
             "Preferred device types: {:?}",
             physical_device_type_priority
@@ -212,7 +212,7 @@ impl VkDevice {
         physical_device: ash::vk::PhysicalDevice,
         surface_loader: &ash::extensions::khr::Surface,
         surface: ash::vk::SurfaceKHR,
-    ) -> Option<QueueFamilyIndices> {
+    ) -> Option<VkQueueFamilyIndices> {
         let queue_families: Vec<ash::vk::QueueFamilyProperties> =
             unsafe { instance.get_physical_device_queue_family_properties(physical_device) };
 
@@ -261,7 +261,7 @@ impl VkDevice {
             graphics_queue_family_index, present_queue_family_index
         );
 
-        Some(QueueFamilyIndices {
+        Some(VkQueueFamilyIndices {
             graphics_queue_family_index: graphics_queue_family_index?,
             present_queue_family_index: present_queue_family_index?,
         })
@@ -270,8 +270,8 @@ impl VkDevice {
     fn create_logical_device(
         instance: &ash::Instance,
         physical_device: ash::vk::PhysicalDevice,
-        queue_family_indices: &QueueFamilyIndices,
-    ) -> VkResult<(ash::Device, Queues)> {
+        queue_family_indices: &VkQueueFamilyIndices,
+    ) -> VkResult<(ash::Device, VkQueues)> {
         //TODO: Ideally we would set up validation layers for the logical device too.
 
         let device_extension_names_raw = [khr::Swapchain::name().as_ptr()];
@@ -306,7 +306,7 @@ impl VkDevice {
         let present_queue =
             unsafe { device.get_device_queue(queue_family_indices.present_queue_family_index, 0) };
 
-        let queues = Queues {
+        let queues = VkQueues {
             graphics_queue,
             present_queue,
         };
