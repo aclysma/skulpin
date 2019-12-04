@@ -65,7 +65,7 @@ impl AppHandler for ExampleApp {
         input_state: &InputState,
         time_state: &TimeState,
     ) {
-        let now = time_state.system().frame_start_instant;
+        let now = time_state.current_instant();
 
         //
         // Quit if user hits escape
@@ -83,7 +83,7 @@ impl AppHandler for ExampleApp {
         };
 
         if update_text_string {
-            let fps = time_state.system().fps;
+            let fps = time_state.updates_per_second();
             self.fps_text = format!("Fps: {:.1}", fps);
             self.last_fps_text_change = Some(now);
         }
@@ -115,7 +115,7 @@ impl AppHandler for ExampleApp {
         canvas: &mut skia_safe::Canvas,
         _coordinate_system_helper: &CoordinateSystemHelper,
     ) {
-        let now = time_state.system().frame_start_instant;
+        let now = time_state.current_instant();
 
         // Generally would want to clear data every time we draw
         canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));

@@ -3,7 +3,6 @@
 use super::app_control::AppControl;
 use super::input_state::InputState;
 use super::time_state::TimeState;
-use super::time_state::TimeContext;
 use super::util::PeriodicEvent;
 use std::ffi::CString;
 
@@ -318,13 +317,13 @@ impl App {
 
             match event {
                 winit::event::Event::EventsCleared => {
-                    time_state.update(TimeContext::System);
+                    time_state.update();
 
                     if print_fps_event.try_take_event(
-                        time_state.system().frame_start_instant,
+                        time_state.current_instant(),
                         std::time::Duration::from_secs(1),
                     ) {
-                        debug!("fps: {}", time_state.system().fps);
+                        debug!("fps: {}", time_state.updates_per_second());
                     }
 
                     app_handler.update(&mut app_control, &input_state, &time_state);

@@ -259,7 +259,11 @@ impl Renderer {
             None,
             &present_mode_priority,
         )?);
-        let skia_renderpass = ManuallyDrop::new(VkSkiaRenderPass::new(&device, &swapchain, &mut skia_context)?);
+        let skia_renderpass = ManuallyDrop::new(VkSkiaRenderPass::new(
+            &device,
+            &swapchain,
+            &mut skia_context,
+        )?);
         let sync_frame_index = 0;
 
         let previous_inner_size = window.inner_size();

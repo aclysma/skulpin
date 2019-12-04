@@ -285,12 +285,29 @@ impl VkSwapchain {
                 .height(height)
                 .build();
 
-            actual_extent.width = num_traits::clamp(
+            // Copied from num-traits under MIT/Apache-2.0 dual license. It doesn't make much sense
+            // to pull in a whole crate just for this utility function
+            pub fn clamp<T: PartialOrd>(
+                input: T,
+                min: T,
+                max: T,
+            ) -> T {
+                debug_assert!(min <= max, "min must be less than or equal to max");
+                if input < min {
+                    min
+                } else if input > max {
+                    max
+                } else {
+                    input
+                }
+            }
+
+            actual_extent.width = clamp(
                 actual_extent.width,
                 surface_capabilities.min_image_extent.width,
                 surface_capabilities.max_image_extent.width,
             );
-            actual_extent.height = num_traits::clamp(
+            actual_extent.height = clamp(
                 actual_extent.height,
                 surface_capabilities.min_image_extent.height,
                 surface_capabilities.max_image_extent.height,

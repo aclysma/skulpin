@@ -32,11 +32,6 @@ skia-safe = { version = "0.17", features = ["vulkan"] }
 
 log="0.4"
 
-num-traits = "0.2"
-num-derive = "0.2"
-strum = "0.15"
-strum_macros = "0.15"
-
 # From ash example code
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["windef", "winuser"] }

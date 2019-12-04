@@ -14,8 +14,6 @@ use super::VkQueueFamilyIndices;
 use crate::renderer::VkBuffer;
 use crate::renderer::skia_support::{VkSkiaContext, VkSkiaSurface};
 
-//TODO: Rename to SkiaRenderpass
-
 #[derive(Clone, Debug, Copy)]
 struct Vertex {
     pos: [f32; 2],
