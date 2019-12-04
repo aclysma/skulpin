@@ -11,7 +11,7 @@ use super::VkCreateInstanceError;
 use super::VkDevice;
 use super::VkSkiaContext;
 use super::VkSwapchain;
-use super::VkPipeline;
+use super::VkSkiaRenderPass;
 use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
@@ -180,7 +180,7 @@ pub struct Renderer {
     skia_context: ManuallyDrop<VkSkiaContext>,
 
     swapchain: ManuallyDrop<VkSwapchain>,
-    pipeline: ManuallyDrop<VkPipeline>,
+    skia_renderpass: ManuallyDrop<VkSkiaRenderPass>,
 
     // Increase until > MAX_FRAMES_IN_FLIGHT, then set to 0, or -1 if no frame drawn yet
     sync_frame_index: usize,
@@ -259,7 +259,7 @@ impl Renderer {
             None,
             &present_mode_priority,
         )?);
-        let pipeline = ManuallyDrop::new(VkPipeline::new(&device, &swapchain, &mut skia_context)?);
+        let skia_renderpass = ManuallyDrop::new(VkSkiaRenderPass::new(&device, &swapchain, &mut skia_context)?);
         let sync_frame_index = 0;
 
         let previous_inner_size = window.inner_size();
@@ -269,7 +269,7 @@ impl Renderer {
             device,
             skia_context,
             swapchain,
-            pipeline,
+            skia_renderpass,
             sync_frame_index,
             present_mode_priority,
             previous_inner_size,
@@ -311,7 +311,7 @@ impl Renderer {
     ) -> VkResult<()> {
         unsafe {
             self.device.logical_device.device_wait_idle()?;
-            ManuallyDrop::drop(&mut self.pipeline);
+            ManuallyDrop::drop(&mut self.skia_renderpass);
         }
 
         let new_swapchain = ManuallyDrop::new(VkSwapchain::new(
@@ -327,7 +327,7 @@ impl Renderer {
         }
 
         self.swapchain = new_swapchain;
-        self.pipeline = ManuallyDrop::new(VkPipeline::new(
+        self.skia_renderpass = ManuallyDrop::new(VkSkiaRenderPass::new(
             &self.device,
             &self.swapchain,
             &mut self.skia_context,
@@ -369,7 +369,7 @@ impl Renderer {
         };
 
         {
-            let surface = self.pipeline.skia_surface(present_index as usize);
+            let surface = self.skia_renderpass.skia_surface(present_index as usize);
             let mut canvas = surface.surface.canvas();
 
             let surface_extents = self.swapchain.swapchain_info.extents;
@@ -409,7 +409,7 @@ impl Renderer {
         let signal_semaphores = [self.swapchain.render_finished_semaphores[self.sync_frame_index]];
 
         let wait_dst_stage_mask = [vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
-        let command_buffers = [self.pipeline.command_buffers[present_index as usize]];
+        let command_buffers = [self.skia_renderpass.command_buffers[present_index as usize]];
 
         //add fence to queue submit
         let submit_info = [vk::SubmitInfo::builder()
@@ -453,7 +453,7 @@ impl Drop for Renderer {
 
         unsafe {
             self.device.logical_device.device_wait_idle().unwrap();
-            ManuallyDrop::drop(&mut self.pipeline);
+            ManuallyDrop::drop(&mut self.skia_renderpass);
             ManuallyDrop::drop(&mut self.swapchain);
             ManuallyDrop::drop(&mut self.skia_context);
             ManuallyDrop::drop(&mut self.device);

@@ -21,8 +21,8 @@ pub use swapchain::VkSwapchain;
 pub use swapchain::SwapchainInfo;
 pub use swapchain::MAX_FRAMES_IN_FLIGHT;
 
-mod skia_pipeline;
-pub use skia_pipeline::VkPipeline;
+mod skia_renderpass;
+pub use skia_renderpass::VkSkiaRenderPass;
 
 mod skia_support;
 pub use skia_support::VkSkiaContext;

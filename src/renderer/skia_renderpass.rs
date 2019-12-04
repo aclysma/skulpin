@@ -60,7 +60,7 @@ struct PipelineResources {
 }
 
 /// Handles the skia renderpass
-pub struct VkPipeline {
+pub struct VkSkiaRenderPass {
     pub device: ash::Device, // This struct is not responsible for releasing this
     pub descriptor_set_layout: vk::DescriptorSetLayout,
     pub pipeline_layout: vk::PipelineLayout,
@@ -77,7 +77,7 @@ pub struct VkPipeline {
     pub image_sampler: vk::Sampler,
 }
 
-impl VkPipeline {
+impl VkSkiaRenderPass {
     pub fn new(
         device: &VkDevice,
         swapchain: &VkSwapchain,
@@ -188,7 +188,7 @@ impl VkPipeline {
             )?;
         }
 
-        Ok(VkPipeline {
+        Ok(VkSkiaRenderPass {
             device: device.logical_device.clone(),
             descriptor_set_layout,
             pipeline_layout,
@@ -738,9 +738,9 @@ impl VkPipeline {
     }
 }
 
-impl Drop for VkPipeline {
+impl Drop for VkSkiaRenderPass {
     fn drop(&mut self) {
-        debug!("destroying VkPipeline");
+        debug!("destroying VkSkiaRenderPass");
 
         unsafe {
             self.device.destroy_sampler(self.image_sampler, None);
@@ -765,6 +765,6 @@ impl Drop for VkPipeline {
                 .destroy_descriptor_set_layout(self.descriptor_set_layout, None);
         }
 
-        debug!("destroyed VkPipeline");
+        debug!("destroyed VkSkiaRenderPass");
     }
 }

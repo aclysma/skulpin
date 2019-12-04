@@ -1,7 +1,5 @@
 //! Handles input tracking and provides an easy way to detect clicks, dragging, etc.
 
-//TODO: Remove the "went" from method/member names
-
 // Re-export winit types
 pub use winit::event::VirtualKeyCode;
 pub use winit::event::MouseButton;
