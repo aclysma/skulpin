@@ -1,7 +1,7 @@
 // This example shows how to use the "app" helpers to get a window open and drawing with minimal code
 // It's not as flexible as working with winit directly, but it's quick and simple
 
-use skulpin::AppHandler;
+use skulpin::{AppHandler, CoordinateSystem};
 use skulpin::CoordinateSystemHelper;
 use skulpin::AppControl;
 use skulpin::InputState;
@@ -18,10 +18,23 @@ fn main() {
 
     let example_app = ExampleApp::new();
 
+    // Set up the coordinate system to be fixed at 900x600, and use this as the default window size
+    // This means the drawing code can be written as though the window is always 900x600. The
+    // output will be automatically scaled so that it's always visible.
+    let logical_size = LogicalSize::new(900.0, 600.0);
+    let visible_range = skulpin::skia_safe::Rect {
+        left: 0.0,
+        right: logical_size.width as f32,
+        top: 0.0,
+        bottom: logical_size.height as f32,
+    };
+    let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
+
     skulpin::AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
-        .logical_size(LogicalSize::new(900.0, 600.0))
+        .logical_size(logical_size)
+        .coordinate_system(CoordinateSystem::VisibleRange(visible_range, scale_to_fit))
         .run(example_app);
 }
 

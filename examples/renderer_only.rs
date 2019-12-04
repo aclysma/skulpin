@@ -12,16 +12,32 @@ fn main() {
     // Create the winit event loop
     let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
 
+    // Set up the coordinate system to be fixed at 900x600, and use this as the default window size
+    // This means the drawing code can be written as though the window is always 900x600. The
+    // output will be automatically scaled so that it's always visible.
+    let logical_size = winit::dpi::LogicalSize::new(900.0, 600.0);
+    let visible_range = skulpin::skia_safe::Rect {
+        left: 0.0,
+        right: logical_size.width as f32,
+        top: 0.0,
+        bottom: logical_size.height as f32,
+    };
+    let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
+
     // Create a single window
     let window = winit::window::WindowBuilder::new()
         .with_title("Skulpin")
-        .with_inner_size(winit::dpi::LogicalSize::new(900.0, 600.0))
+        .with_inner_size(logical_size)
         .build(&event_loop)
         .expect("Failed to create window");
 
     // Create the renderer, which will draw to the window
     let renderer = skulpin::RendererBuilder::new()
         .use_vulkan_debug_layer(true)
+        .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
+            visible_range,
+            scale_to_fit,
+        ))
         .build(&window);
 
     // Check if there were error setting up vulkan
