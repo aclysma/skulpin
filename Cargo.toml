@@ -28,7 +28,7 @@ include = [
 winit = "0.20.0-alpha4"
 raw-window-handle = "0.3"
 ash = "0.29"
-skia-safe = { version = "0.17", features = ["vulkan"] }
+skia-safe = { version = "0.21", features = ["vulkan", "svg", "shaper", "textlayout"] }
 
 log="0.4"
 
