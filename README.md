@@ -43,6 +43,20 @@ Here's a video of the physics and interactive examples.
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/El99FgGSzfg/0.jpg)](https://www.youtube.com/watch?v=El99FgGSzfg "Video of Skulpin")
 
+## Feature Flags
+
+* `complete` - Includes all the below features. ** This is on by default **
+* `shaper` - Enables text shaping with Harfbuzz and ICU
+* `svg` - This feature enables the SVG rendering backend
+* `textlayout` - Makes the Skia module skparagraph available, which contains types that are used to lay out paragraphs
+
+More information on these flags is available in the [skia-safe readme](https://crates.io/crates/skia-safe)
+
+The `skia-bindings` prebuilt binaries are only available for certain combinations of features. As of this writing, it is
+available for none, each feature individually, or all features enabled. The `vulkan` feature is required and implicitly
+used, so enabling any features individually will substantially increase build times. It's recommended to use all
+features (default behavior), or disable all features. (use `default-features = false`) 
+
 ## Documentation
 
 Documentation fails to build on docs.rs because the skia_safe crate requires an internet connection to build. (It will
@@ -52,7 +66,7 @@ either grab skia source code, or grab a prebuilt binary.) So the best way to vie
 
 ## Requirements
 
-Minimum required rust version: **1.36.0**
+Minimum required rust version: **1.37.0**
 
 ### Windows
 

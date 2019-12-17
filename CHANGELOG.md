@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.0
+ * Update to skia_safe 0.21 and enable all upstream features by default
+
 ## 0.3.0
  * Added support for selecting from among several coordinate systems, and mechanism for turning this off.
  * Error handling is now done via a new callback on AppHandler `fatal_error()`. The app will no longer return, which

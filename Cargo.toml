@@ -1,6 +1,6 @@
 [package]
 name = "skulpin"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
@@ -22,13 +22,23 @@ include = [
 ]
 
 # Minimum required rust version:
-# rust="1.36"
+# rust="1.37"
+
+# NOTE: See README.md for implications on how feature selection will affect build-time. As of this writing, binary
+# builds of skia are available for ALL of the features or NONE of the features. Only selecting some of the features will
+# require building skia from scratch, which will greatly increase build times
+[features]
+default = ["complete"]
+shaper = ["skia-safe/shaper"]
+svg = ["skia-safe/svg"]
+textlayout = ["skia-safe/textlayout"]
+complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 
 [dependencies]
 winit = "0.20.0-alpha4"
 raw-window-handle = "0.3"
 ash = "0.29"
-skia-safe = { version = "0.17", features = ["vulkan"] }
+skia-safe = { version = "0.21", features = ["vulkan"] }
 
 log="0.4"
 
