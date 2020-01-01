@@ -11,7 +11,7 @@ use super::VkDevice;
 use super::VkSwapchain;
 use crate::{offset_of, ImguiManager};
 use super::SwapchainInfo;
-use super::QueueFamilyIndices;
+use super::VkQueueFamilyIndices;
 use crate::renderer::{VkBuffer, VkImage};
 
 #[derive(Clone, Debug, Copy)]
@@ -131,8 +131,8 @@ impl VkImGuiPipeline {
 
         let image = Self::load_image(
             &device.logical_device,
-            &device.queues.graphics_queue,
-            &command_pool,
+            device.queues.graphics_queue,
+            command_pool,
             &device.memory_properties,
             imgui_manager
         )?;
@@ -530,7 +530,7 @@ impl VkImGuiPipeline {
 
     fn create_command_pool(
         logical_device: &ash::Device,
-        queue_family_indices: &QueueFamilyIndices
+        queue_family_indices: &VkQueueFamilyIndices
     )
         -> VkResult<vk::CommandPool>
     {
@@ -580,8 +580,8 @@ impl VkImGuiPipeline {
 
     pub fn load_image(
         logical_device: &ash::Device,
-        queue: &vk::Queue,
-        command_pool: &vk::CommandPool,
+        queue: vk::Queue,
+        command_pool: vk::CommandPool,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties,
         imgui_manager: &mut ImguiManager
     )
@@ -619,7 +619,7 @@ impl VkImGuiPipeline {
             logical_device,
             queue,
             command_pool,
-            &image.image,
+            image.image,
             vk::Format::R8G8B8A8_UNORM,
             vk::ImageLayout::UNDEFINED,
             vk::ImageLayout::TRANSFER_DST_OPTIMAL
@@ -629,8 +629,8 @@ impl VkImGuiPipeline {
             logical_device,
             queue,
             command_pool,
-            &staging_buffer.buffer,
-            &image.image,
+            staging_buffer.buffer,
+            image.image,
             &image.extent
         )?;
 
@@ -638,7 +638,7 @@ impl VkImGuiPipeline {
             logical_device,
             queue,
             command_pool,
-            &image.image,
+            image.image,
             vk::Format::R8G8B8A8_UNORM,
             vk::ImageLayout::TRANSFER_DST_OPTIMAL,
             vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)?;

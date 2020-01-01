@@ -28,14 +28,11 @@ include = [
 # builds of skia are available for ALL of the features or NONE of the features. Only selecting some of the features will
 # require building skia from scratch, which will greatly increase build times
 [features]
-default = ["complete"]
+default = ["skia_complete", "with_imgui"]
 shaper = ["skia-safe/shaper"]
 svg = ["skia-safe/svg"]
 textlayout = ["skia-safe/textlayout"]
-complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
-
-[features]
-default = ["with_imgui"]
+skia_complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 with_imgui = ["imgui", "imgui-winit-support"]
 
 [dependencies]

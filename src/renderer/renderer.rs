@@ -306,13 +306,13 @@ impl Renderer {
     ) -> VkResult<()> {
         if window.inner_size() != self.previous_inner_size {
             debug!("Detected window inner size change, rebuilding swapchain");
-            self.rebuild_swapchain(window)?;
+            self.rebuild_swapchain(window, &mut imgui_manager)?;
         }
 
         let result = self.do_draw(window, &mut imgui_manager, f);
         if let Err(e) = result {
             match e {
-                ash::vk::Result::ERROR_OUT_OF_DATE_KHR => self.rebuild_swapchain(window),
+                ash::vk::Result::ERROR_OUT_OF_DATE_KHR => self.rebuild_swapchain(window, &mut imgui_manager),
                 ash::vk::Result::SUCCESS => Ok(()),
                 ash::vk::Result::SUBOPTIMAL_KHR => Ok(()),
                 _ => {
@@ -328,6 +328,7 @@ impl Renderer {
     fn rebuild_swapchain(
         &mut self,
         window: &winit::window::Window,
+        mut imgui_manager: &mut Option<&mut ImguiManager>,
     ) -> VkResult<()> {
         unsafe {
             self.device.logical_device.device_wait_idle()?;
@@ -368,7 +369,7 @@ impl Renderer {
     }
 
     /// Do the render
-    fn do_draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
+    fn do_draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper, Option<&ImguiManager>)>(
         &mut self,
         window: &winit::window::Window,
         imgui_manager: &mut Option<&mut ImguiManager>,

@@ -13,12 +13,9 @@ use crate::renderer::ImguiManager;
 use winit::dpi::LogicalSize;
 use winit::dpi::Size;
 
-use crate::RendererBuilder;
 use crate::CreateRendererError;
 use crate::CoordinateSystem;
 use crate::CoordinateSystemHelper;
-use crate::PresentMode;
-use crate::PhysicalDeviceType;
 
 /// Represents an error from creating the renderer
 #[derive(Debug)]
