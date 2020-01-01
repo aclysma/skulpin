@@ -102,9 +102,9 @@ pub fn submit_single_use_command_buffer<F: Fn(vk::CommandBuffer)>(
 //TODO: Find a better place for this
 pub fn transition_image_layout(
     logical_device: &ash::Device,
-    queue: &vk::Queue,
-    command_pool: &vk::CommandPool,
-    image: &vk::Image,
+    queue: vk::Queue,
+    command_pool: vk::CommandPool,
+    image: vk::Image,
     _format: vk::Format,
     old_layout: vk::ImageLayout,
     new_layout: vk::ImageLayout
@@ -153,14 +153,14 @@ pub fn transition_image_layout(
             .new_layout(new_layout)
             .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
             .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
-            .image(*image)
+            .image(image)
             .subresource_range(*subresource_range)
             .src_access_mask(sync_info.src_access_mask)
             .dst_access_mask(sync_info.dst_access_mask);
 
         unsafe {
             logical_device.cmd_pipeline_barrier(
-                *command_buffer,
+                command_buffer,
                 sync_info.src_stage,
                 sync_info.dst_stage,
                 vk::DependencyFlags::BY_REGION,
@@ -174,10 +174,10 @@ pub fn transition_image_layout(
 //TODO: Find a better place for this
 pub fn copy_buffer_to_image(
     logical_device: &ash::Device,
-    queue: &vk::Queue,
-    command_pool: &vk::CommandPool,
-    buffer: &vk::Buffer,
-    image: &vk::Image,
+    queue: vk::Queue,
+    command_pool: vk::CommandPool,
+    buffer: vk::Buffer,
+    image: vk::Image,
     extent: &vk::Extent3D
 ) -> VkResult<()> {
     super::util::submit_single_use_command_buffer(logical_device, queue, command_pool, |command_buffer| {
@@ -197,9 +197,9 @@ pub fn copy_buffer_to_image(
 
         unsafe {
             logical_device.cmd_copy_buffer_to_image(
-                *command_buffer,
-                *buffer,
-                *image,
+                command_buffer,
+                buffer,
+                image,
                 vk::ImageLayout::TRANSFER_DST_OPTIMAL,
                 &[*image_copy]
             );
