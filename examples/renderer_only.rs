@@ -31,6 +31,11 @@ fn main() {
         .build(&event_loop)
         .expect("Failed to create window");
 
+    #[cfg(feature = "with_imgui")]
+    let mut imgui_manager = init_imgui_manager(&window);
+    #[cfg(feature = "with_imgui")]
+    imgui_manager.begin_frame(&window);
+
     // Create the renderer, which will draw to the window
     let renderer = skulpin::RendererBuilder::new()
         .use_vulkan_debug_layer(true)
@@ -38,7 +43,7 @@ fn main() {
             visible_range,
             scale_to_fit,
         ))
-        .build(&window, None);
+        .build(&window, #[cfg(feature = "with_imgui")] &mut imgui_manager);
 
     // Check if there were error setting up vulkan
     if let Err(e) = renderer {
@@ -54,6 +59,10 @@ fn main() {
     // Start the window event loop. Winit will not return once run is called. We will get notified
     // when important events happen.
     event_loop.run(move |event, _window_target, control_flow| {
+
+        #[cfg(feature = "with_imgui")]
+        imgui_manager.handle_event(&window, &event);
+
         match event {
             //
             // Halt if the user requests to close the window
@@ -91,9 +100,25 @@ fn main() {
             // Redraw
             //
             winit::event::Event::RedrawRequested(_window_id) => {
-                if let Err(e) = renderer.draw(&window, None, |canvas, coordinate_system_helper, _imgui| {
+                if let Err(e) = renderer.draw(&window, #[cfg(feature = "with_imgui")] &mut imgui_manager, |canvas, coordinate_system_helper, #[cfg(feature = "with_imgui")] imgui_manager| {
                     draw(canvas, coordinate_system_helper, frame_count);
                     frame_count += 1;
+
+                    #[cfg(feature = "with_imgui")]
+                    {
+                        imgui_manager.with_ui(|ui: &mut imgui::Ui| {
+                            let mut show_demo = true;
+                            ui.show_demo_window(&mut show_demo);
+
+                            ui.main_menu_bar(|| {
+                                ui.menu(imgui::im_str!("File"), true, || {
+                                    if imgui::MenuItem::new(imgui::im_str!("New")).build(ui) {
+                                        log::info!("clicked");
+                                    }
+                                });
+                            });
+                        });
+                    }
                 }) {
                     println!("Error during draw: {:?}", e);
                     *control_flow = winit::event_loop::ControlFlow::Exit
@@ -159,4 +184,56 @@ fn draw(
     canvas.draw_str("Hello Skulpin", (65, 200), &font, &paint);
     canvas.draw_str("Hello Skulpin", (68, 203), &font, &paint);
     canvas.draw_str("Hello Skulpin", (71, 206), &font, &paint);
+}
+
+#[cfg(feature = "with_imgui")]
+fn init_imgui(window: &winit::window::Window) -> imgui::Context {
+    use imgui::Context;
+
+    let mut imgui = Context::create();
+    {
+        // Fix incorrect colors with sRGB framebuffer
+        fn imgui_gamma_to_linear(col: [f32; 4]) -> [f32; 4] {
+            let x = col[0].powf(2.2);
+            let y = col[1].powf(2.2);
+            let z = col[2].powf(2.2);
+            let w = 1.0 - (1.0 - col[3]).powf(2.2);
+            [x, y, z, w]
+        }
+
+        let style = imgui.style_mut();
+        for col in 0..style.colors.len() {
+            style.colors[col] = imgui_gamma_to_linear(style.colors[col]);
+        }
+    }
+
+    imgui.set_ini_filename(None);
+
+    // In the examples we only use integer DPI factors, because the UI can get very blurry
+    // otherwise. This might or might not be what you want in a real application.
+    let hidpi_factor = window.hidpi_factor().round();
+    let font_size = (16.0 * hidpi_factor) as f32;
+    imgui.fonts().add_font(&[imgui::FontSource::TtfData {
+        data: include_bytes!("../fonts/mplus-1p-regular.ttf"),
+        size_pixels: font_size,
+        config: None,
+    }]);
+
+    imgui.io_mut().font_global_scale = (1.0 / hidpi_factor) as f32;
+
+    return imgui;
+}
+
+#[cfg(feature = "with_imgui")]
+pub fn init_imgui_manager(window: &winit::window::Window) -> skulpin::ImguiManager {
+    let mut imgui_context = init_imgui(&window);
+    let mut imgui_platform = imgui_winit_support::WinitPlatform::init(&mut imgui_context);
+
+    imgui_platform.attach_window(
+        imgui_context.io_mut(),
+        &window,
+        imgui_winit_support::HiDpiMode::Rounded,
+    );
+
+    skulpin::ImguiManager::new(imgui_context, imgui_platform)
 }

@@ -42,7 +42,7 @@ struct PipelineResources {
     pipeline : vk::Pipeline
 }
 
-pub struct VkImGuiPipeline {
+pub struct VkImGuiRenderPass {
     pub device : ash::Device, // This struct is not responsible for releasing this
     pub swapchain_info: SwapchainInfo,
     pub descriptor_set_layout: vk::DescriptorSetLayout,
@@ -64,7 +64,7 @@ pub struct VkImGuiPipeline {
     pub image_sampler: vk::Sampler
 }
 
-impl VkImGuiPipeline {
+impl VkImGuiRenderPass {
     pub fn new(
         device: &VkDevice,
         swapchain: &VkSwapchain,
@@ -180,7 +180,7 @@ impl VkImGuiPipeline {
             )?;
         }
 
-        Ok(VkImGuiPipeline {
+        Ok(VkImGuiRenderPass {
             device: device.logical_device.clone(),
             swapchain_info: swapchain.swapchain_info.clone(),
             descriptor_set_layout,
@@ -1114,9 +1114,9 @@ impl VkImGuiPipeline {
     }
 }
 
-impl Drop for VkImGuiPipeline {
+impl Drop for VkImGuiRenderPass {
     fn drop(&mut self) {
-        debug!("destroying VkImGuiPipeline");
+        debug!("destroying VkImGuiRenderPass");
 
         fn drop_all_buffer_lists(buffer_list: &mut Vec<Vec<ManuallyDrop<VkBuffer>>>) {
             for buffers in buffer_list {
@@ -1156,6 +1156,6 @@ impl Drop for VkImGuiPipeline {
             self.device.destroy_descriptor_set_layout(self.descriptor_set_layout, None);
         }
 
-        debug!("destroyed VkImGuiPipeline");
+        debug!("destroyed VkImGuiRenderPass");
     }
 }

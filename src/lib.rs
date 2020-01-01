@@ -47,6 +47,8 @@ pub use app::ScopeTimer;
 pub use app::App;
 pub use app::AppBuilder;
 pub use app::AppHandler;
+pub use app::AppUpdateArgs;
+pub use app::AppDrawArgs;
 
 mod renderer;
 pub use renderer::RendererBuilder;
@@ -56,9 +58,15 @@ pub use renderer::PhysicalDeviceType;
 pub use renderer::CoordinateSystemHelper;
 pub use renderer::CoordinateSystem;
 pub use renderer::CreateRendererError;
+
+#[cfg(feature = "with_imgui")]
 pub use renderer::ImguiManager;
 
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;
 pub use skia_safe;
 pub use winit;
+
+#[cfg(feature = "with_imgui")]
+pub use imgui;
+

@@ -2,14 +2,9 @@
 
 extern crate nalgebra as na;
 
-use skulpin::AppHandler;
-use skulpin::CoordinateSystemHelper;
-use skulpin::AppControl;
-use skulpin::InputState;
-use skulpin::TimeState;
+use skulpin::{AppHandler, AppUpdateArgs, AppDrawArgs};
 use skulpin::VirtualKeyCode;
 use skulpin::LogicalSize;
-use skulpin::ImguiManager;
 
 use std::ffi::CString;
 
@@ -176,10 +171,12 @@ impl ExampleApp {
 impl AppHandler for ExampleApp {
     fn update(
         &mut self,
-        app_control: &mut AppControl,
-        input_state: &InputState,
-        time_state: &TimeState,
+        update_args: AppUpdateArgs
     ) {
+        let time_state = update_args.time_state;
+        let input_state = update_args.input_state;
+        let app_control = update_args.app_control;
+
         let now = time_state.current_instant();
 
         //
@@ -210,13 +207,28 @@ impl AppHandler for ExampleApp {
 
     fn draw(
         &mut self,
-        _app_control: &AppControl,
-        _input_state: &InputState,
-        _time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas,
-        coordinate_system_helper: &CoordinateSystemHelper,
-        _imgui_manager: Option<&ImguiManager>
+        draw_args: AppDrawArgs
     ) {
+        let coordinate_system_helper = draw_args.coordinate_system_helper;
+        let canvas = draw_args.canvas;
+
+        #[cfg(feature = "with_imgui")]
+        {
+            let imgui_manager = draw_args.imgui_manager;
+            imgui_manager.with_ui(|ui: &mut imgui::Ui| {
+                let mut show_demo = true;
+                ui.show_demo_window(&mut show_demo);
+
+                ui.main_menu_bar(|| {
+                    ui.menu(imgui::im_str!("File"), true, || {
+                        if imgui::MenuItem::new(imgui::im_str!("New")).build(ui) {
+                            log::info!("clicked");
+                        }
+                    });
+                });
+            });
+        }
+
         let x_half_extents = GROUND_HALF_EXTENTS_WIDTH * 1.5;
         let y_half_extents = x_half_extents
             / (coordinate_system_helper.surface_extents().width as f32
