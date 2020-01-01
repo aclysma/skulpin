@@ -4,6 +4,8 @@ pub use app::App;
 pub use app::AppHandler;
 pub use app::AppBuilder;
 pub use app::AppError;
+pub use app::AppUpdateArgs;
+pub use app::AppDrawArgs;
 
 mod app_control;
 pub use app_control::AppControl;

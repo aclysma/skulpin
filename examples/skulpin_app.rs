@@ -2,13 +2,10 @@
 // It's not as flexible as working with winit directly, but it's quick and simple
 
 use skulpin::{AppHandler, CoordinateSystem};
-use skulpin::CoordinateSystemHelper;
-use skulpin::AppControl;
-use skulpin::InputState;
-use skulpin::TimeState;
 use skulpin::VirtualKeyCode;
 use skulpin::LogicalSize;
-use skulpin::ImguiManager;
+use skulpin::AppUpdateArgs;
+use skulpin::AppDrawArgs;
 use std::ffi::CString;
 
 fn main() {
@@ -50,10 +47,11 @@ impl ExampleApp {
 impl AppHandler for ExampleApp {
     fn update(
         &mut self,
-        app_control: &mut AppControl,
-        input_state: &InputState,
-        _time_state: &TimeState,
+        update_args: AppUpdateArgs
     ) {
+        let input_state = update_args.input_state;
+        let app_control = update_args.app_control;
+
         if input_state.is_key_down(VirtualKeyCode::Escape) {
             app_control.enqueue_terminate_process();
         }
@@ -61,13 +59,11 @@ impl AppHandler for ExampleApp {
 
     fn draw(
         &mut self,
-        _app_control: &AppControl,
-        _input_state: &InputState,
-        time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas,
-        _coordinate_system_helper: &CoordinateSystemHelper,
-        _imgui_manager: Option<&ImguiManager>
+        draw_args: AppDrawArgs
     ) {
+        let time_state = draw_args.time_state;
+        let canvas = draw_args.canvas;
+
         // Generally would want to clear data every time we draw
         canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
 

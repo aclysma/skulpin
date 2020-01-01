@@ -21,12 +21,17 @@ pub use swapchain::VkSwapchain;
 pub use swapchain::SwapchainInfo;
 pub use swapchain::MAX_FRAMES_IN_FLIGHT;
 
+#[cfg(feature = "with_imgui")]
 mod imgui_support;
+#[cfg(feature = "with_imgui")]
 pub use imgui_support::init_imgui_manager;
+#[cfg(feature = "with_imgui")]
 pub use imgui_support::ImguiManager;
 
-mod imgui_pipeline;
-pub use imgui_pipeline::VkImGuiPipeline;
+#[cfg(feature = "with_imgui")]
+mod imgui_renderpass;
+#[cfg(feature = "with_imgui")]
+pub use imgui_renderpass::VkImGuiRenderPass;
 
 mod skia_renderpass;
 pub use skia_renderpass::VkSkiaRenderPass;
@@ -37,7 +42,9 @@ pub use skia_support::VkSkiaContext;
 mod buffer;
 pub use buffer::VkBuffer;
 
+#[cfg(feature = "with_imgui")]
 mod image;
+#[cfg(feature = "with_imgui")]
 pub use self::image::VkImage;
 
 mod debug_reporter;

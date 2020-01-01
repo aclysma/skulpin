@@ -100,6 +100,7 @@ pub fn submit_single_use_command_buffer<F: Fn(vk::CommandBuffer)>(
 }
 
 //TODO: Find a better place for this
+#[cfg(feature = "with_imgui")]
 pub fn transition_image_layout(
     logical_device: &ash::Device,
     queue: vk::Queue,
@@ -172,6 +173,7 @@ pub fn transition_image_layout(
 }
 
 //TODO: Find a better place for this
+#[cfg(feature = "with_imgui")]
 pub fn copy_buffer_to_image(
     logical_device: &ash::Device,
     queue: vk::Queue,
