@@ -108,68 +108,72 @@ pub fn transition_image_layout(
     image: vk::Image,
     _format: vk::Format,
     old_layout: vk::ImageLayout,
-    new_layout: vk::ImageLayout
+    new_layout: vk::ImageLayout,
 ) -> VkResult<()> {
-    super::util::submit_single_use_command_buffer(logical_device, queue, command_pool, |command_buffer| {
+    super::util::submit_single_use_command_buffer(
+        logical_device,
+        queue,
+        command_pool,
+        |command_buffer| {
+            struct SyncInfo {
+                src_access_mask: vk::AccessFlags,
+                dst_access_mask: vk::AccessFlags,
+                src_stage: vk::PipelineStageFlags,
+                dst_stage: vk::PipelineStageFlags,
+            }
 
-        struct SyncInfo {
-            src_access_mask: vk::AccessFlags,
-            dst_access_mask: vk::AccessFlags,
-            src_stage: vk::PipelineStageFlags,
-            dst_stage: vk::PipelineStageFlags,
-        }
-
-        let sync_info = match (old_layout, new_layout) {
-            (vk::ImageLayout::UNDEFINED, vk::ImageLayout::TRANSFER_DST_OPTIMAL) => {
-                SyncInfo {
+            let sync_info = match (old_layout, new_layout) {
+                (vk::ImageLayout::UNDEFINED, vk::ImageLayout::TRANSFER_DST_OPTIMAL) => SyncInfo {
                     src_access_mask: vk::AccessFlags::empty(),
                     dst_access_mask: vk::AccessFlags::TRANSFER_WRITE,
                     src_stage: vk::PipelineStageFlags::TOP_OF_PIPE,
                     dst_stage: vk::PipelineStageFlags::TRANSFER,
-                }
-            },
-            (vk::ImageLayout::TRANSFER_DST_OPTIMAL, vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL) => {
-                SyncInfo {
+                },
+                (
+                    vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+                    vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
+                ) => SyncInfo {
                     src_access_mask: vk::AccessFlags::TRANSFER_WRITE,
                     dst_access_mask: vk::AccessFlags::SHADER_READ,
                     src_stage: vk::PipelineStageFlags::TRANSFER,
                     dst_stage: vk::PipelineStageFlags::FRAGMENT_SHADER,
+                },
+                _ => {
+                    // Layout transition not yet supported
+                    unimplemented!();
                 }
-            },
-            _ => {
-                // Layout transition not yet supported
-                unimplemented!();
+            };
+
+            let subresource_range = vk::ImageSubresourceRange::builder()
+                .aspect_mask(vk::ImageAspectFlags::COLOR)
+                .base_mip_level(0)
+                .level_count(1)
+                .base_array_layer(0)
+                .layer_count(1);
+
+            let barrier_info = vk::ImageMemoryBarrier::builder()
+                .old_layout(old_layout)
+                .new_layout(new_layout)
+                .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+                .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
+                .image(image)
+                .subresource_range(*subresource_range)
+                .src_access_mask(sync_info.src_access_mask)
+                .dst_access_mask(sync_info.dst_access_mask);
+
+            unsafe {
+                logical_device.cmd_pipeline_barrier(
+                    command_buffer,
+                    sync_info.src_stage,
+                    sync_info.dst_stage,
+                    vk::DependencyFlags::BY_REGION,
+                    &[],
+                    &[],
+                    &[*barrier_info],
+                ); //TODO: Can remove build() by using *?
             }
-        };
-
-        let subresource_range = vk::ImageSubresourceRange::builder()
-            .aspect_mask(vk::ImageAspectFlags::COLOR)
-            .base_mip_level(0)
-            .level_count(1)
-            .base_array_layer(0)
-            .layer_count(1);
-
-        let barrier_info = vk::ImageMemoryBarrier::builder()
-            .old_layout(old_layout)
-            .new_layout(new_layout)
-            .src_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
-            .dst_queue_family_index(vk::QUEUE_FAMILY_IGNORED)
-            .image(image)
-            .subresource_range(*subresource_range)
-            .src_access_mask(sync_info.src_access_mask)
-            .dst_access_mask(sync_info.dst_access_mask);
-
-        unsafe {
-            logical_device.cmd_pipeline_barrier(
-                command_buffer,
-                sync_info.src_stage,
-                sync_info.dst_stage,
-                vk::DependencyFlags::BY_REGION,
-                &[],
-                &[],
-                &[*barrier_info]); //TODO: Can remove build() by using *?
-        }
-    })
+        },
+    )
 }
 
 //TODO: Find a better place for this
@@ -180,31 +184,36 @@ pub fn copy_buffer_to_image(
     command_pool: vk::CommandPool,
     buffer: vk::Buffer,
     image: vk::Image,
-    extent: &vk::Extent3D
+    extent: &vk::Extent3D,
 ) -> VkResult<()> {
-    super::util::submit_single_use_command_buffer(logical_device, queue, command_pool, |command_buffer| {
-        let image_subresource = vk::ImageSubresourceLayers::builder()
-            .aspect_mask(vk::ImageAspectFlags::COLOR)
-            .mip_level(0)
-            .base_array_layer(0)
-            .layer_count(1);
+    super::util::submit_single_use_command_buffer(
+        logical_device,
+        queue,
+        command_pool,
+        |command_buffer| {
+            let image_subresource = vk::ImageSubresourceLayers::builder()
+                .aspect_mask(vk::ImageAspectFlags::COLOR)
+                .mip_level(0)
+                .base_array_layer(0)
+                .layer_count(1);
 
-        let image_copy = vk::BufferImageCopy::builder()
-            .buffer_offset(0)
-            .buffer_row_length(0)
-            .buffer_image_height(0)
-            .image_subresource(*image_subresource)
-            .image_offset(vk::Offset3D { x: 0, y: 0, z: 0 })
-            .image_extent(*extent);
+            let image_copy = vk::BufferImageCopy::builder()
+                .buffer_offset(0)
+                .buffer_row_length(0)
+                .buffer_image_height(0)
+                .image_subresource(*image_subresource)
+                .image_offset(vk::Offset3D { x: 0, y: 0, z: 0 })
+                .image_extent(*extent);
 
-        unsafe {
-            logical_device.cmd_copy_buffer_to_image(
-                command_buffer,
-                buffer,
-                image,
-                vk::ImageLayout::TRANSFER_DST_OPTIMAL,
-                &[*image_copy]
-            );
-        }
-    })
+            unsafe {
+                logical_device.cmd_copy_buffer_to_image(
+                    command_buffer,
+                    buffer,
+                    image,
+                    vk::ImageLayout::TRANSFER_DST_OPTIMAL,
+                    &[*image_copy],
+                );
+            }
+        },
+    )
 }

@@ -165,12 +165,13 @@ impl RendererBuilder {
     pub fn build(
         &self,
         window: &winit::window::Window,
-        #[cfg(feature = "with_imgui")] imgui_manager: &mut ImguiManager
+        #[cfg(feature = "with_imgui")] imgui_manager: &mut ImguiManager,
     ) -> Result<Renderer, CreateRendererError> {
         Renderer::new(
             &self.app_name,
             window,
-            #[cfg(feature = "with_imgui")] imgui_manager,
+            #[cfg(feature = "with_imgui")]
+            imgui_manager,
             self.validation_layer_debug_report_flags,
             self.physical_device_type_priority.clone(),
             self.present_mode_priority.clone(),
@@ -189,7 +190,8 @@ pub struct Renderer {
 
     swapchain: ManuallyDrop<VkSwapchain>,
     skia_renderpass: ManuallyDrop<VkSkiaRenderPass>,
-    #[cfg(feature = "with_imgui")] imgui_renderpass: ManuallyDrop<VkImGuiRenderPass>,
+    #[cfg(feature = "with_imgui")]
+    imgui_renderpass: ManuallyDrop<VkImGuiRenderPass>,
 
     // Increase until > MAX_FRAMES_IN_FLIGHT, then set to 0, or -1 if no frame drawn yet
     sync_frame_index: usize,
@@ -276,7 +278,8 @@ impl Renderer {
         )?);
 
         #[cfg(feature = "with_imgui")]
-        let imgui_renderpass = ManuallyDrop::new(VkImGuiRenderPass::new(&device, &swapchain, imgui_manager)?);
+        let imgui_renderpass =
+            ManuallyDrop::new(VkImGuiRenderPass::new(&device, &swapchain, imgui_manager)?);
 
         let sync_frame_index = 0;
 
@@ -288,7 +291,8 @@ impl Renderer {
             skia_context,
             swapchain,
             skia_renderpass,
-            #[cfg(feature = "with_imgui")] imgui_renderpass,
+            #[cfg(feature = "with_imgui")]
+            imgui_renderpass,
             sync_frame_index,
             present_mode_priority,
             previous_inner_size,
@@ -300,7 +304,7 @@ impl Renderer {
     /// the swapchain if necessary.
     pub fn draw<
         #[cfg(feature = "with_imgui")] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper, &mut ImguiManager),
-        #[cfg(not(feature = "with_imgui"))] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)
+        #[cfg(not(feature = "with_imgui"))] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper),
     >(
         &mut self,
         window: &winit::window::Window,
@@ -309,13 +313,26 @@ impl Renderer {
     ) -> VkResult<()> {
         if window.inner_size() != self.previous_inner_size {
             debug!("Detected window inner size change, rebuilding swapchain");
-            self.rebuild_swapchain(window, #[cfg(feature = "with_imgui")] imgui_manager)?;
+            self.rebuild_swapchain(
+                window,
+                #[cfg(feature = "with_imgui")]
+                imgui_manager,
+            )?;
         }
 
-        let result = self.do_draw(window, #[cfg(feature = "with_imgui")] imgui_manager, f);
+        let result = self.do_draw(
+            window,
+            #[cfg(feature = "with_imgui")]
+            imgui_manager,
+            f,
+        );
         if let Err(e) = result {
             match e {
-                ash::vk::Result::ERROR_OUT_OF_DATE_KHR => self.rebuild_swapchain(window, #[cfg(feature = "with_imgui")] imgui_manager),
+                ash::vk::Result::ERROR_OUT_OF_DATE_KHR => self.rebuild_swapchain(
+                    window,
+                    #[cfg(feature = "with_imgui")]
+                    imgui_manager,
+                ),
                 ash::vk::Result::SUCCESS => Ok(()),
                 ash::vk::Result::SUBOPTIMAL_KHR => Ok(()),
                 _ => {
@@ -362,7 +379,11 @@ impl Renderer {
 
         #[cfg(feature = "with_imgui")]
         {
-            self.imgui_renderpass = ManuallyDrop::new(VkImGuiRenderPass::new(&self.device, &self.swapchain, imgui_manager)?);
+            self.imgui_renderpass = ManuallyDrop::new(VkImGuiRenderPass::new(
+                &self.device,
+                &self.swapchain,
+                imgui_manager,
+            )?);
         }
 
         self.previous_inner_size = window.inner_size();
@@ -373,7 +394,7 @@ impl Renderer {
     /// Do the render
     fn do_draw<
         #[cfg(feature = "with_imgui")] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper, &mut ImguiManager),
-        #[cfg(not(feature = "with_imgui"))] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)
+        #[cfg(not(feature = "with_imgui"))] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper),
     >(
         &mut self,
         window: &winit::window::Window,
@@ -436,7 +457,12 @@ impl Renderer {
                     .unwrap(),
             }
 
-            f(&mut canvas, &coordinate_system_helper, #[cfg(feature = "with_imgui")] imgui_manager);
+            f(
+                &mut canvas,
+                &coordinate_system_helper,
+                #[cfg(feature = "with_imgui")]
+                imgui_manager,
+            );
 
             canvas.flush();
         }
@@ -444,13 +470,13 @@ impl Renderer {
         #[cfg(feature = "with_imgui")]
         {
             imgui_manager.render(window);
-            let imgui_draw_data : Option<&imgui::DrawData> = imgui_manager.draw_data();
+            let imgui_draw_data: Option<&imgui::DrawData> = imgui_manager.draw_data();
 
             self.imgui_renderpass.update(
                 &self.device.memory_properties,
                 imgui_draw_data,
                 present_index as usize,
-                window.hidpi_factor()
+                window.hidpi_factor(),
             )?;
 
             imgui_manager.begin_frame(window);
@@ -467,7 +493,7 @@ impl Renderer {
         #[cfg(feature = "with_imgui")]
         let command_buffers = vec![
             self.skia_renderpass.command_buffers[present_index as usize],
-            self.imgui_renderpass.command_buffers[present_index as usize]
+            self.imgui_renderpass.command_buffers[present_index as usize],
         ];
 
         //add fence to queue submit

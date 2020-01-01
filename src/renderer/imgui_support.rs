@@ -1,4 +1,3 @@
-
 use imgui::sys as imgui_sys;
 
 // Inner state for ImguiManager, which will be protected by a Mutex. Mutex protection required since
@@ -99,18 +98,22 @@ impl ImguiManager {
 
     // Allows access to the context without caller needing to be aware of locking
     #[allow(dead_code)]
-    pub fn with_context<F>(&mut self, f: F)
-        where
-            F: FnOnce(&mut imgui::Context),
+    pub fn with_context<F>(
+        &mut self,
+        f: F,
+    ) where
+        F: FnOnce(&mut imgui::Context),
     {
         let mut inner = self.inner.lock().unwrap();
         (f)(&mut inner.context);
     }
 
     // Allows access to the ui without the caller needing to be aware of locking. A frame must be started
-    pub fn with_ui<F>(&mut self, f: F)
-        where
-            F: FnOnce(&mut imgui::Ui),
+    pub fn with_ui<F>(
+        &mut self,
+        f: F,
+    ) where
+        F: FnOnce(&mut imgui::Ui),
     {
         let inner = self.inner.lock().unwrap();
 
@@ -146,7 +149,10 @@ impl ImguiManager {
     }
 
     // Start a new frame
-    pub fn begin_frame(&mut self, window: &winit::window::Window) {
+    pub fn begin_frame(
+        &mut self,
+        window: &winit::window::Window,
+    ) {
         let mut inner_mutex_guard = self.inner.lock().unwrap();
         let mut inner = &mut *inner_mutex_guard;
 
@@ -182,7 +188,10 @@ impl ImguiManager {
     }
 
     // Finishes the frame. Draw data becomes available via get_draw_data()
-    pub fn render(&mut self, window: &winit::window::Window) {
+    pub fn render(
+        &mut self,
+        window: &winit::window::Window,
+    ) {
         let mut inner = self.inner.lock().unwrap();
 
         if inner.ui.is_none() {
@@ -251,7 +260,6 @@ impl Drop for ImguiManager {
         unsafe { Box::from_raw(inner.font_atlas_texture) };
     }
 }
-
 
 fn init_imgui(window: &winit::window::Window) -> imgui::Context {
     use imgui::Context;

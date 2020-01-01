@@ -81,7 +81,7 @@ pub struct AppDrawArgs<'a, 'b, 'c, 'd, 'e, #[cfg(feature = "with_imgui")] 'f> {
     pub coordinate_system_helper: &'e CoordinateSystemHelper,
 
     #[cfg(feature = "with_imgui")]
-    pub imgui_manager: &'f mut ImguiManager
+    pub imgui_manager: &'f mut ImguiManager,
 }
 
 /// A skulpin app requires implementing the AppHandler. A separate update and draw call must be
@@ -97,13 +97,13 @@ pub trait AppHandler {
     /// Called frequently, this is the intended place to put non-rendering logic
     fn update(
         &mut self,
-        update_args: AppUpdateArgs
+        update_args: AppUpdateArgs,
     );
 
     /// Called frequently, this is the intended place to put drawing code
     fn draw(
         &mut self,
-        draw_args: AppDrawArgs
+        draw_args: AppDrawArgs,
     );
 
     fn fatal_error(
@@ -311,7 +311,11 @@ impl App {
         #[cfg(feature = "with_imgui")]
         imgui_manager.begin_frame(&window);
 
-        let renderer_result = renderer_builder.build(&window, #[cfg(feature = "with_imgui")] &mut imgui_manager);
+        let renderer_result = renderer_builder.build(
+            &window,
+            #[cfg(feature = "with_imgui")]
+            &mut imgui_manager,
+        );
         let mut renderer = match renderer_result {
             Ok(renderer) => renderer,
             Err(e) => {
@@ -348,7 +352,11 @@ impl App {
                         debug!("fps: {}", time_state.updates_per_second());
                     }
 
-                    app_handler.update(AppUpdateArgs {app_control: &mut app_control, input_state: &input_state, time_state: &time_state });
+                    app_handler.update(AppUpdateArgs {
+                        app_control: &mut app_control,
+                        input_state: &input_state,
+                        time_state: &time_state,
+                    });
 
                     // Call this to mark the start of the next frame (i.e. "key just down" will return false)
                     input_state.end_frame();
@@ -357,18 +365,24 @@ impl App {
                     window.request_redraw();
                 }
                 winit::event::Event::RedrawRequested(_window_id) => {
-                    if let Err(e) = renderer.draw(&window, #[cfg(feature = "with_imgui")]&mut imgui_manager, |canvas, coordinate_system_helper, #[cfg(feature = "with_imgui")] imgui_manager| {
-                        app_handler.draw(
-                            AppDrawArgs {
+                    if let Err(e) = renderer.draw(
+                        &window,
+                        #[cfg(feature = "with_imgui")]
+                        &mut imgui_manager,
+                        |canvas,
+                         coordinate_system_helper,
+                         #[cfg(feature = "with_imgui")] imgui_manager| {
+                            app_handler.draw(AppDrawArgs {
                                 app_control: &app_control,
                                 input_state: &input_state,
                                 time_state: &time_state,
                                 canvas,
                                 coordinate_system_helper,
-                                #[cfg(feature = "with_imgui")] imgui_manager
-                            }
-                        );
-                    }) {
+                                #[cfg(feature = "with_imgui")]
+                                imgui_manager,
+                            });
+                        },
+                    ) {
                         warn!("Passing Renderer::draw() error to app {}", e);
                         app_handler.fatal_error(&e.into());
                         app_control.enqueue_terminate_process();
