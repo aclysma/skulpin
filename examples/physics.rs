@@ -171,7 +171,7 @@ impl ExampleApp {
 impl AppHandler for ExampleApp {
     fn update(
         &mut self,
-        update_args: AppUpdateArgs
+        update_args: AppUpdateArgs,
     ) {
         let time_state = update_args.time_state;
         let input_state = update_args.input_state;
@@ -207,7 +207,7 @@ impl AppHandler for ExampleApp {
 
     fn draw(
         &mut self,
-        draw_args: AppDrawArgs
+        draw_args: AppDrawArgs,
     ) {
         let coordinate_system_helper = draw_args.coordinate_system_helper;
         let canvas = draw_args.canvas;

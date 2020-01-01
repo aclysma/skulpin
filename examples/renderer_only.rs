@@ -43,7 +43,11 @@ fn main() {
             visible_range,
             scale_to_fit,
         ))
-        .build(&window, #[cfg(feature = "with_imgui")] &mut imgui_manager);
+        .build(
+            &window,
+            #[cfg(feature = "with_imgui")]
+            &mut imgui_manager,
+        );
 
     // Check if there were error setting up vulkan
     if let Err(e) = renderer {
@@ -59,7 +63,6 @@ fn main() {
     // Start the window event loop. Winit will not return once run is called. We will get notified
     // when important events happen.
     event_loop.run(move |event, _window_target, control_flow| {
-
         #[cfg(feature = "with_imgui")]
         imgui_manager.handle_event(&window, &event);
 
@@ -100,26 +103,33 @@ fn main() {
             // Redraw
             //
             winit::event::Event::RedrawRequested(_window_id) => {
-                if let Err(e) = renderer.draw(&window, #[cfg(feature = "with_imgui")] &mut imgui_manager, |canvas, coordinate_system_helper, #[cfg(feature = "with_imgui")] imgui_manager| {
-                    draw(canvas, coordinate_system_helper, frame_count);
-                    frame_count += 1;
-
+                if let Err(e) = renderer.draw(
+                    &window,
                     #[cfg(feature = "with_imgui")]
-                    {
-                        imgui_manager.with_ui(|ui: &mut imgui::Ui| {
-                            let mut show_demo = true;
-                            ui.show_demo_window(&mut show_demo);
+                    &mut imgui_manager,
+                    |canvas,
+                     coordinate_system_helper,
+                     #[cfg(feature = "with_imgui")] imgui_manager| {
+                        draw(canvas, coordinate_system_helper, frame_count);
+                        frame_count += 1;
 
-                            ui.main_menu_bar(|| {
-                                ui.menu(imgui::im_str!("File"), true, || {
-                                    if imgui::MenuItem::new(imgui::im_str!("New")).build(ui) {
-                                        log::info!("clicked");
-                                    }
+                        #[cfg(feature = "with_imgui")]
+                        {
+                            imgui_manager.with_ui(|ui: &mut imgui::Ui| {
+                                let mut show_demo = true;
+                                ui.show_demo_window(&mut show_demo);
+
+                                ui.main_menu_bar(|| {
+                                    ui.menu(imgui::im_str!("File"), true, || {
+                                        if imgui::MenuItem::new(imgui::im_str!("New")).build(ui) {
+                                            log::info!("clicked");
+                                        }
+                                    });
                                 });
                             });
-                        });
-                    }
-                }) {
+                        }
+                    },
+                ) {
                     println!("Error during draw: {:?}", e);
                     *control_flow = winit::event_loop::ControlFlow::Exit
                 }

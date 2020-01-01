@@ -47,7 +47,7 @@ impl ExampleApp {
 impl AppHandler for ExampleApp {
     fn update(
         &mut self,
-        update_args: AppUpdateArgs
+        update_args: AppUpdateArgs,
     ) {
         let input_state = update_args.input_state;
         let app_control = update_args.app_control;
@@ -59,7 +59,7 @@ impl AppHandler for ExampleApp {
 
     fn draw(
         &mut self,
-        draw_args: AppDrawArgs
+        draw_args: AppDrawArgs,
     ) {
         let time_state = draw_args.time_state;
         let canvas = draw_args.canvas;
