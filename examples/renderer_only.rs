@@ -32,7 +32,7 @@ fn main() {
         .expect("Failed to create window");
 
     #[cfg(feature = "with_imgui")]
-    let mut imgui_manager = init_imgui_manager(&window);
+    let imgui_manager = init_imgui_manager(&window);
     #[cfg(feature = "with_imgui")]
     imgui_manager.begin_frame(&window);
 
@@ -46,7 +46,7 @@ fn main() {
         .build(
             &window,
             #[cfg(feature = "with_imgui")]
-            &mut imgui_manager,
+            imgui_manager.clone(),
         );
 
     // Check if there were error setting up vulkan
@@ -106,7 +106,7 @@ fn main() {
                 if let Err(e) = renderer.draw(
                     &window,
                     #[cfg(feature = "with_imgui")]
-                    &mut imgui_manager,
+                    imgui_manager.clone(),
                     |canvas,
                      coordinate_system_helper,
                      #[cfg(feature = "with_imgui")] imgui_manager| {
@@ -146,7 +146,7 @@ fn main() {
 /// Called when winit passes us a WindowEvent::RedrawRequested
 fn draw(
     canvas: &mut skia_safe::Canvas,
-    _coordinate_system_helper: &CoordinateSystemHelper,
+    _coordinate_system_helper: CoordinateSystemHelper,
     frame_count: i32,
 ) {
     // Generally would want to clear data every time we draw

@@ -9,27 +9,27 @@ script:
 matrix:
   include:
     - name: "Windows MSVC 1.39.0"
-      rust: 1.37.0-msvc
+      rust: 1.39.0-msvc
       os: windows
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "OSX 1.39.0"
-      rust: 1.37.0
+      rust: 1.39.0
       os: osx
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "Linux 1.39.0"
-      rust: 1.37.0
+      rust: 1.39.0
       os: linux
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "Windows MSVC 1.39.0 imgui"
-      rust: 1.37.0-msvc
+      rust: 1.39.0-msvc
       os: windows
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1 FEATURES="with_imgui"
     - name: "OSX 1.39.0 imgui"
-      rust: 1.37.0
+      rust: 1.39.0
       os: osx
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1 FEATURES="with_imgui"
     - name: "Linux 1.39.0 imgui"
-      rust: 1.37.0
+      rust: 1.39.0
       os: linux
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1 FEATURES="with_imgui"
     - name: "Windows MSVC Stable"

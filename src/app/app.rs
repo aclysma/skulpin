@@ -73,15 +73,15 @@ pub struct AppUpdateArgs<'a, 'b, 'c> {
     pub time_state: &'c TimeState,
 }
 
-pub struct AppDrawArgs<'a, 'b, 'c, 'd, 'e, #[cfg(feature = "with_imgui")] 'f> {
+pub struct AppDrawArgs<'a, 'b, 'c, 'd> {
     pub app_control: &'a AppControl,
     pub input_state: &'b InputState,
     pub time_state: &'c TimeState,
     pub canvas: &'d mut skia_safe::Canvas,
-    pub coordinate_system_helper: &'e CoordinateSystemHelper,
+    pub coordinate_system_helper: CoordinateSystemHelper,
 
     #[cfg(feature = "with_imgui")]
-    pub imgui_manager: &'f mut ImguiManager,
+    pub imgui_manager: ImguiManager,
 }
 
 /// A skulpin app requires implementing the AppHandler. A separate update and draw call must be
@@ -307,14 +307,14 @@ impl App {
         let mut input_state = InputState::new(&window);
 
         #[cfg(feature = "with_imgui")]
-        let mut imgui_manager = crate::renderer::init_imgui_manager(&window);
+        let imgui_manager = crate::renderer::init_imgui_manager(&window);
         #[cfg(feature = "with_imgui")]
         imgui_manager.begin_frame(&window);
 
         let renderer_result = renderer_builder.build(
             &window,
             #[cfg(feature = "with_imgui")]
-            &mut imgui_manager,
+            imgui_manager.clone(),
         );
         let mut renderer = match renderer_result {
             Ok(renderer) => renderer,
@@ -368,7 +368,7 @@ impl App {
                     if let Err(e) = renderer.draw(
                         &window,
                         #[cfg(feature = "with_imgui")]
-                        &mut imgui_manager,
+                        imgui_manager.clone(),
                         |canvas,
                          coordinate_system_helper,
                          #[cfg(feature = "with_imgui")] imgui_manager| {
@@ -379,7 +379,7 @@ impl App {
                                 canvas,
                                 coordinate_system_helper,
                                 #[cfg(feature = "with_imgui")]
-                                imgui_manager,
+                                imgui_manager: imgui_manager.clone(),
                             });
                         },
                     ) {

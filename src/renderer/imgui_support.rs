@@ -1,5 +1,8 @@
 use imgui::sys as imgui_sys;
 
+use std::sync::Arc;
+use std::sync::Mutex;
+
 // Inner state for ImguiManager, which will be protected by a Mutex. Mutex protection required since
 // this object is Send but not Sync
 struct Inner {
@@ -26,14 +29,28 @@ struct Inner {
 // Rust assumes pointers in Inner are not safe to send, so we need to explicitly impl that here
 unsafe impl Send for Inner {}
 
+impl Drop for Inner {
+    fn drop(&mut self) {
+        let mut ui = None;
+        std::mem::swap(&mut self.ui, &mut ui);
+
+        // Drop the UI call if it exists
+        if let Some(ui) = ui {
+            let _ui = unsafe { Box::from_raw(ui) };
+        }
+
+        // Drop the font atlas
+        unsafe { Box::from_raw(self.font_atlas_texture) };
+    }
+}
+
 //TODO: Investigate usage of channels/draw lists
+#[derive(Clone)]
 pub struct ImguiManager {
-    inner: std::sync::Mutex<Inner>,
+    inner: Arc<Mutex<Inner>>,
 }
 
 // Wraps imgui (and winit integration logic)
-// All functions that take the lock are mutable to ensure exclusive access and that it
-// won't actually block
 impl ImguiManager {
     // imgui and winit platform are expected to be pre-configured
     pub fn new(
@@ -56,7 +73,7 @@ impl ImguiManager {
         };
 
         ImguiManager {
-            inner: std::sync::Mutex::new(Inner {
+            inner: Arc::new(Mutex::new(Inner {
                 context: imgui_context,
                 font_atlas_texture,
                 ui: None,
@@ -65,14 +82,14 @@ impl ImguiManager {
                 want_capture_mouse: false,
                 want_set_mouse_pos: false,
                 want_text_input: false,
-            }),
+            })),
         }
     }
 
     // Call when a winit event is received
     //TODO: Taking a lock per event sucks
     pub fn handle_event<T>(
-        &mut self,
+        &self,
         window: &winit::window::Window,
         event: &winit::event::Event<T>,
     ) {
@@ -99,7 +116,7 @@ impl ImguiManager {
     // Allows access to the context without caller needing to be aware of locking
     #[allow(dead_code)]
     pub fn with_context<F>(
-        &mut self,
+        &self,
         f: F,
     ) where
         F: FnOnce(&mut imgui::Context),
@@ -110,7 +127,7 @@ impl ImguiManager {
 
     // Allows access to the ui without the caller needing to be aware of locking. A frame must be started
     pub fn with_ui<F>(
-        &mut self,
+        &self,
         f: F,
     ) where
         F: FnOnce(&mut imgui::Ui),
@@ -131,7 +148,7 @@ impl ImguiManager {
 
     // Get reference to the underlying font atlas. The ref will be valid as long as this object
     // is not destroyed
-    pub fn font_atlas_texture(&mut self) -> &imgui::FontAtlasTexture {
+    pub fn font_atlas_texture(&self) -> &imgui::FontAtlasTexture {
         let inner = self.inner.lock().unwrap();
         assert!(!inner.font_atlas_texture.is_null());
         unsafe { &*inner.font_atlas_texture }
@@ -150,7 +167,7 @@ impl ImguiManager {
 
     // Start a new frame
     pub fn begin_frame(
-        &mut self,
+        &self,
         window: &winit::window::Window,
     ) {
         let mut inner_mutex_guard = self.inner.lock().unwrap();
@@ -182,14 +199,14 @@ impl ImguiManager {
     }
 
     // Returns true if a frame has been started (and not ended)
-    pub fn is_frame_started(&mut self) -> bool {
+    pub fn is_frame_started(&self) -> bool {
         let inner = self.inner.lock().unwrap();
         inner.ui.is_some()
     }
 
     // Finishes the frame. Draw data becomes available via get_draw_data()
     pub fn render(
-        &mut self,
+        &self,
         window: &winit::window::Window,
     ) {
         let mut inner = self.inner.lock().unwrap();
@@ -209,7 +226,7 @@ impl ImguiManager {
     }
 
     // Returns draw data (render must be called first to end the frame)
-    pub fn draw_data(&mut self) -> Option<&imgui::DrawData> {
+    pub fn draw_data(&self) -> Option<&imgui::DrawData> {
         let inner = self.inner.lock().unwrap();
 
         if inner.ui.is_some() {
@@ -241,23 +258,6 @@ impl ImguiManager {
 
     pub fn want_text_input(&self) -> bool {
         self.inner.lock().unwrap().want_text_input
-    }
-}
-
-impl Drop for ImguiManager {
-    fn drop(&mut self) {
-        let mut inner = self.inner.lock().unwrap();
-
-        let mut ui = None;
-        std::mem::swap(&mut inner.ui, &mut ui);
-
-        // Drop the UI call if it exists
-        if let Some(ui) = ui {
-            let _ui = unsafe { Box::from_raw(ui) };
-        }
-
-        // Drop the font atlas
-        unsafe { Box::from_raw(inner.font_atlas_texture) };
     }
 }
 
