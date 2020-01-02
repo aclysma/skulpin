@@ -3,23 +3,35 @@ before_script:
   - if [ $SKIP_FORMAT_CHECK = 0 ]; then rustup component add rustfmt; fi
   - if [ $SKIP_CLIPPY = 0 ]; then rustup component add clippy; fi
 script:
-  - cargo build --verbose --all
+  - cargo build --verbose --all --features="$FEATURES"
   - if [ $SKIP_FORMAT_CHECK = 0 ]; then cargo fmt --all -- --check; fi
   - if [ $SKIP_CLIPPY = 0 ]; then cargo clippy -- -D warnings; fi
 matrix:
   include:
-    - name: "Windows MSVC 1.37.0"
+    - name: "Windows MSVC 1.39.0"
       rust: 1.37.0-msvc
       os: windows
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
-    - name: "OSX 1.37.0"
+    - name: "OSX 1.39.0"
       rust: 1.37.0
       os: osx
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
-    - name: "Linux 1.37.0"
+    - name: "Linux 1.39.0"
       rust: 1.37.0
       os: linux
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
+    - name: "Windows MSVC 1.39.0 imgui"
+      rust: 1.37.0-msvc
+      os: windows
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1 FEATURES="with_imgui"
+    - name: "OSX 1.39.0 imgui"
+      rust: 1.37.0
+      os: osx
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1 FEATURES="with_imgui"
+    - name: "Linux 1.39.0 imgui"
+      rust: 1.37.0
+      os: linux
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1 FEATURES="with_imgui"
     - name: "Windows MSVC Stable"
       rust: stable-msvc
       os: windows
@@ -32,18 +44,34 @@ matrix:
       rust: stable
       os: linux
       env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
+    - name: "Windows MSVC Stable imgui"
+      rust: stable-msvc
+      os: windows
+      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0 FEATURES="with_imgui"
+    - name: "OSX Stable imgui"
+      rust: stable
+      os: osx
+      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0 FEATURES="with_imgui"
+    - name: "Linux Stable imgui"
+      rust: stable
+      os: linux
+      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0 FEATURES="with_imgui"
     - name: "Windows MSVC Beta"
       rust: beta-msvc
       os: windows
-      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "OSX Beta"
       rust: beta
       os: osx
-      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "Linux Beta"
       rust: beta
       os: linux
-      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
+    - name: "Linux Beta imgui"
+      rust: beta
+      os: linux
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=0 FEATURES="with_imgui"
     - name: "Windows MSVC Nightly"
       rust: nightly-msvc
       os: windows
@@ -56,3 +84,7 @@ matrix:
       rust: nightly
       os: linux
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
+    - name: "Linux Nightly imgui"
+      rust: nightly
+      os: linux
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1 FEATURES="with_imgui"
