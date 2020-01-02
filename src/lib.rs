@@ -69,3 +69,5 @@ pub use winit;
 
 #[cfg(feature = "with_imgui")]
 pub use imgui;
+#[cfg(feature = "with_imgui")]
+pub use imgui_winit_support;
