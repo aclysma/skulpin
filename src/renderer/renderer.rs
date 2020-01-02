@@ -165,7 +165,7 @@ impl RendererBuilder {
     pub fn build(
         &self,
         window: &winit::window::Window,
-        #[cfg(feature = "with_imgui")] imgui_manager: &mut ImguiManager,
+        #[cfg(feature = "with_imgui")] imgui_manager: ImguiManager,
     ) -> Result<Renderer, CreateRendererError> {
         Renderer::new(
             &self.app_name,
@@ -248,7 +248,7 @@ impl Renderer {
     pub fn new(
         app_name: &CString,
         window: &winit::window::Window,
-        #[cfg(feature = "with_imgui")] imgui_manager: &mut ImguiManager,
+        #[cfg(feature = "with_imgui")] imgui_manager: ImguiManager,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
         present_mode_priority: Vec<PresentMode>,
@@ -304,12 +304,12 @@ impl Renderer {
     /// Call to render a frame. This can block for certain presentation modes. This will rebuild
     /// the swapchain if necessary.
     pub fn draw<
-        #[cfg(feature = "with_imgui")] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper, &mut ImguiManager),
-        #[cfg(not(feature = "with_imgui"))] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper),
+        #[cfg(feature = "with_imgui")] F: FnOnce(&mut skia_safe::Canvas, CoordinateSystemHelper, ImguiManager),
+        #[cfg(not(feature = "with_imgui"))] F: FnOnce(&mut skia_safe::Canvas, CoordinateSystemHelper),
     >(
         &mut self,
         window: &winit::window::Window,
-        #[cfg(feature = "with_imgui")] imgui_manager: &mut ImguiManager,
+        #[cfg(feature = "with_imgui")] imgui_manager: ImguiManager,
         f: F,
     ) -> VkResult<()> {
         if window.inner_size() != self.previous_inner_size {
@@ -317,14 +317,14 @@ impl Renderer {
             self.rebuild_swapchain(
                 window,
                 #[cfg(feature = "with_imgui")]
-                imgui_manager,
+                imgui_manager.clone(),
             )?;
         }
 
         let result = self.do_draw(
             window,
             #[cfg(feature = "with_imgui")]
-            imgui_manager,
+            imgui_manager.clone(),
             f,
         );
         if let Err(e) = result {
@@ -332,7 +332,7 @@ impl Renderer {
                 ash::vk::Result::ERROR_OUT_OF_DATE_KHR => self.rebuild_swapchain(
                     window,
                     #[cfg(feature = "with_imgui")]
-                    imgui_manager,
+                    imgui_manager.clone(),
                 ),
                 ash::vk::Result::SUCCESS => Ok(()),
                 ash::vk::Result::SUBOPTIMAL_KHR => Ok(()),
@@ -349,7 +349,7 @@ impl Renderer {
     fn rebuild_swapchain(
         &mut self,
         window: &winit::window::Window,
-        #[cfg(feature = "with_imgui")] imgui_manager: &mut ImguiManager,
+        #[cfg(feature = "with_imgui")] imgui_manager: ImguiManager,
     ) -> VkResult<()> {
         unsafe {
             self.device.logical_device.device_wait_idle()?;
@@ -394,12 +394,12 @@ impl Renderer {
 
     /// Do the render
     fn do_draw<
-        #[cfg(feature = "with_imgui")] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper, &mut ImguiManager),
-        #[cfg(not(feature = "with_imgui"))] F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper),
+        #[cfg(feature = "with_imgui")] F: FnOnce(&mut skia_safe::Canvas, CoordinateSystemHelper, ImguiManager),
+        #[cfg(not(feature = "with_imgui"))] F: FnOnce(&mut skia_safe::Canvas, CoordinateSystemHelper),
     >(
         &mut self,
         window: &winit::window::Window,
-        #[cfg(feature = "with_imgui")] imgui_manager: &mut ImguiManager,
+        #[cfg(feature = "with_imgui")] imgui_manager: ImguiManager,
         f: F,
     ) -> VkResult<()> {
         let frame_fence = self.swapchain.in_flight_fences[self.sync_frame_index];
@@ -460,9 +460,9 @@ impl Renderer {
 
             f(
                 &mut canvas,
-                &coordinate_system_helper,
+                coordinate_system_helper,
                 #[cfg(feature = "with_imgui")]
-                imgui_manager,
+                imgui_manager.clone(),
             );
 
             canvas.flush();

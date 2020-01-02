@@ -67,7 +67,7 @@ impl VkImGuiRenderPass {
     pub fn new(
         device: &VkDevice,
         swapchain: &VkSwapchain,
-        imgui_manager: &mut ImguiManager,
+        imgui_manager: ImguiManager,
     ) -> VkResult<Self> {
         let mut pipeline_resources = None;
 
@@ -548,7 +548,7 @@ impl VkImGuiRenderPass {
         queue: vk::Queue,
         command_pool: vk::CommandPool,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties,
-        imgui_manager: &mut ImguiManager,
+        imgui_manager: ImguiManager,
     ) -> VkResult<ManuallyDrop<VkImage>> {
         let font_atlas = imgui_manager.font_atlas_texture();
 
