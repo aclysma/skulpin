@@ -8,8 +8,8 @@ script:
   - if [ $SKIP_CLIPPY = 0 ]; then cargo clippy -- -D warnings; fi
 matrix:
   include:
-    - name: "Windows 1.37.0"
-      rust: 1.37.0
+    - name: "Windows MSVC 1.37.0"
+      rust: 1.37.0-msvc
       os: windows
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "OSX 1.37.0"
@@ -20,8 +20,8 @@ matrix:
       rust: 1.37.0
       os: linux
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
-    - name: "Windows Stable"
-      rust: stable
+    - name: "Windows MSVC Stable"
+      rust: stable-msvc
       os: windows
       env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
     - name: "OSX Stable"
@@ -32,8 +32,8 @@ matrix:
       rust: stable
       os: linux
       env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
-    - name: "Windows Beta"
-      rust: beta
+    - name: "Windows MSVC Beta"
+      rust: beta-msvc
       os: windows
       env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
     - name: "OSX Beta"
@@ -44,8 +44,8 @@ matrix:
       rust: beta
       os: linux
       env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
-    - name: "Windows Nightly"
-      rust: nightly
+    - name: "Windows MSVC Nightly"
+      rust: nightly-msvc
       os: windows
       env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "OSX Nightly"
