@@ -82,7 +82,7 @@ fn main() {
             //
             // Request a redraw any time we finish processing events
             //
-            winit::event::Event::EventsCleared => {
+            winit::event::Event::MainEventsCleared => {
                 // Queue a RedrawRequested event.
                 window.request_redraw();
             }
@@ -90,10 +90,7 @@ fn main() {
             //
             // Redraw
             //
-            winit::event::Event::WindowEvent {
-                event: winit::event::WindowEvent::RedrawRequested,
-                ..
-            } => {
+            winit::event::Event::RedrawRequested(_window_id) => {
                 if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
                     draw(canvas, coordinate_system_helper, frame_count);
                     frame_count += 1;

@@ -546,16 +546,15 @@ impl InputState {
                         device_id,
                         state,
                         button,
-                        modifiers,
+                        ..
                     },
                 ..
             } => {
                 trace!(
-                    "mouse button input {:?} {:?} {:?} {:?}",
+                    "mouse button input {:?} {:?} {:?}",
                     device_id,
                     state,
                     button,
-                    modifiers
                 );
 
                 self.handle_mouse_button_event(*button, *state);
@@ -566,15 +565,14 @@ impl InputState {
                     WindowEvent::CursorMoved {
                         device_id,
                         position,
-                        modifiers,
+                        ..
                     },
                 ..
             } => {
                 trace!(
-                    "mouse move input {:?} {:?} {:?}",
+                    "mouse move input {:?} {:?}",
                     device_id,
                     position,
-                    modifiers
                 );
                 self.handle_mouse_move_event(*position);
             }

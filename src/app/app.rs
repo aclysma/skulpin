@@ -67,9 +67,9 @@ impl From<winit::error::OsError> for AppError {
 /// A skulpin app requires implementing the AppHandler. A separate update and draw call must be
 /// implemented.
 ///
-/// `update` is called when winit provides a `winit::event::Event::EventsCleared` message
+/// `update` is called when winit provides a `winit::event::Event::MainEventsCleared` message
 ///
-/// `draw` is called when winit provides a `winit::event::WindowEvent::RedrawRequested` message
+/// `draw` is called when winit provides a `winit::event::RedrawRequested` message
 ///
 /// I would recommend putting general logic you always want to run in the `update` and just
 /// rendering code in the `draw`.
@@ -316,7 +316,7 @@ impl App {
             input_state.handle_winit_event(&mut app_control, &event, window_target);
 
             match event {
-                winit::event::Event::EventsCleared => {
+                winit::event::Event::MainEventsCleared => {
                     time_state.update();
 
                     if print_fps_event.try_take_event(
@@ -334,10 +334,7 @@ impl App {
                     // Queue a RedrawRequested event.
                     window.request_redraw();
                 }
-                winit::event::Event::WindowEvent {
-                    event: winit::event::WindowEvent::RedrawRequested,
-                    ..
-                } => {
+                winit::event::Event::RedrawRequested(_window_id) => {
                     if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
                         app_handler.draw(
                             &app_control,
