@@ -73,6 +73,11 @@ Minimum required rust version: **1.37.0**
 All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
 get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
+If you're using the GNU toolchain (MSVC is the default) you might run into an issue building curl. (Curl is a dependency
+of skia-safe bindings, which is used to download prebuilt skia binaries.) There are some 
+[workarounds listed here](https://github.com/alexcrichton/curl-rust/issues/239). Again, this should only affect you if
+you are running the non-default GNU toolchain.
+
 ### MacOS
 
 All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
