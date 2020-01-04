@@ -569,11 +569,7 @@ impl InputState {
                     },
                 ..
             } => {
-                trace!(
-                    "mouse move input {:?} {:?}",
-                    device_id,
-                    position,
-                );
+                trace!("mouse move input {:?} {:?}", device_id, position,);
                 self.handle_mouse_move_event(*position);
             }
 
