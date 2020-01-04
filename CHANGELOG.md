@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+ * Limit winit to 0.20.0-alpha4 and 0.20.0-alpha5 due to breaking changes in 0.20.0-alpha6
+ * Allow skia_safe to be any version >= 0.21, allowing downstream users to use newer versions of skia bindings without
+   requiring the crate to be republished
+
 ## 0.4.0
  * Update to skia_safe 0.21 and enable all upstream features by default
 
