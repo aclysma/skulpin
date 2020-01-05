@@ -41,6 +41,7 @@ pub use app::Position; // This is the same type as winit::dpi::Position
 pub use app::Size; // This is the same type as winit::dpi::Size
 
 pub use app::TimeState;
+pub use app::TimeContext;
 pub use app::AppControl;
 pub use app::PeriodicEvent;
 pub use app::ScopeTimer;
