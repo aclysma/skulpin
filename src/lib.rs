@@ -39,6 +39,7 @@ pub use app::LogicalPosition; // This is the same type as winit::dpi::LogicalPos
 pub use app::PhysicalPosition; // This is the same type as winit::dpi::PhysicalPosition
 
 pub use app::TimeState;
+pub use app::TimeContext;
 pub use app::AppControl;
 pub use app::PeriodicEvent;
 pub use app::ScopeTimer;
