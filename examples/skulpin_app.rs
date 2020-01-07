@@ -21,7 +21,7 @@ fn main() {
     // Set up the coordinate system to be fixed at 900x600, and use this as the default window size
     // This means the drawing code can be written as though the window is always 900x600. The
     // output will be automatically scaled so that it's always visible.
-    let logical_size = LogicalSize::new(900.0, 600.0);
+    let logical_size = LogicalSize::new(900, 600);
     let visible_range = skulpin::skia_safe::Rect {
         left: 0.0,
         right: logical_size.width as f32,
@@ -33,7 +33,7 @@ fn main() {
     skulpin::AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
-        .logical_size(logical_size)
+        .inner_size(logical_size)
         .coordinate_system(CoordinateSystem::VisibleRange(visible_range, scale_to_fit))
         .run(example_app);
 }

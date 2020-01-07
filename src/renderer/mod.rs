@@ -39,7 +39,8 @@ pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::CreateRendererError;
 
-use winit::dpi::{LogicalSize, PhysicalSize};
+pub use winit::dpi::LogicalSize;
+pub use winit::dpi::PhysicalSize;
 
 /// Used to select which PresentMode is preferred. Some of this is hardware/platform dependent and
 /// it's a good idea to read the Vulkan spec.
@@ -168,24 +169,24 @@ impl Default for CoordinateSystem {
 /// manually
 pub struct CoordinateSystemHelper {
     surface_extents: vk::Extent2D,
-    window_logical_size: LogicalSize,
-    window_physical_size: PhysicalSize,
-    hidpi_factor: f64,
+    window_logical_size: LogicalSize<u32>,
+    window_physical_size: PhysicalSize<u32>,
+    scale_factor: f64,
 }
 
 impl CoordinateSystemHelper {
     /// Create a CoordinateSystemHelper for a window of the given parameters
     pub fn new(
         surface_extents: vk::Extent2D,
-        window_logical_size: LogicalSize,
-        window_physical_size: PhysicalSize,
-        hidpi_factor: f64,
+        window_logical_size: LogicalSize<u32>,
+        window_physical_size: PhysicalSize<u32>,
+        scale_factor: f64,
     ) -> Self {
         CoordinateSystemHelper {
             surface_extents,
             window_logical_size,
             window_physical_size,
-            hidpi_factor,
+            scale_factor,
         }
     }
 
@@ -195,19 +196,19 @@ impl CoordinateSystemHelper {
     }
 
     /// Get the logical inner size of the window
-    pub fn window_logical_size(&self) -> LogicalSize {
+    pub fn window_logical_size(&self) -> LogicalSize<u32> {
         self.window_logical_size
     }
 
     /// Get the physical inner size of the window
-    pub fn window_physical_size(&self) -> PhysicalSize {
+    pub fn window_physical_size(&self) -> PhysicalSize<u32> {
         self.window_physical_size
     }
 
     /// Get the multiplier used for high-dpi displays. For example, a 4K display simulating a 1080p
     /// display will use a factor of 2.0
-    pub fn hidpi_factor(&self) -> f64 {
-        self.hidpi_factor
+    pub fn scale_factor(&self) -> f64 {
+        self.scale_factor
     }
 
     /// Use raw pixels for the coordinate system. Top-left is (0, 0), bottom-right is (+X, +Y)
@@ -230,8 +231,9 @@ impl CoordinateSystemHelper {
         // actual canvas size. Critically, the canvas size won't necessarily be the size of the
         // window in physical pixels.
         let scale = (
-            (f64::from(self.surface_extents.width) / self.window_logical_size.width) as f32,
-            (f64::from(self.surface_extents.height) / self.window_logical_size.height) as f32,
+            (f64::from(self.surface_extents.width) / self.window_logical_size.width as f64) as f32,
+            (f64::from(self.surface_extents.height) / self.window_logical_size.height as f64)
+                as f32,
         );
 
         canvas.reset_matrix();

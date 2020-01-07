@@ -37,6 +37,8 @@ pub use app::LogicalSize; // This is the same type as winit::dpi::LogicalSize
 pub use app::PhysicalSize; // This is the same type as winit::dpi::PhysicalSize
 pub use app::LogicalPosition; // This is the same type as winit::dpi::LogicalPosition
 pub use app::PhysicalPosition; // This is the same type as winit::dpi::PhysicalPosition
+pub use app::Position; // This is the same type as winit::dpi::Position
+pub use app::Size; // This is the same type as winit::dpi::Size
 
 pub use app::TimeState;
 pub use app::AppControl;
