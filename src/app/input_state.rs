@@ -8,6 +8,8 @@ pub use winit::dpi::LogicalSize;
 pub use winit::dpi::PhysicalSize;
 pub use winit::dpi::LogicalPosition;
 pub use winit::dpi::PhysicalPosition;
+pub use winit::dpi::Size;
+pub use winit::dpi::Position;
 
 use super::AppControl;
 use winit::window::Window;
@@ -16,36 +18,36 @@ use winit::window::Window;
 #[derive(Copy, Clone, Debug)]
 pub struct MouseDragState {
     /// Logical position where the drag began
-    pub begin_position: LogicalPosition,
+    pub begin_position: PhysicalPosition<i32>,
 
     /// Logical position where the drag ended
-    pub end_position: LogicalPosition,
+    pub end_position: PhysicalPosition<i32>,
 
     /// Amount of mouse movement in the previous frame
-    pub previous_frame_delta: LogicalPosition,
+    pub previous_frame_delta: PhysicalPosition<i32>,
 
     /// Amount of mouse movement in total
-    pub accumulated_frame_delta: LogicalPosition,
+    pub accumulated_frame_delta: PhysicalPosition<i32>,
 }
 
 /// State of input devices. This is maintained by processing events from winit
 pub struct InputState {
-    window_size: LogicalSize,
-    dpi_factor: f64,
+    window_size: PhysicalSize<u32>,
+    scale_factor: f64,
 
     key_is_down: [bool; Self::KEYBOARD_BUTTON_COUNT],
     key_just_down: [bool; Self::KEYBOARD_BUTTON_COUNT],
     key_just_up: [bool; Self::KEYBOARD_BUTTON_COUNT],
 
-    mouse_position: LogicalPosition,
+    mouse_position: PhysicalPosition<i32>,
     mouse_button_is_down: [bool; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_just_down: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_just_up: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_down: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_up: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
 
-    mouse_button_just_clicked: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_clicked: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
 
-    mouse_button_went_down_position: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_went_up_position: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_went_down_position: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_went_up_position: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
 
     mouse_drag_in_progress: [Option<MouseDragState>; Self::MOUSE_BUTTON_COUNT],
     mouse_drag_just_finished: [Option<MouseDragState>; Self::MOUSE_BUTTON_COUNT],
@@ -69,11 +71,11 @@ impl InputState {
     pub fn new(window: &Window) -> InputState {
         InputState {
             window_size: window.inner_size(),
-            dpi_factor: window.hidpi_factor(),
+            scale_factor: window.scale_factor(),
             key_is_down: [false; Self::KEYBOARD_BUTTON_COUNT],
             key_just_down: [false; Self::KEYBOARD_BUTTON_COUNT],
             key_just_up: [false; Self::KEYBOARD_BUTTON_COUNT],
-            mouse_position: LogicalPosition::new(0.0, 0.0),
+            mouse_position: PhysicalPosition::new(0, 0),
             mouse_button_is_down: [false; Self::MOUSE_BUTTON_COUNT],
             mouse_button_just_down: [None; Self::MOUSE_BUTTON_COUNT],
             mouse_button_just_up: [None; Self::MOUSE_BUTTON_COUNT],
@@ -90,13 +92,13 @@ impl InputState {
     //
 
     /// Current size of window
-    pub fn window_size(&self) -> LogicalSize {
+    pub fn window_size(&self) -> PhysicalSize<u32> {
         self.window_size
     }
 
     /// The scaling factor due to high-dpi screens
-    pub fn dpi_factor(&self) -> f64 {
-        self.dpi_factor
+    pub fn scale_factor(&self) -> f64 {
+        self.scale_factor
     }
 
     /// Returns true if the given key is down
@@ -136,7 +138,7 @@ impl InputState {
     }
 
     /// Get the current mouse position
-    pub fn mouse_position(&self) -> LogicalPosition {
+    pub fn mouse_position(&self) -> PhysicalPosition<i32> {
         self.mouse_position
     }
 
@@ -168,7 +170,7 @@ impl InputState {
     pub fn mouse_just_down_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<PhysicalPosition<i32>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_down[index]
         } else {
@@ -192,7 +194,7 @@ impl InputState {
     pub fn mouse_just_up_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<PhysicalPosition<i32>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_up[index]
         } else {
@@ -219,7 +221,7 @@ impl InputState {
     pub fn mouse_button_just_clicked_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<PhysicalPosition<i32>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_clicked[index]
         } else {
@@ -231,7 +233,7 @@ impl InputState {
     pub fn mouse_button_went_down_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<PhysicalPosition<i32>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_went_down_position[index]
         } else {
@@ -243,7 +245,7 @@ impl InputState {
     pub fn mouse_button_went_up_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<PhysicalPosition<i32>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_went_up_position[index]
         } else {
@@ -332,23 +334,23 @@ impl InputState {
 
         for value in self.mouse_drag_in_progress.iter_mut() {
             if let Some(v) = value {
-                v.previous_frame_delta = LogicalPosition::new(0.0, 0.0);
+                v.previous_frame_delta = PhysicalPosition::new(0, 0);
             }
         }
     }
 
     /// Call when DPI factor changes
-    fn handle_hidpi_factor_changed(
+    fn handle_scale_factor_changed(
         &mut self,
-        dpi_factor: f64,
+        scale_factor: f64,
     ) {
-        self.dpi_factor = dpi_factor;
+        self.scale_factor = scale_factor;
     }
 
     /// Call when window size changes
     fn handle_window_size_changed(
         &mut self,
-        window_size: LogicalSize,
+        window_size: PhysicalSize<u32>,
     ) {
         self.window_size = window_size;
     }
@@ -400,9 +402,9 @@ impl InputState {
 
                     match self.mouse_drag_in_progress[button_index] {
                         Some(in_progress) => {
-                            let delta = Self::subtract(
+                            let delta = Self::subtract_physical(
                                 self.mouse_position,
-                                Self::add(
+                                Self::add_physical(
                                     in_progress.begin_position,
                                     in_progress.accumulated_frame_delta,
                                 ),
@@ -411,7 +413,7 @@ impl InputState {
                                 begin_position: in_progress.begin_position,
                                 end_position: self.mouse_position,
                                 previous_frame_delta: delta,
-                                accumulated_frame_delta: Self::add(
+                                accumulated_frame_delta: Self::add_physical(
                                     in_progress.accumulated_frame_delta,
                                     delta,
                                 ),
@@ -431,7 +433,7 @@ impl InputState {
     /// Call when a mouse move occurs
     fn handle_mouse_move_event(
         &mut self,
-        position: LogicalPosition,
+        position: PhysicalPosition<i32>,
     ) {
         //let old_mouse_position = self.mouse_position;
 
@@ -445,19 +447,20 @@ impl InputState {
                     None => {
                         match self.mouse_button_went_down_position[i] {
                             Some(went_down_position) => {
-                                let min_drag_distance_met =
-                                    Self::distance(went_down_position, self.mouse_position)
-                                        > Self::MIN_DRAG_DISTANCE;
+                                let min_drag_distance_met = Self::distance_physical(
+                                    went_down_position,
+                                    self.mouse_position,
+                                ) > Self::MIN_DRAG_DISTANCE;
                                 if min_drag_distance_met {
                                     // We dragged a non-trivial amount, start the drag
                                     Some(MouseDragState {
                                         begin_position: went_down_position,
                                         end_position: self.mouse_position,
-                                        previous_frame_delta: Self::subtract(
+                                        previous_frame_delta: Self::subtract_physical(
                                             self.mouse_position,
                                             went_down_position,
                                         ),
-                                        accumulated_frame_delta: Self::subtract(
+                                        accumulated_frame_delta: Self::subtract_physical(
                                             self.mouse_position,
                                             went_down_position,
                                         ),
@@ -475,9 +478,9 @@ impl InputState {
                     Some(old_drag_state) => {
                         // We were already dragging, so just update the end position
 
-                        let delta = Self::subtract(
+                        let delta = Self::subtract_physical(
                             self.mouse_position,
-                            Self::add(
+                            Self::add_physical(
                                 old_drag_state.begin_position,
                                 old_drag_state.accumulated_frame_delta,
                             ),
@@ -486,7 +489,7 @@ impl InputState {
                             begin_position: old_drag_state.begin_position,
                             end_position: self.mouse_position,
                             previous_frame_delta: delta,
-                            accumulated_frame_delta: Self::add(
+                            accumulated_frame_delta: Self::add_physical(
                                 old_drag_state.accumulated_frame_delta,
                                 delta,
                             ),
@@ -517,11 +520,16 @@ impl InputState {
             } => is_close_requested = true,
 
             Event::WindowEvent {
-                event: WindowEvent::HiDpiFactorChanged(hidpi_factor),
+                event:
+                    WindowEvent::ScaleFactorChanged {
+                        scale_factor,
+                        new_inner_size,
+                    },
                 ..
             } => {
-                trace!("dpi scaling factor changed {:?}", hidpi_factor);
-                self.handle_hidpi_factor_changed(*hidpi_factor);
+                trace!("dpi scaling factor changed {:?}", scale_factor);
+                self.handle_scale_factor_changed(*scale_factor);
+                self.handle_window_size_changed(**new_inner_size);
             }
 
             Event::WindowEvent {
@@ -614,28 +622,28 @@ impl InputState {
     }
 
     /// Adds two logical positions (p0 + p1)
-    fn add(
-        p0: LogicalPosition,
-        p1: LogicalPosition,
-    ) -> LogicalPosition {
-        LogicalPosition::new(p0.x + p1.x, p0.y + p1.y)
+    fn add_physical(
+        p0: PhysicalPosition<i32>,
+        p1: PhysicalPosition<i32>,
+    ) -> PhysicalPosition<i32> {
+        PhysicalPosition::new(p0.x + p1.x, p0.y + p1.y)
     }
 
     /// Subtracts two logical positions (p0 - p1)
-    fn subtract(
-        p0: LogicalPosition,
-        p1: LogicalPosition,
-    ) -> LogicalPosition {
-        LogicalPosition::new(p0.x - p1.x, p0.y - p1.y)
+    fn subtract_physical(
+        p0: PhysicalPosition<i32>,
+        p1: PhysicalPosition<i32>,
+    ) -> PhysicalPosition<i32> {
+        PhysicalPosition::new(p0.x - p1.x, p0.y - p1.y)
     }
 
     /// Gets the distance between two logical positions
-    fn distance(
-        p0: LogicalPosition,
-        p1: LogicalPosition,
+    fn distance_physical(
+        p0: PhysicalPosition<i32>,
+        p1: PhysicalPosition<i32>,
     ) -> f64 {
-        let x_diff = p1.x - p0.x;
-        let y_diff = p1.y - p0.y;
+        let x_diff = (p1.x - p0.x) as f64;
+        let y_diff = (p1.y - p0.y) as f64;
 
         ((x_diff * x_diff) + (y_diff * y_diff)).sqrt()
     }

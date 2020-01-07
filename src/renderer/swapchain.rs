@@ -270,10 +270,7 @@ impl VkSwapchain {
             );
             surface_capabilities.current_extent
         } else {
-            let (width, height) = window
-                .inner_size()
-                .to_physical(window.hidpi_factor())
-                .into();
+            let (width, height) = window.inner_size().into();
 
             debug!(
                 "Swapchain extents chosen by inner window size ({} {})",

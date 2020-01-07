@@ -20,6 +20,8 @@ pub use input_state::LogicalSize;
 pub use input_state::PhysicalSize;
 pub use input_state::LogicalPosition;
 pub use input_state::PhysicalPosition;
+pub use input_state::Position;
+pub use input_state::Size;
 
 mod time_state;
 pub use time_state::TimeState;

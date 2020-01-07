@@ -7,6 +7,7 @@ use super::util::PeriodicEvent;
 use std::ffi::CString;
 
 use winit::dpi::LogicalSize;
+use winit::dpi::Size;
 
 use crate::RendererBuilder;
 use crate::CreateRendererError;
@@ -100,7 +101,7 @@ pub trait AppHandler {
 
 /// Used to configure the app behavior and create the app
 pub struct AppBuilder {
-    logical_size: LogicalSize,
+    inner_size: Size,
     renderer_builder: RendererBuilder,
 }
 
@@ -114,19 +115,17 @@ impl AppBuilder {
     /// Construct the app builder initialized with default options
     pub fn new() -> Self {
         AppBuilder {
-            logical_size: LogicalSize::new(900.0, 600.0),
+            inner_size: LogicalSize::new(900, 600).into(),
             renderer_builder: RendererBuilder::new(),
         }
     }
 
-    /// Specifies the logical size of the window. The physical size of the window will depend on
-    /// dpi settings. For example, a 500x300 window on a 2x dpi screen could be 1000x600 in
-    /// physical pixel size
-    pub fn logical_size(
+    /// Specifies the inner size of the window. Both physical and logical coordinates are accepted.
+    pub fn inner_size<S: Into<Size>>(
         mut self,
-        logical_size: LogicalSize,
+        inner_size: S,
     ) -> Self {
-        self.logical_size = logical_size;
+        self.inner_size = inner_size.into();
         self
     }
 
@@ -250,7 +249,7 @@ impl AppBuilder {
         &self,
         app_handler: T,
     ) -> ! {
-        App::run(app_handler, self.logical_size, &self.renderer_builder)
+        App::run(app_handler, self.inner_size, &self.renderer_builder)
     }
 }
 
@@ -262,7 +261,7 @@ impl App {
     /// not return. For consistency, we use the fatal_error() callback on the passed in AppHandler.
     pub fn run<T: 'static + AppHandler>(
         mut app_handler: T,
-        logical_size: LogicalSize,
+        inner_size: Size,
         renderer_builder: &RendererBuilder,
     ) -> ! {
         // Create the event loop
@@ -271,7 +270,7 @@ impl App {
         // Create a single window
         let window_result = winit::window::WindowBuilder::new()
             .with_title("Skulpin")
-            .with_inner_size(logical_size)
+            .with_inner_size(inner_size)
             .build(&event_loop);
 
         let window = match window_result {
