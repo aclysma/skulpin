@@ -1,6 +1,6 @@
 [package]
 name = "skulpin"
-version = "0.5.2"
+version = "0.6.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
@@ -35,7 +35,7 @@ textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 
 [dependencies]
-winit = "=0.20.0-alpha6"
+winit = "0.20"
 raw-window-handle = "0.3"
 ash = "0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }

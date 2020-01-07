@@ -7,7 +7,7 @@ use skulpin::InputState;
 use skulpin::TimeState;
 use skulpin::MouseButton;
 use skulpin::VirtualKeyCode;
-use skulpin::LogicalPosition;
+use skulpin::PhysicalPosition;
 use skulpin::LogicalSize;
 
 use std::ffi::CString;
@@ -16,7 +16,7 @@ use std::collections::VecDeque;
 fn main() {
     // Setup logging
     env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Debug)
+        .filter_level(log::LevelFilter::Trace)
         .init();
 
     let example_app = ExampleApp::new();
@@ -24,18 +24,18 @@ fn main() {
     skulpin::AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
-        .logical_size(LogicalSize::new(900.0, 600.0))
+        .inner_size(LogicalSize::new(900, 600))
         .run(example_app);
 }
 
 struct PreviousClick {
-    position: LogicalPosition,
+    position: PhysicalPosition<i32>,
     time: std::time::Instant,
 }
 
 impl PreviousClick {
     fn new(
-        position: LogicalPosition,
+        position: PhysicalPosition<i32>,
         time: std::time::Instant,
     ) -> Self {
         PreviousClick { position, time }
@@ -187,19 +187,19 @@ impl AppHandler for ExampleApp {
         canvas.draw_str(self.fps_text.clone(), (50, 50), &font, &text_paint);
         canvas.draw_str("Click and drag the mouse", (50, 80), &font, &text_paint);
         canvas.draw_str(
-            format!("dpi factor: {}", input_state.dpi_factor()),
+            format!("scale factor: {}", input_state.scale_factor()),
             (50, 110),
             &font,
             &text_paint,
         );
-        let physical_mouse_position = input_state
-            .mouse_position()
-            .to_physical(input_state.dpi_factor());
+        let physical_mouse_position = input_state.mouse_position();
+        let logical_mouse_position =
+            physical_mouse_position.to_logical::<i32>(input_state.scale_factor());
         canvas.draw_str(
             format!(
                 "mouse L: ({:.1} {:.1}) P: ({:.1} {:.1})",
-                input_state.mouse_position().x,
-                input_state.mouse_position().y,
+                logical_mouse_position.x,
+                logical_mouse_position.y,
                 physical_mouse_position.x,
                 physical_mouse_position.y
             ),
