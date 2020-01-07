@@ -66,6 +66,7 @@ impl From<vk::Result> for VkCreateInstanceError {
 impl VkInstance {
     /// Creates a vulkan instance.
     pub fn new(
+        window: &winit::window::Window,
         app_name: &CString,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
     ) -> Result<VkInstance, VkCreateInstanceError> {
@@ -126,7 +127,8 @@ impl VkInstance {
             .collect();
 
         // Determine what extensions to use
-        let extension_names_raw = window_support::extension_names();
+        use raw_window_handle::HasRawWindowHandle;
+        let extension_names_raw = window_support::extension_names(&window.raw_window_handle());
 
         // Create the instance
         let create_info = vk::InstanceCreateInfo::builder()

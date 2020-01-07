@@ -243,6 +243,7 @@ impl Renderer {
         coordinate_system: CoordinateSystem,
     ) -> Result<Renderer, CreateRendererError> {
         let instance = ManuallyDrop::new(VkInstance::new(
+            window,
             app_name,
             validation_layer_debug_report_flags,
         )?);
