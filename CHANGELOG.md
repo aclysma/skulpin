@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.1
+ * This release pins winit to exactly 0.20.0-alpha6 as winit 0.20 has breaking changes
+
 ## 0.5.0
  * Update to 0.20.0-alpha6 (breaking change)
 
