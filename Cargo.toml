@@ -36,7 +36,7 @@ skia_complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 with_imgui = ["imgui", "imgui-winit-support"]
 
 [dependencies]
-winit = "0.20.0-alpha6"
+winit = "=0.20.0-alpha6"
 raw-window-handle = "0.3"
 ash = "0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }
