@@ -163,7 +163,8 @@ pub fn extension_names(raw_window_handle: &raw_window_handle::RawWindowHandle) -
 }
 
 #[cfg(target_os = "macos")]
-pub fn extension_names(raw_window_handle: &raw_window_handle::RawWindowHandle) -> Vec<*const i8> {
+pub fn extension_names(_raw_window_handle: &raw_window_handle::RawWindowHandle) -> Vec<*const i8> {
+    use ash::extensions::mvk::MacOSSurface;
     vec![
         Surface::name().as_ptr(),
         MacOSSurface::name().as_ptr(),
@@ -172,7 +173,8 @@ pub fn extension_names(raw_window_handle: &raw_window_handle::RawWindowHandle) -
 }
 
 #[cfg(all(windows))]
-pub fn extension_names(raw_window_handle: &raw_window_handle::RawWindowHandle) -> Vec<*const i8> {
+pub fn extension_names(_raw_window_handle: &raw_window_handle::RawWindowHandle) -> Vec<*const i8> {
+    use ash::extensions::khr::Win32Surface;
     vec![
         Surface::name().as_ptr(),
         Win32Surface::name().as_ptr(),
