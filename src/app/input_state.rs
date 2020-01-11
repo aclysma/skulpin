@@ -596,7 +596,7 @@ impl InputState {
     //
 
     /// Convert the winit mouse button enum into a numerical index
-    fn mouse_button_to_index(button: MouseButton) -> Option<usize> {
+    pub fn mouse_button_to_index(button: MouseButton) -> Option<usize> {
         let index = match button {
             MouseButton::Left => 0,
             MouseButton::Right => 1,
@@ -611,8 +611,24 @@ impl InputState {
         }
     }
 
+    /// Convert to the winit mouse button enum from a numerical index
+    pub fn mouse_index_to_button(index: usize) -> Option<MouseButton> {
+        if index >= Self::MOUSE_BUTTON_COUNT {
+            None
+        } else {
+            let button = match index {
+                0 => MouseButton::Left,
+                1 => MouseButton::Right,
+                2 => MouseButton::Middle,
+                _ => MouseButton::Other((index - 3) as u8)
+            };
+
+            Some(button)
+        }
+    }
+
     /// Convert the winit virtual key code into a numerical index
-    fn keyboard_button_to_index(button: VirtualKeyCode) -> Option<usize> {
+    pub fn keyboard_button_to_index(button: VirtualKeyCode) -> Option<usize> {
         let index = button as usize;
         if index >= Self::KEYBOARD_BUTTON_COUNT {
             None
