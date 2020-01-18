@@ -116,6 +116,7 @@ pub trait AppHandler {
 /// Used to configure the app behavior and create the app
 pub struct AppBuilder {
     inner_size: Size,
+    window_title: String,
     renderer_builder: RendererBuilder,
 }
 
@@ -130,6 +131,7 @@ impl AppBuilder {
     pub fn new() -> Self {
         AppBuilder {
             inner_size: LogicalSize::new(900, 600).into(),
+            window_title: "Skulpin".to_string(),
             renderer_builder: RendererBuilder::new(),
         }
     }
@@ -140,6 +142,15 @@ impl AppBuilder {
         inner_size: S,
     ) -> Self {
         self.inner_size = inner_size.into();
+        self
+    }
+
+    /// Specifies the title that the window will be created with
+    pub fn window_title<T: Into<String>>(
+        mut self,
+        window_title: T,
+    ) -> Self {
+        self.window_title = window_title.into();
         self
     }
 
@@ -263,7 +274,7 @@ impl AppBuilder {
         &self,
         app_handler: T,
     ) -> ! {
-        App::run(app_handler, self.inner_size, &self.renderer_builder)
+        App::run(app_handler, self.inner_size, self.window_title.clone(), &self.renderer_builder)
     }
 }
 
@@ -276,6 +287,7 @@ impl App {
     pub fn run<T: 'static + AppHandler>(
         mut app_handler: T,
         inner_size: Size,
+        window_title: String,
         renderer_builder: &RendererBuilder,
     ) -> ! {
         // Create the event loop
@@ -283,7 +295,7 @@ impl App {
 
         // Create a single window
         let window_result = winit::window::WindowBuilder::new()
-            .with_title("Skulpin")
+            .with_title(window_title)
             .with_inner_size(inner_size)
             .build(&event_loop);
 
