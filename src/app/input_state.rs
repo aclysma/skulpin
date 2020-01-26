@@ -612,7 +612,7 @@ impl InputState {
                 0 => MouseButton::Left,
                 1 => MouseButton::Right,
                 2 => MouseButton::Middle,
-                _ => MouseButton::Other((index - 3) as u8)
+                _ => MouseButton::Other((index - 3) as u8),
             };
 
             Some(button)
