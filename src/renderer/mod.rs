@@ -59,6 +59,29 @@ pub use renderer::CreateRendererError;
 pub use winit::dpi::LogicalSize;
 pub use winit::dpi::PhysicalSize;
 
+
+/// Affects how ImguiManager begin_frame() and render() calls are made
+#[cfg(feature = "with_imgui")]
+#[derive(Copy, Clone, PartialEq)]
+pub enum ImguiUpdateMode {
+    /// This library handles calling begin_frame and render automatically. Skulpin will expect the
+    /// imgui manager to be mid-frame when rendering imgui and will call begin_frame after every
+    /// render
+    SkulpinControlled,
+
+    /// The end-user will be responsible for keeping Imgui in the correct state to render. Skulpin
+    /// will expect the imgui manager to have render() called on it when it attempts to render imgui
+    /// and the end-user will need to call begin_frame
+    UserControlled,
+}
+
+#[cfg(feature = "with_imgui")]
+impl Default for ImguiUpdateMode {
+    fn default() -> Self {
+        ImguiUpdateMode::SkulpinControlled
+    }
+}
+
 /// Used to select which PresentMode is preferred. Some of this is hardware/platform dependent and
 /// it's a good idea to read the Vulkan spec.
 ///

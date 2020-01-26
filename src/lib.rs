@@ -63,6 +63,9 @@ pub use renderer::CreateRendererError;
 #[cfg(feature = "with_imgui")]
 pub use renderer::ImguiManager;
 
+#[cfg(feature = "with_imgui")]
+pub use renderer::ImguiUpdateMode;
+
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;
 pub use skia_safe;

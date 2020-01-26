@@ -274,7 +274,12 @@ impl AppBuilder {
         &self,
         app_handler: T,
     ) -> ! {
-        App::run(app_handler, self.inner_size, self.window_title.clone(), &self.renderer_builder)
+        App::run(
+            app_handler,
+            self.inner_size,
+            self.window_title.clone(),
+            &self.renderer_builder,
+        )
     }
 }
 

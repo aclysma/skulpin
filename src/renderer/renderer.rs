@@ -25,6 +25,9 @@ use crate::CoordinateSystem;
 #[cfg(feature = "with_imgui")]
 use crate::renderer::imgui_support::ImguiManager;
 
+#[cfg(feature = "with_imgui")]
+use crate::renderer::ImguiUpdateMode;
+
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
 #[derive(Default)]
@@ -34,6 +37,8 @@ pub struct RendererBuilder {
     present_mode_priority: Vec<PresentMode>,
     physical_device_type_priority: Vec<PhysicalDeviceType>,
     coordinate_system: CoordinateSystem,
+    #[cfg(feature = "with_imgui")]
+    imgui_update_mode: ImguiUpdateMode,
 }
 
 impl RendererBuilder {
@@ -48,6 +53,8 @@ impl RendererBuilder {
                 PhysicalDeviceType::IntegratedGpu,
             ],
             coordinate_system: Default::default(),
+            #[cfg(feature = "with_imgui")]
+            imgui_update_mode: ImguiUpdateMode::SkulpinControlled,
         }
     }
 
@@ -94,6 +101,17 @@ impl RendererBuilder {
         coordinate_system: CoordinateSystem,
     ) -> Self {
         self.coordinate_system = coordinate_system;
+        self
+    }
+
+    /// Configure if skulpin will automatically prepare imgui updates per frame or if the end-user
+    /// will be responsible for it
+    #[cfg(feature = "with_imgui")]
+    pub fn imgui_update_mode(
+        mut self,
+        imgui_update_mode: ImguiUpdateMode,
+    ) -> Self {
+        self.imgui_update_mode = imgui_update_mode;
         self
     }
 
@@ -176,6 +194,8 @@ impl RendererBuilder {
             self.physical_device_type_priority.clone(),
             self.present_mode_priority.clone(),
             self.coordinate_system,
+            #[cfg(feature = "with_imgui")]
+            self.imgui_update_mode,
         )
     }
 }
@@ -201,6 +221,9 @@ pub struct Renderer {
     previous_inner_size: PhysicalSize<u32>,
 
     coordinate_system: CoordinateSystem,
+
+    #[cfg(feature = "with_imgui")]
+    imgui_update_mode: ImguiUpdateMode,
 }
 
 /// Represents an error from creating the renderer
@@ -253,6 +276,7 @@ impl Renderer {
         physical_device_type_priority: Vec<PhysicalDeviceType>,
         present_mode_priority: Vec<PresentMode>,
         coordinate_system: CoordinateSystem,
+        #[cfg(feature = "with_imgui")] imgui_update_mode: ImguiUpdateMode,
     ) -> Result<Renderer, CreateRendererError> {
         let instance = ManuallyDrop::new(VkInstance::new(
             window,
@@ -298,6 +322,8 @@ impl Renderer {
             present_mode_priority,
             previous_inner_size,
             coordinate_system,
+            #[cfg(feature = "with_imgui")]
+            imgui_update_mode,
         })
     }
 
@@ -470,7 +496,9 @@ impl Renderer {
 
         #[cfg(feature = "with_imgui")]
         {
-            imgui_manager.render(window);
+            if self.imgui_update_mode == ImguiUpdateMode::SkulpinControlled {
+                imgui_manager.render(window);
+            }
             let imgui_draw_data: Option<&imgui::DrawData> = imgui_manager.draw_data();
 
             self.imgui_renderpass.update(
@@ -480,7 +508,9 @@ impl Renderer {
                 window.hidpi_factor(),
             )?;
 
-            imgui_manager.begin_frame(window);
+            if self.imgui_update_mode == ImguiUpdateMode::SkulpinControlled {
+                imgui_manager.begin_frame(window);
+            }
         }
 
         let wait_semaphores = [self.swapchain.image_available_semaphores[self.sync_frame_index]];
