@@ -58,7 +58,6 @@ pub use renderer::CreateRendererError;
 
 use winit::dpi::{LogicalSize, PhysicalSize};
 
-
 /// Affects how ImguiManager begin_frame() and render() calls are made
 #[cfg(feature = "with_imgui")]
 #[derive(Copy, Clone, PartialEq)]
