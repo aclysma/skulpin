@@ -16,36 +16,36 @@ use winit::window::Window;
 #[derive(Copy, Clone, Debug)]
 pub struct MouseDragState {
     /// Logical position where the drag began
-    pub begin_position: LogicalPosition,
+    pub begin_position: LogicalPosition<f64>,
 
     /// Logical position where the drag ended
-    pub end_position: LogicalPosition,
+    pub end_position: LogicalPosition<f64>,
 
     /// Amount of mouse movement in the previous frame
-    pub previous_frame_delta: LogicalPosition,
+    pub previous_frame_delta: LogicalPosition<f64>,
 
     /// Amount of mouse movement in total
-    pub accumulated_frame_delta: LogicalPosition,
+    pub accumulated_frame_delta: LogicalPosition<f64>,
 }
 
 /// State of input devices. This is maintained by processing events from winit
 pub struct InputState {
-    window_size: LogicalSize,
+    window_size: PhysicalSize<u32>,
     dpi_factor: f64,
 
     key_is_down: [bool; Self::KEYBOARD_BUTTON_COUNT],
     key_just_down: [bool; Self::KEYBOARD_BUTTON_COUNT],
     key_just_up: [bool; Self::KEYBOARD_BUTTON_COUNT],
 
-    mouse_position: LogicalPosition,
+    mouse_position: LogicalPosition<f64>,
     mouse_button_is_down: [bool; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_just_down: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_just_up: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_down: [Option<LogicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_up: [Option<LogicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
 
-    mouse_button_just_clicked: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_clicked: [Option<LogicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
 
-    mouse_button_went_down_position: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_went_up_position: [Option<LogicalPosition>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_went_down_position: [Option<LogicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_went_up_position: [Option<LogicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
 
     mouse_drag_in_progress: [Option<MouseDragState>; Self::MOUSE_BUTTON_COUNT],
     mouse_drag_just_finished: [Option<MouseDragState>; Self::MOUSE_BUTTON_COUNT],
@@ -69,7 +69,7 @@ impl InputState {
     pub fn new(window: &Window) -> InputState {
         InputState {
             window_size: window.inner_size(),
-            dpi_factor: window.hidpi_factor(),
+            dpi_factor: window.scale_factor(),
             key_is_down: [false; Self::KEYBOARD_BUTTON_COUNT],
             key_just_down: [false; Self::KEYBOARD_BUTTON_COUNT],
             key_just_up: [false; Self::KEYBOARD_BUTTON_COUNT],
@@ -90,8 +90,8 @@ impl InputState {
     //
 
     /// Current size of window
-    pub fn window_size(&self) -> LogicalSize {
-        self.window_size
+    pub fn window_size(&self) -> LogicalSize<f64> {
+        self.window_size.to_logical(self.dpi_factor)
     }
 
     /// The scaling factor due to high-dpi screens
@@ -136,7 +136,7 @@ impl InputState {
     }
 
     /// Get the current mouse position
-    pub fn mouse_position(&self) -> LogicalPosition {
+    pub fn mouse_position(&self) -> LogicalPosition<f64> {
         self.mouse_position
     }
 
@@ -168,7 +168,7 @@ impl InputState {
     pub fn mouse_just_down_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<LogicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_down[index]
         } else {
@@ -192,7 +192,7 @@ impl InputState {
     pub fn mouse_just_up_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<LogicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_up[index]
         } else {
@@ -219,7 +219,7 @@ impl InputState {
     pub fn mouse_button_just_clicked_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<LogicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_clicked[index]
         } else {
@@ -231,7 +231,7 @@ impl InputState {
     pub fn mouse_button_went_down_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<LogicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_went_down_position[index]
         } else {
@@ -243,7 +243,7 @@ impl InputState {
     pub fn mouse_button_went_up_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<LogicalPosition> {
+    ) -> Option<LogicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_went_up_position[index]
         } else {
@@ -348,7 +348,7 @@ impl InputState {
     /// Call when window size changes
     fn handle_window_size_changed(
         &mut self,
-        window_size: LogicalSize,
+        window_size: PhysicalSize<u32>,
     ) {
         self.window_size = window_size;
     }
@@ -431,8 +431,10 @@ impl InputState {
     /// Call when a mouse move occurs
     fn handle_mouse_move_event(
         &mut self,
-        position: LogicalPosition,
+        position: PhysicalPosition<i32>,
     ) {
+        let position = position.to_logical(self.dpi_factor);
+
         //let old_mouse_position = self.mouse_position;
 
         // Update mouse position
@@ -517,11 +519,11 @@ impl InputState {
             } => is_close_requested = true,
 
             Event::WindowEvent {
-                event: WindowEvent::HiDpiFactorChanged(hidpi_factor),
+                event: WindowEvent::ScaleFactorChanged { scale_factor, new_inner_size: _ },
                 ..
             } => {
-                trace!("dpi scaling factor changed {:?}", hidpi_factor);
-                self.handle_hidpi_factor_changed(*hidpi_factor);
+                trace!("dpi scaling factor changed {:?}", scale_factor);
+                self.handle_hidpi_factor_changed(*scale_factor);
             }
 
             Event::WindowEvent {
@@ -615,24 +617,24 @@ impl InputState {
 
     /// Adds two logical positions (p0 + p1)
     fn add(
-        p0: LogicalPosition,
-        p1: LogicalPosition,
-    ) -> LogicalPosition {
+        p0: LogicalPosition<f64>,
+        p1: LogicalPosition<f64>,
+    ) -> LogicalPosition<f64> {
         LogicalPosition::new(p0.x + p1.x, p0.y + p1.y)
     }
 
     /// Subtracts two logical positions (p0 - p1)
     fn subtract(
-        p0: LogicalPosition,
-        p1: LogicalPosition,
-    ) -> LogicalPosition {
+        p0: LogicalPosition<f64>,
+        p1: LogicalPosition<f64>,
+    ) -> LogicalPosition<f64> {
         LogicalPosition::new(p0.x - p1.x, p0.y - p1.y)
     }
 
     /// Gets the distance between two logical positions
     fn distance(
-        p0: LogicalPosition,
-        p1: LogicalPosition,
+        p0: LogicalPosition<f64>,
+        p1: LogicalPosition<f64>,
     ) -> f64 {
         let x_diff = p1.x - p0.x;
         let y_diff = p1.y - p0.y;

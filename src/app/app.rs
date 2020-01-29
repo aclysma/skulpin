@@ -100,7 +100,7 @@ pub trait AppHandler {
 
 /// Used to configure the app behavior and create the app
 pub struct AppBuilder {
-    logical_size: LogicalSize,
+    logical_size: LogicalSize<f64>,
     renderer_builder: RendererBuilder,
 }
 
@@ -124,7 +124,7 @@ impl AppBuilder {
     /// physical pixel size
     pub fn logical_size(
         mut self,
-        logical_size: LogicalSize,
+        logical_size: LogicalSize<f64>,
     ) -> Self {
         self.logical_size = logical_size;
         self
@@ -262,7 +262,7 @@ impl App {
     /// not return. For consistency, we use the fatal_error() callback on the passed in AppHandler.
     pub fn run<T: 'static + AppHandler>(
         mut app_handler: T,
-        logical_size: LogicalSize,
+        logical_size: LogicalSize<f64>,
         renderer_builder: &RendererBuilder,
     ) -> ! {
         // Create the event loop

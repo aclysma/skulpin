@@ -272,7 +272,6 @@ impl VkSwapchain {
         } else {
             let (width, height) = window
                 .inner_size()
-                .to_physical(window.hidpi_factor())
                 .into();
 
             debug!(

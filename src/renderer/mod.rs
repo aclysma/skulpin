@@ -168,8 +168,8 @@ impl Default for CoordinateSystem {
 /// manually
 pub struct CoordinateSystemHelper {
     surface_extents: vk::Extent2D,
-    window_logical_size: LogicalSize,
-    window_physical_size: PhysicalSize,
+    window_logical_size: LogicalSize<f64>,
+    window_physical_size: PhysicalSize<u32>,
     hidpi_factor: f64,
 }
 
@@ -177,8 +177,8 @@ impl CoordinateSystemHelper {
     /// Create a CoordinateSystemHelper for a window of the given parameters
     pub fn new(
         surface_extents: vk::Extent2D,
-        window_logical_size: LogicalSize,
-        window_physical_size: PhysicalSize,
+        window_logical_size: LogicalSize<f64>,
+        window_physical_size: PhysicalSize<u32>,
         hidpi_factor: f64,
     ) -> Self {
         CoordinateSystemHelper {
@@ -195,12 +195,12 @@ impl CoordinateSystemHelper {
     }
 
     /// Get the logical inner size of the window
-    pub fn window_logical_size(&self) -> LogicalSize {
+    pub fn window_logical_size(&self) -> LogicalSize<f64> {
         self.window_logical_size
     }
 
     /// Get the physical inner size of the window
-    pub fn window_physical_size(&self) -> PhysicalSize {
+    pub fn window_physical_size(&self) -> PhysicalSize<u32> {
         self.window_physical_size
     }
 

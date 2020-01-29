@@ -16,7 +16,7 @@ use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
 use super::CoordinateSystemHelper;
-use winit::dpi::LogicalSize;
+use winit::dpi::PhysicalSize;
 use crate::CoordinateSystem;
 
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
@@ -187,7 +187,7 @@ pub struct Renderer {
 
     present_mode_priority: Vec<PresentMode>,
 
-    previous_inner_size: LogicalSize,
+    previous_inner_size: PhysicalSize<u32>,
 
     coordinate_system: CoordinateSystem,
 }
@@ -378,9 +378,9 @@ impl Renderer {
             let mut canvas = surface.surface.canvas();
 
             let surface_extents = self.swapchain.swapchain_info.extents;
-            let window_logical_size = window.inner_size();
-            let hidpi_factor = window.hidpi_factor();
-            let window_physical_size = window_logical_size.to_physical(hidpi_factor);
+            let hidpi_factor = window.scale_factor();
+            let window_physical_size = window.inner_size();
+            let window_logical_size = window_physical_size.to_logical(hidpi_factor);
 
             let coordinate_system_helper = CoordinateSystemHelper::new(
                 surface_extents,

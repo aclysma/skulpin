@@ -8,6 +8,7 @@ use skulpin::TimeState;
 use skulpin::MouseButton;
 use skulpin::VirtualKeyCode;
 use skulpin::LogicalPosition;
+use skulpin::PhysicalPosition;
 use skulpin::LogicalSize;
 
 use std::ffi::CString;
@@ -29,13 +30,13 @@ fn main() {
 }
 
 struct PreviousClick {
-    position: LogicalPosition,
+    position: LogicalPosition<f64>,
     time: std::time::Instant,
 }
 
 impl PreviousClick {
     fn new(
-        position: LogicalPosition,
+        position: LogicalPosition<f64>,
         time: std::time::Instant,
     ) -> Self {
         PreviousClick { position, time }
@@ -192,7 +193,7 @@ impl AppHandler for ExampleApp {
             &font,
             &text_paint,
         );
-        let physical_mouse_position = input_state
+        let physical_mouse_position: PhysicalPosition<f64> = input_state
             .mouse_position()
             .to_physical(input_state.dpi_factor());
         canvas.draw_str(
