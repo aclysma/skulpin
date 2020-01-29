@@ -18,16 +18,16 @@ use winit::window::Window;
 #[derive(Copy, Clone, Debug)]
 pub struct MouseDragState {
     /// Logical position where the drag began
-    pub begin_position: PhysicalPosition<i32>,
+    pub begin_position: PhysicalPosition<f64>,
 
     /// Logical position where the drag ended
-    pub end_position: PhysicalPosition<i32>,
+    pub end_position: PhysicalPosition<f64>,
 
     /// Amount of mouse movement in the previous frame
-    pub previous_frame_delta: PhysicalPosition<i32>,
+    pub previous_frame_delta: PhysicalPosition<f64>,
 
     /// Amount of mouse movement in total
-    pub accumulated_frame_delta: PhysicalPosition<i32>,
+    pub accumulated_frame_delta: PhysicalPosition<f64>,
 }
 
 /// State of input devices. This is maintained by processing events from winit
@@ -39,15 +39,15 @@ pub struct InputState {
     key_just_down: [bool; Self::KEYBOARD_BUTTON_COUNT],
     key_just_up: [bool; Self::KEYBOARD_BUTTON_COUNT],
 
-    mouse_position: PhysicalPosition<i32>,
+    mouse_position: PhysicalPosition<f64>,
     mouse_button_is_down: [bool; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_just_down: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_just_up: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_down: [Option<PhysicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_up: [Option<PhysicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
 
-    mouse_button_just_clicked: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_just_clicked: [Option<PhysicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
 
-    mouse_button_went_down_position: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
-    mouse_button_went_up_position: [Option<PhysicalPosition<i32>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_went_down_position: [Option<PhysicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
+    mouse_button_went_up_position: [Option<PhysicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
 
     mouse_drag_in_progress: [Option<MouseDragState>; Self::MOUSE_BUTTON_COUNT],
     mouse_drag_just_finished: [Option<MouseDragState>; Self::MOUSE_BUTTON_COUNT],
@@ -75,7 +75,7 @@ impl InputState {
             key_is_down: [false; Self::KEYBOARD_BUTTON_COUNT],
             key_just_down: [false; Self::KEYBOARD_BUTTON_COUNT],
             key_just_up: [false; Self::KEYBOARD_BUTTON_COUNT],
-            mouse_position: PhysicalPosition::new(0, 0),
+            mouse_position: PhysicalPosition::new(0.0, 0.0),
             mouse_button_is_down: [false; Self::MOUSE_BUTTON_COUNT],
             mouse_button_just_down: [None; Self::MOUSE_BUTTON_COUNT],
             mouse_button_just_up: [None; Self::MOUSE_BUTTON_COUNT],
@@ -138,7 +138,7 @@ impl InputState {
     }
 
     /// Get the current mouse position
-    pub fn mouse_position(&self) -> PhysicalPosition<i32> {
+    pub fn mouse_position(&self) -> PhysicalPosition<f64> {
         self.mouse_position
     }
 
@@ -170,7 +170,7 @@ impl InputState {
     pub fn mouse_just_down_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<PhysicalPosition<i32>> {
+    ) -> Option<PhysicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_down[index]
         } else {
@@ -194,7 +194,7 @@ impl InputState {
     pub fn mouse_just_up_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<PhysicalPosition<i32>> {
+    ) -> Option<PhysicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_up[index]
         } else {
@@ -221,7 +221,7 @@ impl InputState {
     pub fn mouse_button_just_clicked_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<PhysicalPosition<i32>> {
+    ) -> Option<PhysicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_clicked[index]
         } else {
@@ -233,7 +233,7 @@ impl InputState {
     pub fn mouse_button_went_down_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<PhysicalPosition<i32>> {
+    ) -> Option<PhysicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_went_down_position[index]
         } else {
@@ -245,7 +245,7 @@ impl InputState {
     pub fn mouse_button_went_up_position(
         &self,
         mouse_button: MouseButton,
-    ) -> Option<PhysicalPosition<i32>> {
+    ) -> Option<PhysicalPosition<f64>> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_went_up_position[index]
         } else {
@@ -334,7 +334,7 @@ impl InputState {
 
         for value in self.mouse_drag_in_progress.iter_mut() {
             if let Some(v) = value {
-                v.previous_frame_delta = PhysicalPosition::new(0, 0);
+                v.previous_frame_delta = PhysicalPosition::new(0.0, 0.0);
             }
         }
     }
@@ -433,7 +433,7 @@ impl InputState {
     /// Call when a mouse move occurs
     fn handle_mouse_move_event(
         &mut self,
-        position: PhysicalPosition<i32>,
+        position: PhysicalPosition<f64>,
     ) {
         //let old_mouse_position = self.mouse_position;
 
@@ -623,24 +623,24 @@ impl InputState {
 
     /// Adds two logical positions (p0 + p1)
     fn add_physical(
-        p0: PhysicalPosition<i32>,
-        p1: PhysicalPosition<i32>,
-    ) -> PhysicalPosition<i32> {
+        p0: PhysicalPosition<f64>,
+        p1: PhysicalPosition<f64>,
+    ) -> PhysicalPosition<f64> {
         PhysicalPosition::new(p0.x + p1.x, p0.y + p1.y)
     }
 
     /// Subtracts two logical positions (p0 - p1)
     fn subtract_physical(
-        p0: PhysicalPosition<i32>,
-        p1: PhysicalPosition<i32>,
-    ) -> PhysicalPosition<i32> {
+        p0: PhysicalPosition<f64>,
+        p1: PhysicalPosition<f64>,
+    ) -> PhysicalPosition<f64> {
         PhysicalPosition::new(p0.x - p1.x, p0.y - p1.y)
     }
 
     /// Gets the distance between two logical positions
     fn distance_physical(
-        p0: PhysicalPosition<i32>,
-        p1: PhysicalPosition<i32>,
+        p0: PhysicalPosition<f64>,
+        p1: PhysicalPosition<f64>,
     ) -> f64 {
         let x_diff = (p1.x - p0.x) as f64;
         let y_diff = (p1.y - p0.y) as f64;
