@@ -35,7 +35,7 @@ textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 
 [dependencies]
-winit = { git = "https://github.com/filnet/winit", branch = "fix-panic-at-redraw-event-in-non-redraw-phase" }
+winit = { git = "https://github.com/rust-windowing/winit", rev = "9daa0738a9aeb60768d9b7d19f4e3deddd55958b" }
 raw-window-handle = "0.3"
 ash = "0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }
