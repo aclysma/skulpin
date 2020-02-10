@@ -3,6 +3,7 @@ use ash::prelude::VkResult;
 use ash::extensions::khr;
 
 use ash::version::DeviceV1_0;
+use sdl2::video::Window;
 
 use super::VkInstance;
 use super::VkDevice;
@@ -38,7 +39,7 @@ impl VkSwapchain {
     pub fn new(
         instance: &VkInstance,
         device: &VkDevice,
-        window: &winit::window::Window,
+        window: &Window,
         old_swapchain: Option<vk::SwapchainKHR>,
         present_mode_priority: &[PresentMode],
     ) -> VkResult<VkSwapchain> {
@@ -116,7 +117,7 @@ impl VkSwapchain {
         surface_loader: &ash::extensions::khr::Surface,
         surface: ash::vk::SurfaceKHR,
         queue_family_indices: &VkQueueFamilyIndices,
-        window: &winit::window::Window,
+        window: &Window,
         old_swapchain: Option<vk::SwapchainKHR>,
         present_mode_priority: &[PresentMode],
     ) -> VkResult<(SwapchainInfo, khr::Swapchain, vk::SwapchainKHR)> {
@@ -260,7 +261,7 @@ impl VkSwapchain {
 
     fn choose_extents(
         surface_capabilities: &vk::SurfaceCapabilitiesKHR,
-        window: &winit::window::Window,
+        window: &Window,
     ) -> ash::vk::Extent2D {
         if surface_capabilities.current_extent.width != std::u32::MAX {
             debug!(
@@ -270,7 +271,7 @@ impl VkSwapchain {
             );
             surface_capabilities.current_extent
         } else {
-            let (width, height) = window.inner_size().into();
+            let (width, height) = window.vulkan_drawable_size();
 
             debug!(
                 "Swapchain extents chosen by inner window size ({} {})",

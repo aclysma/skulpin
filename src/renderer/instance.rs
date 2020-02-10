@@ -3,6 +3,8 @@ use std::ffi::CString;
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
 use ash::prelude::VkResult;
+use sdl2::video::Window;
+use raw_window_handle::HasRawWindowHandle;
 
 use super::debug_reporter;
 use super::VkDebugReporter;
@@ -66,7 +68,7 @@ impl From<vk::Result> for VkCreateInstanceError {
 impl VkInstance {
     /// Creates a vulkan instance.
     pub fn new(
-        window: &winit::window::Window,
+        window: &Window,
         app_name: &CString,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
     ) -> Result<VkInstance, VkCreateInstanceError> {
@@ -127,7 +129,6 @@ impl VkInstance {
             .collect();
 
         // Determine what extensions to use
-        use raw_window_handle::HasRawWindowHandle;
         let extension_names_raw = window_support::extension_names(&window.raw_window_handle());
 
         // Create the instance

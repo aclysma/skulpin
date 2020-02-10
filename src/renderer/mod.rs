@@ -39,8 +39,47 @@ pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::CreateRendererError;
 
-pub use winit::dpi::LogicalSize;
-pub use winit::dpi::PhysicalSize;
+#[derive(Clone, Copy)]
+pub struct LogicalSize {
+    width: u32,
+    height: u32
+}
+
+impl Into<(u32, u32)> for LogicalSize {
+    fn into(self) -> (u32, u32) {
+        (self.width, self.height)
+    }
+}
+
+impl From<(u32, u32)> for LogicalSize {
+    fn from(tuple: (u32, u32)) -> LogicalSize {
+        LogicalSize {
+            width: tuple.0,
+            height: tuple.0
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct PhysicalSize {
+    width: u32,
+    height: u32
+}
+
+impl Into<(u32, u32)> for PhysicalSize {
+    fn into(self) -> (u32, u32) {
+        (self.width, self.height)
+    }
+}
+
+impl From<(u32, u32)> for PhysicalSize {
+    fn from(tuple: (u32, u32)) -> PhysicalSize {
+        PhysicalSize {
+            width: tuple.0,
+            height: tuple.0
+        }
+    }
+}
 
 /// Used to select which PresentMode is preferred. Some of this is hardware/platform dependent and
 /// it's a good idea to read the Vulkan spec.
@@ -52,7 +91,7 @@ pub use winit::dpi::PhysicalSize;
 #[derive(Copy, Clone, Debug)]
 pub enum PresentMode {
     /// (`VK_PRESENT_MODE_IMMEDIATE_KHR`) - No internal buffering, and can result in screen
-    /// tearing.
+    /// tearin.
     Immediate = 0,
 
     /// (`VK_PRESENT_MODE_MAILBOX_KHR`) - This allows rendering as fast as the hardware will
@@ -169,24 +208,21 @@ impl Default for CoordinateSystem {
 /// manually
 pub struct CoordinateSystemHelper {
     surface_extents: vk::Extent2D,
-    window_logical_size: LogicalSize<u32>,
-    window_physical_size: PhysicalSize<u32>,
-    scale_factor: f64,
+    window_logical_size: LogicalSize,
+    window_physical_size: PhysicalSize,
 }
 
 impl CoordinateSystemHelper {
     /// Create a CoordinateSystemHelper for a window of the given parameters
     pub fn new(
         surface_extents: vk::Extent2D,
-        window_logical_size: LogicalSize<u32>,
-        window_physical_size: PhysicalSize<u32>,
-        scale_factor: f64,
+        window_logical_size: LogicalSize,
+        window_physical_size: PhysicalSize,
     ) -> Self {
         CoordinateSystemHelper {
             surface_extents,
             window_logical_size,
             window_physical_size,
-            scale_factor,
         }
     }
 
@@ -196,19 +232,13 @@ impl CoordinateSystemHelper {
     }
 
     /// Get the logical inner size of the window
-    pub fn window_logical_size(&self) -> LogicalSize<u32> {
+    pub fn window_logical_size(&self) -> LogicalSize {
         self.window_logical_size
     }
 
     /// Get the physical inner size of the window
-    pub fn window_physical_size(&self) -> PhysicalSize<u32> {
+    pub fn window_physical_size(&self) -> PhysicalSize {
         self.window_physical_size
-    }
-
-    /// Get the multiplier used for high-dpi displays. For example, a 4K display simulating a 1080p
-    /// display will use a factor of 2.0
-    pub fn scale_factor(&self) -> f64 {
-        self.scale_factor
     }
 
     /// Use raw pixels for the coordinate system. Top-left is (0, 0), bottom-right is (+X, +Y)
