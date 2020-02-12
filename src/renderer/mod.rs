@@ -41,8 +41,14 @@ pub use renderer::CreateRendererError;
 
 #[derive(Clone, Copy)]
 pub struct LogicalSize {
-    width: u32,
-    height: u32
+    pub width: u32,
+    pub height: u32
+}
+
+impl LogicalSize {
+    pub fn new(width: u32, height: u32) -> LogicalSize {
+        LogicalSize { width, height }
+    }
 }
 
 impl Into<(u32, u32)> for LogicalSize {
@@ -62,8 +68,14 @@ impl From<(u32, u32)> for LogicalSize {
 
 #[derive(Clone, Copy)]
 pub struct PhysicalSize {
-    width: u32,
-    height: u32
+    pub width: u32,
+    pub height: u32
+}
+
+impl PhysicalSize {
+    pub fn new(width: u32, height: u32) -> PhysicalSize {
+        PhysicalSize { width, height }
+    }
 }
 
 impl Into<(u32, u32)> for PhysicalSize {
