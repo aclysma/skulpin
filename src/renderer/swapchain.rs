@@ -271,7 +271,7 @@ impl VkSwapchain {
             );
             surface_capabilities.current_extent
         } else {
-            let (width, height) = window.vulkan_drawable_size();
+            let (width, height) = window.drawable_size();
 
             debug!(
                 "Swapchain extents chosen by inner window size ({} {})",

@@ -58,6 +58,7 @@ pub use renderer::CoordinateSystem;
 pub use renderer::CreateRendererError;
 pub use renderer::LogicalSize;
 pub use renderer::PhysicalSize;
+pub use renderer::dpis;
 
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;

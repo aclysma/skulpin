@@ -33,62 +33,56 @@ pub use buffer::VkBuffer;
 mod debug_reporter;
 pub use debug_reporter::VkDebugReporter;
 
+use sdl2::video::Window;
+
 #[allow(clippy::module_inception)]
 mod renderer;
 pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::CreateRendererError;
 
-#[derive(Clone, Copy)]
+#[cfg(macos)]
+const DEFAULT_DPI: f32 = 72.0;
+
+#[cfg(not(macos))]
+const DEFAULT_DPI: f32 = 96.0;
+
+pub fn dpis(window: &Window) -> Result<(f32, f32), String> {
+    let display_index = window.display_index()?;
+    let system = window.subsystem();
+    let (_, hdpi, vdpi) = system.display_dpi(display_index)?;
+    Ok((hdpi, vdpi))
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct LogicalSize {
     pub width: u32,
     pub height: u32
 }
 
 impl LogicalSize {
-    pub fn new(width: u32, height: u32) -> LogicalSize {
-        LogicalSize { width, height }
+    pub fn new(window: &Window) -> Result<LogicalSize, String> {
+        let size = window.size();
+        let (hdpi, vdpi) = dpis(window)?;
+        Ok(LogicalSize { 
+            width: (size.0 as f32 * DEFAULT_DPI / hdpi) as u32, 
+            height: (size.1 as f32 * DEFAULT_DPI / vdpi) as u32
+        })
     }
 }
 
-impl Into<(u32, u32)> for LogicalSize {
-    fn into(self) -> (u32, u32) {
-        (self.width, self.height)
-    }
-}
-
-impl From<(u32, u32)> for LogicalSize {
-    fn from(tuple: (u32, u32)) -> LogicalSize {
-        LogicalSize {
-            width: tuple.0,
-            height: tuple.0
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct PhysicalSize {
     pub width: u32,
     pub height: u32
 }
 
 impl PhysicalSize {
-    pub fn new(width: u32, height: u32) -> PhysicalSize {
-        PhysicalSize { width, height }
-    }
-}
-
-impl Into<(u32, u32)> for PhysicalSize {
-    fn into(self) -> (u32, u32) {
-        (self.width, self.height)
-    }
-}
-
-impl From<(u32, u32)> for PhysicalSize {
-    fn from(tuple: (u32, u32)) -> PhysicalSize {
-        PhysicalSize {
-            width: tuple.0,
-            height: tuple.0
+    pub fn new(window: &Window) -> PhysicalSize {
+        let size = window.size();
+        PhysicalSize { 
+            width: size.0, 
+            height: size.1
         }
     }
 }

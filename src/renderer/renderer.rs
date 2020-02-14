@@ -20,6 +20,7 @@ use super::PhysicalDeviceType;
 use super::CoordinateSystemHelper;
 use super::PhysicalSize;
 use crate::CoordinateSystem;
+use crate::LogicalSize;
 
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
@@ -269,7 +270,7 @@ impl Renderer {
         )?);
         let sync_frame_index = 0;
 
-        let previous_inner_size = window.vulkan_drawable_size();
+        let previous_inner_size = PhysicalSize::new(&window);
 
         Ok(Renderer {
             instance,
@@ -279,7 +280,7 @@ impl Renderer {
             skia_renderpass,
             sync_frame_index,
             present_mode_priority,
-            previous_inner_size: previous_inner_size.into(),
+            previous_inner_size: previous_inner_size,
             coordinate_system,
         })
     }
@@ -291,8 +292,7 @@ impl Renderer {
         window: &Window,
         f: F,
     ) -> VkResult<()> {
-        if window.vulkan_drawable_size() != self.previous_inner_size.into() {
-            println!("Rebuilding swapchain");
+        if PhysicalSize::new(&window) != self.previous_inner_size {
             debug!("Detected window inner size change, rebuilding swapchain");
             self.rebuild_swapchain(window)?;
         }
@@ -341,7 +341,7 @@ impl Renderer {
             &mut self.skia_context,
         )?);
 
-        self.previous_inner_size = window.vulkan_drawable_size().into();
+        self.previous_inner_size = PhysicalSize::new(&window);
 
         Ok(())
     }
@@ -381,13 +381,13 @@ impl Renderer {
             let mut canvas = surface.surface.canvas();
 
             let surface_extents = self.swapchain.swapchain_info.extents;
-            let window_physical_size = window.vulkan_drawable_size();
-            let window_logical_size = window.size();
+            let window_logical_size = LogicalSize::new(&window).unwrap();
+            let window_physical_size = PhysicalSize::new(&window);
 
             let coordinate_system_helper = CoordinateSystemHelper::new(
                 surface_extents,
-                window_logical_size.into(),
-                window_physical_size.into()
+                window_logical_size,
+                window_physical_size
             );
 
             match self.coordinate_system {
