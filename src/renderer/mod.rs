@@ -41,10 +41,10 @@ pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::CreateRendererError;
 
-#[cfg(macos)]
+#[cfg(target_os = "macos")]
 const DEFAULT_DPI: f32 = 72.0;
 
-#[cfg(not(macos))]
+#[cfg(not(target_os = "macos"))]
 const DEFAULT_DPI: f32 = 96.0;
 
 pub fn dpis(window: &Window) -> Result<(f32, f32), String> {
