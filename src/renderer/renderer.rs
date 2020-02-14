@@ -505,7 +505,7 @@ impl Renderer {
                 &self.device.memory_properties,
                 imgui_draw_data,
                 present_index as usize,
-                window.hidpi_factor(),
+                window.scale_factor(),
             )?;
 
             if self.imgui_update_mode == ImguiUpdateMode::SkulpinControlled {

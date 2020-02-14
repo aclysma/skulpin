@@ -285,15 +285,15 @@ fn init_imgui(window: &winit::window::Window) -> imgui::Context {
 
     // In the examples we only use integer DPI factors, because the UI can get very blurry
     // otherwise. This might or might not be what you want in a real application.
-    let hidpi_factor = window.hidpi_factor().round();
-    let font_size = (16.0 * hidpi_factor) as f32;
+    let scale_factor = window.scale_factor().round();
+    let font_size = (16.0 * scale_factor) as f32;
     imgui.fonts().add_font(&[imgui::FontSource::TtfData {
         data: include_bytes!("../../fonts/mplus-1p-regular.ttf"),
         size_pixels: font_size,
         config: None,
     }]);
 
-    imgui.io_mut().font_global_scale = (1.0 / hidpi_factor) as f32;
+    imgui.io_mut().font_global_scale = (1.0 / scale_factor) as f32;
 
     return imgui;
 }

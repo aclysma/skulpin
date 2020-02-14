@@ -41,8 +41,11 @@ raw-window-handle = "0.3"
 ash = "0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }
 
-imgui = { version = "0.2.1", optional = true }
-imgui-winit-support = { version = "0.2", default-features = false, features = ["winit-20"], optional = true }
+#imgui = { version = "0.2.1", optional = true }
+#imgui-winit-support = { version = "0.2", default-features = false, features = ["winit-20"], optional = true }
+
+imgui = { git = "https://github.com/aclysma/imgui-rs.git", branch = "allow_building_with_winit_0.21", optional = true }
+imgui-winit-support = { git = "https://github.com/aclysma/imgui-rs.git", branch = "allow_building_with_winit_0.21", default-features = false, features = ["winit-20"], optional = true }
 
 log="0.4"
 
