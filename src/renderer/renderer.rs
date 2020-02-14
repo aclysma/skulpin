@@ -292,6 +292,7 @@ impl Renderer {
         f: F,
     ) -> VkResult<()> {
         if window.vulkan_drawable_size() != self.previous_inner_size.into() {
+            println!("Rebuilding swapchain");
             debug!("Detected window inner size change, rebuilding swapchain");
             self.rebuild_swapchain(window)?;
         }
