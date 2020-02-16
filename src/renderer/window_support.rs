@@ -12,7 +12,9 @@ pub unsafe fn create_surface<I: InstanceV1_0>(window: &Window, instance: &I) -> 
 }
 
 pub fn extension_names(window: &Window) -> Vec<*const i8> {
-    unsafe {
-        std::mem::transmute(window.vulkan_instance_extensions().expect("Could not get vulkan instance extensions"))
-    }
+    window.vulkan_instance_extensions()
+        .expect("Could not get vulkan instance extensions")
+        .into_iter()
+        .map(|extension| extension.as_ptr() as *const i8)
+        .collect()
 }
