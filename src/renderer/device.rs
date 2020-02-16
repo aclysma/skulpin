@@ -46,13 +46,11 @@ impl VkDevice {
         physical_device_type_priority: &[PhysicalDeviceType],
     ) -> VkResult<Self> {
         // Get the surface, needed to select the best queue family
-        use raw_window_handle::HasRawWindowHandle;
         let surface = unsafe {
             window_support::create_surface(
-                &instance.entry,
+                &window,
                 &instance.instance,
-                &window.raw_window_handle(),
-            )?
+            ).expect("Could not create vulkan surface")
         };
 
         let surface_loader = khr::Surface::new(&instance.entry, &instance.instance);

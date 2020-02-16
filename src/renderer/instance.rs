@@ -4,7 +4,6 @@ pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
 use ash::prelude::VkResult;
 use sdl2::video::Window;
-use raw_window_handle::HasRawWindowHandle;
 
 use super::debug_reporter;
 use super::VkDebugReporter;
@@ -129,7 +128,7 @@ impl VkInstance {
             .collect();
 
         // Determine what extensions to use
-        let extension_names_raw = window_support::extension_names(&window.raw_window_handle());
+        let extension_names_raw = window_support::extension_names(&window);
 
         // Create the instance
         let create_info = vk::InstanceCreateInfo::builder()
