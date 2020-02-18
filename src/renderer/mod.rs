@@ -62,7 +62,7 @@ pub struct LogicalSize {
 
 impl LogicalSize {
     pub fn new(window: &Window) -> Result<LogicalSize, String> {
-        let size = window.size();
+        let size = window.vulkan_drawable_size();
         let (hdpi, vdpi) = dpis(window)?;
         Ok(LogicalSize { 
             width: (size.0 as f32 * DEFAULT_DPI / hdpi) as u32, 
