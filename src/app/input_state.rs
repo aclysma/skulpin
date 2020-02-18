@@ -146,7 +146,9 @@ impl InputState {
     }
 
     /// Get the scroll delta from the current frame
-    pub fn mouse_wheel_delta(&self) -> MouseScrollDelta { self.mouse_wheel_delta }
+    pub fn mouse_wheel_delta(&self) -> MouseScrollDelta {
+        self.mouse_wheel_delta
+    }
 
     /// Returns true if the given button is down
     pub fn is_mouse_down(
@@ -508,7 +510,10 @@ impl InputState {
         }
     }
 
-    fn handle_mouse_wheel_event(&mut self, delta: MouseScrollDelta) {
+    fn handle_mouse_wheel_event(
+        &mut self,
+        delta: MouseScrollDelta,
+    ) {
         // Try to add the delta to self.mouse_wheel_delta
         if let MouseScrollDelta::LineDelta(x1, y1) = self.mouse_wheel_delta {
             if let MouseScrollDelta::LineDelta(x2, y2) = delta {
@@ -518,7 +523,10 @@ impl InputState {
             }
         } else if let MouseScrollDelta::PixelDelta(d1) = self.mouse_wheel_delta {
             if let MouseScrollDelta::PixelDelta(d2) = delta {
-                self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(LogicalPosition::<f64>::new(d1.x + d2.x, d1.y + d2.y));
+                self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(LogicalPosition::<f64>::new(
+                    d1.x + d2.x,
+                    d1.y + d2.y,
+                ));
             } else {
                 self.mouse_wheel_delta = delta;
             }
@@ -606,14 +614,12 @@ impl InputState {
             } => {
                 trace!("mouse move input {:?} {:?}", device_id, position,);
                 self.handle_mouse_move_event(*position);
-            },
+            }
 
             Event::WindowEvent {
                 event:
                     WindowEvent::MouseWheel {
-                        device_id,
-                        delta,
-                        ..
+                        device_id, delta, ..
                     },
                 ..
             } => {
