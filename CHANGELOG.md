@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.6.0
+ * Update to winit 0.21
+
 ## 0.5.2
  * Implement support for wayland and xcb
 
