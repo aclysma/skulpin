@@ -17,6 +17,7 @@ pub use input_state::MouseDragState;
 // These are re-exported winit types
 pub use input_state::VirtualKeyCode;
 pub use input_state::MouseButton;
+pub use input_state::MouseScrollDelta;
 pub use input_state::ElementState;
 pub use input_state::LogicalSize;
 pub use input_state::PhysicalSize;

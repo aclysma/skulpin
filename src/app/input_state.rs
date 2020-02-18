@@ -3,6 +3,7 @@
 // Re-export winit types
 pub use winit::event::VirtualKeyCode;
 pub use winit::event::MouseButton;
+pub use winit::event::MouseScrollDelta;
 pub use winit::event::ElementState;
 pub use winit::dpi::LogicalSize;
 pub use winit::dpi::PhysicalSize;
@@ -40,6 +41,7 @@ pub struct InputState {
     key_just_up: [bool; Self::KEYBOARD_BUTTON_COUNT],
 
     mouse_position: PhysicalPosition<f64>,
+    mouse_wheel_delta: MouseScrollDelta,
     mouse_button_is_down: [bool; Self::MOUSE_BUTTON_COUNT],
     mouse_button_just_down: [Option<PhysicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
     mouse_button_just_up: [Option<PhysicalPosition<f64>>; Self::MOUSE_BUTTON_COUNT],
@@ -76,6 +78,7 @@ impl InputState {
             key_just_down: [false; Self::KEYBOARD_BUTTON_COUNT],
             key_just_up: [false; Self::KEYBOARD_BUTTON_COUNT],
             mouse_position: PhysicalPosition::new(0.0, 0.0),
+            mouse_wheel_delta: MouseScrollDelta::LineDelta(0.0, 0.0),
             mouse_button_is_down: [false; Self::MOUSE_BUTTON_COUNT],
             mouse_button_just_down: [None; Self::MOUSE_BUTTON_COUNT],
             mouse_button_just_up: [None; Self::MOUSE_BUTTON_COUNT],
@@ -141,6 +144,9 @@ impl InputState {
     pub fn mouse_position(&self) -> PhysicalPosition<f64> {
         self.mouse_position
     }
+
+    /// Get the scroll delta from the current frame
+    pub fn mouse_wheel_delta(&self) -> MouseScrollDelta { self.mouse_wheel_delta }
 
     /// Returns true if the given button is down
     pub fn is_mouse_down(
@@ -308,6 +314,8 @@ impl InputState {
 
     /// Call at the end of every frame. This clears events that were "just" completed.
     pub fn end_frame(&mut self) {
+        self.mouse_wheel_delta = MouseScrollDelta::LineDelta(0.0, 0.0);
+
         for value in self.key_just_down.iter_mut() {
             *value = false;
         }
@@ -500,6 +508,25 @@ impl InputState {
         }
     }
 
+    fn handle_mouse_wheel_event(&mut self, delta: MouseScrollDelta) {
+        // Try to add the delta to self.mouse_wheel_delta
+        if let MouseScrollDelta::LineDelta(x1, y1) = self.mouse_wheel_delta {
+            if let MouseScrollDelta::LineDelta(x2, y2) = delta {
+                self.mouse_wheel_delta = MouseScrollDelta::LineDelta(x1 + x2, y1 + y2);
+            } else {
+                self.mouse_wheel_delta = delta;
+            }
+        } else if let MouseScrollDelta::PixelDelta(d1) = self.mouse_wheel_delta {
+            if let MouseScrollDelta::PixelDelta(d2) = delta {
+                self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(LogicalPosition::<f64>::new(d1.x + d2.x, d1.y + d2.y));
+            } else {
+                self.mouse_wheel_delta = delta;
+            }
+        }
+
+        self.mouse_wheel_delta = delta;
+    }
+
     /// Call when winit sends an event
     pub fn handle_winit_event<T>(
         &mut self,
@@ -579,6 +606,19 @@ impl InputState {
             } => {
                 trace!("mouse move input {:?} {:?}", device_id, position,);
                 self.handle_mouse_move_event(*position);
+            },
+
+            Event::WindowEvent {
+                event:
+                    WindowEvent::MouseWheel {
+                        device_id,
+                        delta,
+                        ..
+                    },
+                ..
+            } => {
+                trace!("mouse wheel {:?} {:?}", device_id, delta);
+                self.handle_mouse_wheel_event(*delta);
             }
 
             // Ignore any other events

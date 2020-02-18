@@ -32,6 +32,7 @@ pub use app::MouseDragState;
 // These are re-exported winit types
 pub use app::VirtualKeyCode; // This is the same type as winit::event::VirtualKeyCode
 pub use app::MouseButton; // This is the same type as winit::event::MouseButton
+pub use app::MouseScrollDelta; // This is the same type as winit::event::MouseScrollDelta
 pub use app::ElementState; // This is the same type as winit::event::ElementState
 pub use app::LogicalSize; // This is the same type as winit::dpi::LogicalSize
 pub use app::PhysicalSize; // This is the same type as winit::dpi::PhysicalSize
