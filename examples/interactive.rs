@@ -101,7 +101,12 @@ impl AppHandler for ExampleApp {
         // Push new clicks onto the previous_clicks list
         //
         if input_state.is_mouse_just_down(MouseButton::Left) {
-            let previous_click = PreviousClick::new(input_state.mouse_position().to_logical(input_state.scale_factor()), now);
+            let previous_click = PreviousClick::new(
+                input_state
+                    .mouse_position()
+                    .to_logical(input_state.scale_factor()),
+                now,
+            );
 
             self.previous_clicks.push_back(previous_click);
         }
@@ -129,7 +134,9 @@ impl AppHandler for ExampleApp {
         //
         // Draw current mouse position.
         //
-        let mouse_position : LogicalPosition<f64> = input_state.mouse_position().to_logical(input_state.scale_factor());
+        let mouse_position: LogicalPosition<f64> = input_state
+            .mouse_position()
+            .to_logical(input_state.scale_factor());
         canvas.draw_circle(
             skia_safe::Point::new(mouse_position.x as f32, mouse_position.y as f32),
             15.0,
@@ -152,19 +159,17 @@ impl AppHandler for ExampleApp {
 
             let position = previous_click.position;
 
-            canvas.draw_circle(
-                skia_safe::Point::new(position.x, position.y),
-                25.0,
-                &paint,
-            );
+            canvas.draw_circle(skia_safe::Point::new(position.x, position.y), 25.0, &paint);
         }
 
         //
         // If mouse is being dragged, draw a line to show the drag
         //
         if let Some(drag) = input_state.mouse_drag_in_progress(MouseButton::Left) {
-            let begin_position : LogicalPosition<f32> = drag.begin_position.to_logical(input_state.scale_factor());
-            let end_position : LogicalPosition<f32> = drag.end_position.to_logical(input_state.scale_factor());
+            let begin_position: LogicalPosition<f32> =
+                drag.begin_position.to_logical(input_state.scale_factor());
+            let end_position: LogicalPosition<f32> =
+                drag.end_position.to_logical(input_state.scale_factor());
 
             canvas.draw_line(
                 skia_safe::Point::new(begin_position.x, begin_position.y),

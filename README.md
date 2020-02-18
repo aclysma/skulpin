@@ -66,7 +66,7 @@ either grab skia source code, or grab a prebuilt binary.) So the best way to vie
 
 ## Requirements
 
-Minimum required rust version: **1.37.0**
+Minimum required rust version when used with latest skia bindings: **1.40.0**
 
 ### Windows
 

@@ -22,7 +22,7 @@ include = [
 ]
 
 # Minimum required rust version:
-# rust="1.37"
+# rust="1.40"
 
 # NOTE: See README.md for implications on how feature selection will affect build-time. As of this writing, binary
 # builds of skia are available for ALL of the features or NONE of the features. Only selecting some of the features will
