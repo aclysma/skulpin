@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+ * Fixed an array index out of bound issue that could occur if khr::Swapchain created more images than the specified
+   minimum
+
 ## 0.6.0
  * Update to winit 0.21
 

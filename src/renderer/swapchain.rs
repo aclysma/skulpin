@@ -136,18 +136,18 @@ impl VkSwapchain {
         // "simply sticking to this minimum means that we may sometimes have to wait on the driver
         // to complete internal operations before we can acquire another image to render to.
         // Therefore it is recommended to request at least one more image than the minimum"
-        let mut image_count = surface_capabilities.min_image_count + 1;
+        let mut min_image_count = surface_capabilities.min_image_count + 1;
 
         // But if there is a limit, we must not exceed it
         if surface_capabilities.max_image_count > 0 {
-            image_count = u32::min(image_count, surface_capabilities.max_image_count);
+            min_image_count = u32::min(min_image_count, surface_capabilities.max_image_count);
         }
 
         let swapchain_loader = khr::Swapchain::new(instance, logical_device);
 
         let mut swapchain_create_info = vk::SwapchainCreateInfoKHR::builder()
             .surface(surface)
-            .min_image_count(image_count)
+            .min_image_count(min_image_count)
             .image_format(surface_format.format)
             .image_color_space(surface_format.color_space)
             .image_extent(extents)
@@ -181,11 +181,14 @@ impl VkSwapchain {
 
         let swapchain = unsafe { swapchain_loader.create_swapchain(&swapchain_create_info, None)? };
 
+        let swapchain_images = unsafe { swapchain_loader.get_swapchain_images(swapchain)? };
+        let image_count = swapchain_images.len();
+
         let swapchain_info = SwapchainInfo {
             surface_format,
             present_mode,
             extents,
-            image_count: image_count as usize,
+            image_count,
         };
 
         Ok((swapchain_info, swapchain_loader, swapchain))
