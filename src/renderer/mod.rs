@@ -44,6 +44,7 @@ pub use renderer::CreateRendererError;
 use crate::renderer::CoordinateSystem::Physical;
 
 mod coordinates;
+pub use coordinates::Size;
 pub use coordinates::LogicalSize;
 pub use coordinates::PhysicalSize;
 

@@ -1,13 +1,17 @@
 // This example shows how to use the "app" helpers to get a window open and drawing with minimal code
 // It's not as flexible as working with winit directly, but it's quick and simple
 
-use skulpin::{AppHandler, CoordinateSystem};
+use skulpin::CoordinateSystem;
 use skulpin::CoordinateSystemHelper;
-use skulpin::AppControl;
-use skulpin::InputState;
-use skulpin::TimeState;
-use skulpin::VirtualKeyCode;
 use skulpin::LogicalSize;
+
+use skulpin::app::AppBuilder;
+use skulpin::app::AppError;
+use skulpin::app::AppHandler;
+use skulpin::app::AppControl;
+use skulpin::app::InputState;
+use skulpin::app::TimeState;
+use skulpin::app::VirtualKeyCode;
 use std::ffi::CString;
 
 fn main() {
@@ -30,7 +34,7 @@ fn main() {
     };
     let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
 
-    skulpin::AppBuilder::new()
+    AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
         .inner_size(logical_size)
@@ -115,7 +119,7 @@ impl AppHandler for ExampleApp {
 
     fn fatal_error(
         &mut self,
-        error: &skulpin::AppError,
+        error: &AppError,
     ) {
         println!("{}", error);
     }
