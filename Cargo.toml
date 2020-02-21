@@ -36,6 +36,7 @@ complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 
 [dependencies]
 sdl2 = { git = "https://github.com/Rust-SDL2/rust-sdl2", features = ["bundled", "static-link"] }
+winit = "0.21"
 raw-window-handle = "0.3"
 ash = "0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }

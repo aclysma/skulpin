@@ -3,12 +3,12 @@ use ash::prelude::VkResult;
 use ash::extensions::khr;
 
 use ash::version::DeviceV1_0;
-use sdl2::video::Window;
 
 use super::VkInstance;
 use super::VkDevice;
 use super::VkQueueFamilyIndices;
 use crate::PresentMode;
+use super::Window;
 
 pub const MAX_FRAMES_IN_FLIGHT: usize = 2;
 
@@ -271,16 +271,16 @@ impl VkSwapchain {
             );
             surface_capabilities.current_extent
         } else {
-            let (width, height) = window.drawable_size();
+            let physical_size = window.physical_size();
 
             debug!(
                 "Swapchain extents chosen by inner window size ({} {})",
-                width, height
+                physical_size.width, physical_size.height
             );
 
             let mut actual_extent = ash::vk::Extent2D::builder()
-                .width(width)
-                .height(height)
+                .width(physical_size.width)
+                .height(physical_size.height)
                 .build();
 
             // Copied from num-traits under MIT/Apache-2.0 dual license. It doesn't make much sense

@@ -6,6 +6,9 @@ use alignment::Align;
 pub mod util;
 
 mod window_support;
+pub use window_support::Window;
+pub use window_support::Sdl2Window;
+pub use window_support::WinitWindow;
 
 mod instance;
 pub use instance::VkInstance;
@@ -33,63 +36,16 @@ pub use buffer::VkBuffer;
 mod debug_reporter;
 pub use debug_reporter::VkDebugReporter;
 
-use sdl2::video::Window;
-
 #[allow(clippy::module_inception)]
 mod renderer;
 pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::CreateRendererError;
+use crate::renderer::CoordinateSystem::Physical;
 
-#[cfg(target_os = "macos")]
-const DEFAULT_DPI: f32 = 72.0;
-
-#[cfg(not(target_os = "macos"))]
-const DEFAULT_DPI: f32 = 96.0;
-
-pub fn dpis(window: &Window) -> Result<(f32, f32), String> {
-    let display_index = window.display_index()?;
-    let system = window.subsystem();
-    let (_, hdpi, vdpi) = system.display_dpi(display_index)?;
-    Ok((hdpi, vdpi))
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct LogicalSize {
-    pub width: u32,
-    pub height: u32
-}
-
-impl LogicalSize {
-    pub fn new(window: &Window) -> Result<LogicalSize, String> {
-        let size = window.vulkan_drawable_size();
-        LogicalSize::from_physical_size_tuple(size, window)
-    }
-
-    pub fn from_physical_size_tuple(tuple: (u32, u32), window: &Window) -> Result<LogicalSize, String> {
-        let (hdpi, vdpi) = dpis(window)?;
-        Ok(LogicalSize { 
-            width: (tuple.0 as f32 * DEFAULT_DPI / hdpi) as u32, 
-            height: (tuple.1 as f32 * DEFAULT_DPI / vdpi) as u32
-        })
-    }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct PhysicalSize {
-    pub width: u32,
-    pub height: u32
-}
-
-impl PhysicalSize {
-    pub fn new(window: &Window) -> PhysicalSize {
-        let size = window.size();
-        PhysicalSize { 
-            width: size.0, 
-            height: size.1
-        }
-    }
-}
+mod coordinates;
+pub use coordinates::LogicalSize;
+pub use coordinates::PhysicalSize;
 
 /// Used to select which PresentMode is preferred. Some of this is hardware/platform dependent and
 /// it's a good idea to read the Vulkan spec.

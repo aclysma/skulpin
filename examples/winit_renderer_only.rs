@@ -1,11 +1,7 @@
 // This example shows how to use the renderer directly. This allows full control of winit
 // and the update loop
 
-use skulpin::{CoordinateSystemHelper, RendererBuilder, PresentMode, CoordinateSystem, LogicalSize};
-use std::time::Instant;
-use sdl2::event::Event;
-use sdl2::keyboard::Mod;
-use sdl2::keyboard::Keycode;
+use skulpin::CoordinateSystemHelper;
 
 fn main() {
     // Setup logging
@@ -13,38 +9,33 @@ fn main() {
         .filter_level(log::LevelFilter::Debug)
         .init();
 
-    // Setup SDL
-    let sdl_context = sdl2::init().expect("Failed to initialize sdl2");
-    let video_subsystem = sdl_context.video().expect("Failed to create sdl video subsystem");
+    // Create the winit event loop
+    let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
 
     // Set up the coordinate system to be fixed at 900x600, and use this as the default window size
     // This means the drawing code can be written as though the window is always 900x600. The
     // output will be automatically scaled so that it's always visible.
-    let logical_size = LogicalSize {
-        width: 900,
-        height: 600
-    };
-    let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
+    let logical_size = winit::dpi::LogicalSize::new(900.0, 600.0);
     let visible_range = skulpin::skia_safe::Rect {
         left: 0.0,
         right: logical_size.width as f32,
         top: 0.0,
         bottom: logical_size.height as f32,
     };
+    let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
 
-    let mut window = video_subsystem.window("Skulpin", logical_size.width, logical_size.height)
-        .position_centered()
-        .allow_highdpi()
-        .resizable()
-        .vulkan()
-        .build()
+    // Create a single window
+    let winit_window = winit::window::WindowBuilder::new()
+        .with_title("Skulpin")
+        .with_inner_size(logical_size)
+        .build(&event_loop)
         .expect("Failed to create window");
-    log::info!("window created");
 
-    let mut renderer = RendererBuilder::new()
-        .prefer_integrated_gpu()
+    let window = skulpin::WinitWindow::new(&winit_window);
+
+    // Create the renderer, which will draw to the window
+    let renderer = skulpin::RendererBuilder::new()
         .use_vulkan_debug_layer(true)
-        .present_mode_priority(vec![PresentMode::Immediate])
         .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
             visible_range,
             scale_to_fit,
@@ -57,50 +48,67 @@ fn main() {
         return;
     }
 
-    log::info!("renderer created");
-
     let mut renderer = renderer.unwrap();
 
     // Increment a frame count so we can render something that moves
     let mut frame_count = 0;
 
-    log::info!("Starting window event loop");
-    let mut event_pump = sdl_context.event_pump().expect("Could not create sdl event pump");
+    // Start the window event loop. Winit will not return once run is called. We will get notified
+    // when important events happen.
+    event_loop.run(move |event, _window_target, control_flow| {
+        let window = skulpin::WinitWindow::new(&winit_window);
+        match event {
+            //
+            // Halt if the user requests to close the window
+            //
+            winit::event::Event::WindowEvent {
+                event: winit::event::WindowEvent::CloseRequested,
+                ..
+            } => *control_flow = winit::event_loop::ControlFlow::Exit,
 
-    'running: loop {
-        let frame_start = Instant::now();
-
-        let mut ignore_text_input = false;
-        for event in event_pump.poll_iter() {
-            log::info!("{:?}", event);
-            match event {
-                //
-                // Halt if the user requests to close the window
-                //
-                Event::Quit {..} => break 'running,
-
-                //
-                // Close if the escape key is hit
-                //
-                Event::KeyDown { keycode: Some(keycode), keymod: modifiers, .. } => {
-                    log::info!("Key Down {:?} {:?}", keycode, modifiers);
-                    if keycode == Keycode::Escape {
-                        break 'running;
-                    }
+            //
+            // Close if the escape key is hit
+            //
+            winit::event::Event::WindowEvent {
+                event:
+                winit::event::WindowEvent::KeyboardInput {
+                    input:
+                    winit::event::KeyboardInput {
+                        virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
+                        ..
+                    },
+                    ..
                 },
+                ..
+            } => *control_flow = winit::event_loop::ControlFlow::Exit,
 
-                _ => {}
+            //
+            // Request a redraw any time we finish processing events
+            //
+            winit::event::Event::MainEventsCleared => {
+                // Queue a RedrawRequested event.
+                winit_window.request_redraw();
             }
-        }
 
-        //
-        // Redraw
-        //
-        renderer.draw(&window, |canvas, coordinate_system_helper| {
-            draw(canvas, coordinate_system_helper, frame_count);
-            frame_count += 1;
-        });
-    }
+            //
+            // Redraw
+            //
+            winit::event::Event::RedrawRequested(_window_id) => {
+                if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
+                    draw(canvas, coordinate_system_helper, frame_count);
+                    frame_count += 1;
+                }) {
+                    println!("Error during draw: {:?}", e);
+                    *control_flow = winit::event_loop::ControlFlow::Exit
+                }
+            }
+
+            //
+            // Ignore all other events
+            //
+            _ => {}
+        }
+    });
 }
 
 /// Called when winit passes us a WindowEvent::RedrawRequested

@@ -6,8 +6,6 @@ use ash::prelude::VkResult;
 use std::mem::ManuallyDrop;
 use ash::vk;
 
-use sdl2::video::Window;
-
 use super::VkInstance;
 use super::VkCreateInstanceError;
 use super::VkDevice;
@@ -21,6 +19,7 @@ use super::CoordinateSystemHelper;
 use super::PhysicalSize;
 use crate::CoordinateSystem;
 use crate::LogicalSize;
+use super::Window;
 
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
@@ -270,7 +269,7 @@ impl Renderer {
         )?);
         let sync_frame_index = 0;
 
-        let previous_inner_size = PhysicalSize::new(&window);
+        let previous_inner_size = window.physical_size();
 
         Ok(Renderer {
             instance,
@@ -280,7 +279,7 @@ impl Renderer {
             skia_renderpass,
             sync_frame_index,
             present_mode_priority,
-            previous_inner_size: previous_inner_size,
+            previous_inner_size,
             coordinate_system,
         })
     }
@@ -292,7 +291,7 @@ impl Renderer {
         window: &Window,
         f: F,
     ) -> VkResult<()> {
-        if PhysicalSize::new(&window) != self.previous_inner_size {
+        if window.physical_size() != self.previous_inner_size {
             debug!("Detected window inner size change, rebuilding swapchain");
             self.rebuild_swapchain(window)?;
         }
@@ -341,7 +340,7 @@ impl Renderer {
             &mut self.skia_context,
         )?);
 
-        self.previous_inner_size = PhysicalSize::new(&window);
+        self.previous_inner_size = window.physical_size();
 
         Ok(())
     }
@@ -381,8 +380,8 @@ impl Renderer {
             let mut canvas = surface.surface.canvas();
 
             let surface_extents = self.swapchain.swapchain_info.extents;
-            let window_logical_size = LogicalSize::new(&window).unwrap();
-            let window_physical_size = PhysicalSize::new(&window);
+            let window_logical_size = window.logical_size();
+            let window_physical_size = window.physical_size();
 
             let coordinate_system_helper = CoordinateSystemHelper::new(
                 surface_extents,

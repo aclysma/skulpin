@@ -3,8 +3,8 @@ use std::ffi::CString;
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
 use ash::prelude::VkResult;
-use sdl2::video::Window;
 
+use super::Window;
 use super::debug_reporter;
 use super::VkDebugReporter;
 use super::window_support;
@@ -128,7 +128,7 @@ impl VkInstance {
             .collect();
 
         // Determine what extensions to use
-        let extension_names_raw = window_support::extension_names(&window);
+        let extension_names_raw = window.extension_names();
 
         // Create the instance
         let create_info = vk::InstanceCreateInfo::builder()
