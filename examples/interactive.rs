@@ -1,13 +1,15 @@
 // This example shows a bit more interaction with mouse input
 
-use skulpin::AppHandler;
+use skulpin::app::AppHandler;
+use skulpin::app::AppError;
+use skulpin::app::AppBuilder;
 use skulpin::CoordinateSystemHelper;
-use skulpin::AppControl;
-use skulpin::InputState;
-use skulpin::TimeState;
-use skulpin::MouseButton;
-use skulpin::VirtualKeyCode;
-use skulpin::PhysicalPosition;
+use skulpin::app::AppControl;
+use skulpin::app::InputState;
+use skulpin::app::TimeState;
+use skulpin::app::MouseButton;
+use skulpin::app::VirtualKeyCode;
+use skulpin::app::PhysicalPosition;
 use skulpin::LogicalSize;
 
 use std::ffi::CString;
@@ -21,7 +23,7 @@ fn main() {
 
     let example_app = ExampleApp::new();
 
-    skulpin::AppBuilder::new()
+    AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
         .inner_size(LogicalSize::new(900, 600))
@@ -29,13 +31,13 @@ fn main() {
 }
 
 struct PreviousClick {
-    position: PhysicalPosition<i32>,
+    position: PhysicalPosition<f64>,
     time: std::time::Instant,
 }
 
 impl PreviousClick {
     fn new(
-        position: PhysicalPosition<i32>,
+        position: PhysicalPosition<f64>,
         time: std::time::Instant,
     ) -> Self {
         PreviousClick { position, time }
@@ -211,7 +213,7 @@ impl AppHandler for ExampleApp {
 
     fn fatal_error(
         &mut self,
-        error: &skulpin::AppError,
+        error: &AppError,
     ) {
         println!("{}", error);
     }

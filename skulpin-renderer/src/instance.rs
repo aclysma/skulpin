@@ -7,7 +7,6 @@ use ash::prelude::VkResult;
 use super::Window;
 use super::debug_reporter;
 use super::VkDebugReporter;
-use super::window_support;
 
 /// Create one of these at startup. It never gets lost/destroyed.
 pub struct VkInstance {
@@ -67,7 +66,7 @@ impl From<vk::Result> for VkCreateInstanceError {
 impl VkInstance {
     /// Creates a vulkan instance.
     pub fn new(
-        window: &Window,
+        window: &dyn Window,
         app_name: &CString,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
     ) -> Result<VkInstance, VkCreateInstanceError> {

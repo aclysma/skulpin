@@ -39,7 +39,7 @@ impl VkSwapchain {
     pub fn new(
         instance: &VkInstance,
         device: &VkDevice,
-        window: &Window,
+        window: &dyn Window,
         old_swapchain: Option<vk::SwapchainKHR>,
         present_mode_priority: &[PresentMode],
     ) -> VkResult<VkSwapchain> {
@@ -117,7 +117,7 @@ impl VkSwapchain {
         surface_loader: &ash::extensions::khr::Surface,
         surface: ash::vk::SurfaceKHR,
         queue_family_indices: &VkQueueFamilyIndices,
-        window: &Window,
+        window: &dyn Window,
         old_swapchain: Option<vk::SwapchainKHR>,
         present_mode_priority: &[PresentMode],
     ) -> VkResult<(SwapchainInfo, khr::Swapchain, vk::SwapchainKHR)> {
@@ -261,7 +261,7 @@ impl VkSwapchain {
 
     fn choose_extents(
         surface_capabilities: &vk::SurfaceCapabilitiesKHR,
-        window: &Window,
+        window: &dyn Window,
     ) -> ash::vk::Extent2D {
         if surface_capabilities.current_extent.width != std::u32::MAX {
             debug!(

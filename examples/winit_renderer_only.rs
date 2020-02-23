@@ -71,14 +71,14 @@ fn main() {
             //
             winit::event::Event::WindowEvent {
                 event:
-                winit::event::WindowEvent::KeyboardInput {
-                    input:
-                    winit::event::KeyboardInput {
-                        virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
+                    winit::event::WindowEvent::KeyboardInput {
+                        input:
+                            winit::event::KeyboardInput {
+                                virtual_keycode: Some(winit::event::VirtualKeyCode::Escape),
+                                ..
+                            },
                         ..
                     },
-                    ..
-                },
                 ..
             } => *control_flow = winit::event_loop::ControlFlow::Exit,
 

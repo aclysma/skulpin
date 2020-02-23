@@ -2,12 +2,14 @@
 
 extern crate nalgebra as na;
 
-use skulpin::AppHandler;
+use skulpin::app::AppHandler;
+use skulpin::app::AppError;
 use skulpin::CoordinateSystemHelper;
-use skulpin::AppControl;
-use skulpin::InputState;
-use skulpin::TimeState;
-use skulpin::VirtualKeyCode;
+use skulpin::app::AppControl;
+use skulpin::app::AppBuilder;
+use skulpin::app::InputState;
+use skulpin::app::TimeState;
+use skulpin::app::VirtualKeyCode;
 use skulpin::LogicalSize;
 
 use std::ffi::CString;
@@ -132,7 +134,7 @@ fn main() {
 
     let example_app = ExampleApp::new();
 
-    skulpin::AppBuilder::new()
+    AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
         .inner_size(LogicalSize::new(900, 600))
@@ -291,7 +293,7 @@ impl AppHandler for ExampleApp {
 
     fn fatal_error(
         &mut self,
-        error: &skulpin::AppError,
+        error: &AppError,
     ) {
         println!("{}", error);
     }

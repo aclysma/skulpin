@@ -2,9 +2,9 @@ pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
 use ash::vk::Handle;
 
-use super::PhysicalSize;
-use super::LogicalSize;
-use super::Window;
+use skulpin_renderer::PhysicalSize;
+use skulpin_renderer::LogicalSize;
+use skulpin_renderer::Window;
 
 pub struct Sdl2Window<'a> {
     window: &'a sdl2::video::Window
@@ -35,8 +35,8 @@ impl<'a> Window for Sdl2Window<'a> {
         logical_size.0 as f64 / physical_size.0 as f64
     }
 
-    fn create_vulkan_surface(&self, entry: &ash::Entry, instance: &ash::Instance) -> Result<vk::SurfaceKHR, vk::Result> {
-        let surface_pointer = self.window.vulkan_create_surface(instance.handle().as_raw() as usize).map_err(|e| vk::Result::ERROR_INITIALIZATION_FAILED)?;
+    fn create_vulkan_surface(&self, _entry: &ash::Entry, instance: &ash::Instance) -> Result<vk::SurfaceKHR, vk::Result> {
+        let surface_pointer = self.window.vulkan_create_surface(instance.handle().as_raw() as usize).map_err(|_e| vk::Result::ERROR_INITIALIZATION_FAILED)?;
         Ok(vk::SurfaceKHR::from_raw(surface_pointer as u64))
     }
 

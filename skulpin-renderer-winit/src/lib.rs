@@ -1,10 +1,9 @@
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
-use ash::vk::Handle;
 
-use super::PhysicalSize;
-use super::LogicalSize;
-use super::Window;
+use skulpin_renderer::PhysicalSize;
+use skulpin_renderer::LogicalSize;
+use skulpin_renderer::Window;
 
 #[derive(Clone)]
 pub struct WinitWindow<'a> {

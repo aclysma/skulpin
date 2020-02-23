@@ -17,8 +17,7 @@ use super::PresentMode;
 use super::PhysicalDeviceType;
 use super::CoordinateSystemHelper;
 use super::PhysicalSize;
-use crate::CoordinateSystem;
-use crate::LogicalSize;
+use super::CoordinateSystem;
 use super::Window;
 
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
@@ -160,7 +159,7 @@ impl RendererBuilder {
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
         &self,
-        window: &Window,
+        window: &dyn Window,
     ) -> Result<Renderer, CreateRendererError> {
         Renderer::new(
             &self.app_name,
@@ -238,7 +237,7 @@ impl Renderer {
     /// Create the renderer
     pub fn new(
         app_name: &CString,
-        window: &Window,
+        window: &dyn Window,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
         present_mode_priority: Vec<PresentMode>,
@@ -288,7 +287,7 @@ impl Renderer {
     /// the swapchain if necessary.
     pub fn draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
         &mut self,
-        window: &Window,
+        window: &dyn Window,
         f: F,
     ) -> VkResult<()> {
         if window.physical_size() != self.previous_inner_size {
@@ -314,7 +313,7 @@ impl Renderer {
 
     fn rebuild_swapchain(
         &mut self,
-        window: &Window,
+        window: &dyn Window,
     ) -> VkResult<()> {
         unsafe {
             self.device.logical_device.device_wait_idle()?;
@@ -348,7 +347,7 @@ impl Renderer {
     /// Do the render
     fn do_draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
         &mut self,
-        window: &Window,
+        window: &dyn Window,
         f: F,
     ) -> VkResult<()> {
         let frame_fence = self.swapchain.in_flight_fences[self.sync_frame_index];

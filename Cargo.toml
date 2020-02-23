@@ -1,3 +1,11 @@
+[workspace]
+members = [
+    "skulpin-renderer",
+    "skulpin-renderer-sdl2",
+    "skulpin-renderer-winit",
+    "skulpin-app-winit"
+]
+
 [package]
 name = "skulpin"
 version = "0.5.2"
@@ -28,13 +36,17 @@ include = [
 # builds of skia are available for ALL of the features or NONE of the features. Only selecting some of the features will
 # require building skia from scratch, which will greatly increase build times
 [features]
-default = ["complete"]
-shaper = ["skia-safe/shaper"]
-svg = ["skia-safe/svg"]
-textlayout = ["skia-safe/textlayout"]
-complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
+shaper = ["skulpin-renderer/shaper"]
+svg = ["skulpin-renderer/svg"]
+textlayout = ["skulpin-renderer/textlayout"]
+complete = ["skulpin-renderer/complete"]
 
 [dependencies]
+skulpin-renderer = { path = "skulpin-renderer" }
+skulpin-renderer-sdl2 = { path = "skulpin-renderer-sdl2" }
+skulpin-renderer-winit = { path = "skulpin-renderer-winit" }
+skulpin-app-winit = { path = "skulpin-app-winit" }
+
 sdl2 = { git = "https://github.com/Rust-SDL2/rust-sdl2", features = ["bundled", "static-link"] }
 winit = "0.21"
 raw-window-handle = "0.3"

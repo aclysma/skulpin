@@ -26,21 +26,21 @@ extern crate log;
 
 pub mod app;
 
-mod renderer;
-pub use renderer::RendererBuilder;
-pub use renderer::Renderer;
-pub use renderer::PresentMode;
-pub use renderer::PhysicalDeviceType;
-pub use renderer::CoordinateSystemHelper;
-pub use renderer::CoordinateSystem;
-pub use renderer::CreateRendererError;
-pub use renderer::Size;
-pub use renderer::LogicalSize;
-pub use renderer::PhysicalSize;
-pub use renderer::Window;
+//mod renderer;
+pub use skulpin_renderer::RendererBuilder;
+pub use skulpin_renderer::Renderer;
+pub use skulpin_renderer::PresentMode;
+pub use skulpin_renderer::PhysicalDeviceType;
+pub use skulpin_renderer::CoordinateSystemHelper;
+pub use skulpin_renderer::CoordinateSystem;
+pub use skulpin_renderer::CreateRendererError;
+pub use skulpin_renderer::Size;
+pub use skulpin_renderer::LogicalSize;
+pub use skulpin_renderer::PhysicalSize;
+pub use skulpin_renderer::Window;
 
-pub use renderer::WinitWindow;
-pub use renderer::Sdl2Window;
+pub use skulpin_renderer_winit::WinitWindow;
+pub use skulpin_renderer_sdl2::Sdl2Window;
 
 // Export these crates so that downstream crates can easily use the same version of them as we do
 pub use ash;

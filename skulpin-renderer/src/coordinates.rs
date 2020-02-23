@@ -15,7 +15,7 @@ impl PhysicalSize {
         }
     }
 
-    pub fn to_logical(&self, scale_factor: f64) -> LogicalSize {
+    pub fn to_logical(self, scale_factor: f64) -> LogicalSize {
         LogicalSize {
             width: (self.width as f64 * scale_factor).round() as u32,
             height: (self.height as f64 * scale_factor).round() as u32,
@@ -39,7 +39,7 @@ impl LogicalSize {
         }
     }
 
-    pub fn to_physical(&self, scale_factor: f64) -> PhysicalSize {
+    pub fn to_physical(self, scale_factor: f64) -> PhysicalSize {
         PhysicalSize {
             width: (self.width as f64 / scale_factor).round() as u32,
             height: (self.height as f64 / scale_factor).round() as u32,

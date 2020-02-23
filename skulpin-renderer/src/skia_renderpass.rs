@@ -11,8 +11,8 @@ use super::VkSwapchain;
 use crate::offset_of;
 use super::SwapchainInfo;
 use super::VkQueueFamilyIndices;
-use crate::renderer::VkBuffer;
-use crate::renderer::skia_support::{VkSkiaContext, VkSkiaSurface};
+use crate::VkBuffer;
+use crate::skia_support::{VkSkiaContext, VkSkiaSurface};
 
 #[derive(Clone, Debug, Copy)]
 struct Vertex {

@@ -267,8 +267,13 @@ impl App {
         let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
 
         let winit_size = match inner_size {
-            Size::Physical(physical_size) => winit::dpi::Size::Physical(winit::dpi::PhysicalSize::new(physical_size.width, physical_size.height)),
-            Size::Logical(logical_size) => winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(logical_size.width as f64, logical_size.height as f64)),
+            Size::Physical(physical_size) => winit::dpi::Size::Physical(
+                winit::dpi::PhysicalSize::new(physical_size.width, physical_size.height),
+            ),
+            Size::Logical(logical_size) => winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(
+                logical_size.width as f64,
+                logical_size.height as f64,
+            )),
         };
 
         // Create a single window

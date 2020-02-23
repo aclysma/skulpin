@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+
 use ash::vk;
 
 mod alignment;
@@ -7,8 +10,6 @@ pub mod util;
 
 mod window_support;
 pub use window_support::Window;
-pub use window_support::Sdl2Window;
-pub use window_support::WinitWindow;
 
 mod instance;
 pub use instance::VkInstance;
@@ -41,7 +42,6 @@ mod renderer;
 pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::CreateRendererError;
-use crate::renderer::CoordinateSystem::Physical;
 
 mod coordinates;
 pub use coordinates::Size;
