@@ -1,6 +1,8 @@
 // This example shows how to use the renderer directly. This allows full control of winit
 // and the update loop
 
+use skulpin::skia_safe;
+use skulpin::sdl2;
 use skulpin::{CoordinateSystemHelper, RendererBuilder, LogicalSize, Sdl2Window};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;

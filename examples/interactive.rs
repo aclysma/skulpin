@@ -1,5 +1,6 @@
 // This example shows a bit more interaction with mouse input
 
+use skulpin::skia_safe;
 use skulpin::app::AppHandler;
 use skulpin::app::AppError;
 use skulpin::app::AppBuilder;

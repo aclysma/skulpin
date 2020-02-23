@@ -2,14 +2,17 @@
 
 extern crate nalgebra as na;
 
+use skulpin::skia_safe;
+
 use skulpin::app::AppHandler;
 use skulpin::app::AppError;
-use skulpin::CoordinateSystemHelper;
 use skulpin::app::AppControl;
 use skulpin::app::AppBuilder;
 use skulpin::app::InputState;
 use skulpin::app::TimeState;
 use skulpin::app::VirtualKeyCode;
+
+use skulpin::CoordinateSystemHelper;
 use skulpin::LogicalSize;
 
 use std::ffi::CString;

@@ -2,6 +2,8 @@
 // and the update loop
 
 use skulpin::CoordinateSystemHelper;
+use skulpin::winit;
+use skulpin::skia_safe;
 
 fn main() {
     // Setup logging

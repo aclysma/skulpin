@@ -2,8 +2,7 @@
 
 Skia + Vulkan = Skulpin
 
-This crate provides an easy option for drawing hardware-accelerated 2D by combining vulkan and skia. (And a dash of 
-winit!)
+This crate provides an easy option for drawing hardware-accelerated 2D by combining vulkan and skia.
 
 [![Build Status](https://travis-ci.org/aclysma/skulpin.svg?branch=master)](https://travis-ci.org/aclysma/skulpin)
 ![Crates.io](https://img.shields.io/crates/v/skulpin)
@@ -13,17 +12,26 @@ winit!)
 This crate mainly depends on:
  * [ash](https://github.com/MaikKlein/ash) - Vulkan bindings for Rust
  * [skia-safe](https://github.com/rust-skia/rust-skia) - [Skia](https://skia.org) bindings for Rust
- * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling
- 
+
 NOTE: See [skia-bindings](https://crates.io/crates/skia-bindings) for more info on how a skia binary acquired. In many
 cases, this crate will download a binary created by their project's CI.
+
+Additionally, two optional windowing backends are supported:
+ * [sdl2](https://github.com/Rust-SDL2/rust-sdl2) - SDL2 isn't written in rust, and it does far more than windowing. 
+   However, it's a mature project that's been around for a long time. 
+ * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling implemented in Rust. 
+
+If you're just poking around, winit is fine. If stability and maturity is most important, sdl2 is a good choice. If
+you want to use something else, you can use `skulpin-renderer` directly and implement `Window` trait for yourself.
  
 ## Usage
 
 Currently there are two ways to use this library.
  * [app](examples/skulpin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
+   This is currently only supported when using winit.
  * [renderer_only](examples/renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to 
-   draw to it.
+   draw to it. The window should be wrapped in an implementation of `skulpin::Window`. Implementations for `sdl2` and
+   `winit` are provided.
 
 Don't forget to install the prerequisites below appropriate to your platform! (See "Requirements")
 
@@ -45,17 +53,21 @@ Here's a video of the physics and interactive examples.
 
 ## Feature Flags
 
-* `complete` - Includes all the below features. ** This is on by default **
-* `shaper` - Enables text shaping with Harfbuzz and ICU
-* `svg` - This feature enables the SVG rendering backend
-* `textlayout` - Makes the Skia module skparagraph available, which contains types that are used to lay out paragraphs
-
-More information on these flags is available in the [skia-safe readme](https://crates.io/crates/skia-safe)
+### Skia-related features:
+* `skia_complete` - Includes all the below skia features. ** This is on by default **
+* `skia_shaper` - Enables text shaping with Harfbuzz and ICU
+* `skia_svg` - This feature enables the SVG rendering backend
+* `skia_textlayout` - Makes the Skia module skparagraph available, which contains types that are used to lay out paragraphs
+* More information on these flags is available in the [skia-safe readme](https://crates.io/crates/skia-safe)
 
 The `skia-bindings` prebuilt binaries are only available for certain combinations of features. As of this writing, it is
 available for none, each feature individually, or all features enabled. The `vulkan` feature is required and implicitly
 used, so enabling any features individually will substantially increase build times. It's recommended to use all
 features (default behavior), or disable all features. (use `default-features = false`) 
+
+### Skulpin features:
+* `skulpin_sdl2` - Re-export sdl2-related types from the skulpin crate
+* `skulpin_winit` - Re-export winit-related types from the skulpin crate
 
 ## Documentation
 
@@ -78,15 +90,21 @@ of skia-safe bindings, which is used to download prebuilt skia binaries.) There 
 [workarounds listed here](https://github.com/alexcrichton/curl-rust/issues/239). Again, this should only affect you if
 you are running the non-default GNU toolchain.
 
+If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). 
+
 ### MacOS
 
 All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
 get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
+If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). 
+
 ### Linux
 
 All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
 get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
+
+If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). 
 
 On linux you'll also need to link against bz2, GL, fontconfig, and freetype.
 
@@ -99,7 +117,7 @@ It may be possible to build this for mobile platforms, but I've not investigated
 
 ## Status
 
-For now this is a proof-of-concept. I think there is desire for a simple entry point to drawing on the screen, and that
+Originally this was just a proof-of-concept, but it is now being used . I think there is desire for a simple entry point to drawing on the screen, and that
 this approach can provide a good balance of performance, features, and ease-of-use for many applications.
 
 Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. So I expect this

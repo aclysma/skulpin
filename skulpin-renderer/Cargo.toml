@@ -14,16 +14,8 @@ textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 
 [dependencies]
-ash = "0.29"
+ash = ">=0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }
+skia-bindings = { version = ">=0.21" }
 
 log="0.4"
-
-# From ash example code
-[target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3", features = ["windef", "winuser"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-metal = "0.17"
-cocoa = "0.19"
-objc = "0.2"

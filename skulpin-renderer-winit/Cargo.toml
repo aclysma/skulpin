@@ -11,8 +11,6 @@ skulpin-renderer = { path = "../skulpin-renderer" }
 
 winit = "0.21"
 raw-window-handle = "0.3"
-ash = "0.29"
-skia-safe = { version = ">=0.21", features = ["vulkan"] }
 
 log="0.4"
 

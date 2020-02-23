@@ -4,6 +4,7 @@
 use skulpin::CoordinateSystem;
 use skulpin::CoordinateSystemHelper;
 use skulpin::LogicalSize;
+use skulpin::skia_safe;
 
 use skulpin::app::AppBuilder;
 use skulpin::app::AppError;
