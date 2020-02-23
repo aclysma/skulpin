@@ -10,14 +10,12 @@ use skulpin_renderer::LogicalSize;
 use skulpin_renderer::Window;
 
 pub struct Sdl2Window<'a> {
-    window: &'a sdl2::video::Window
+    window: &'a sdl2::video::Window,
 }
 
 impl<'a> Sdl2Window<'a> {
     pub fn new(window: &'a sdl2::video::Window) -> Self {
-        Sdl2Window {
-            window
-        }
+        Sdl2Window { window }
     }
 }
 
@@ -38,13 +36,21 @@ impl<'a> Window for Sdl2Window<'a> {
         logical_size.0 as f64 / physical_size.0 as f64
     }
 
-    fn create_vulkan_surface(&self, _entry: &ash::Entry, instance: &ash::Instance) -> Result<vk::SurfaceKHR, vk::Result> {
-        let surface_pointer = self.window.vulkan_create_surface(instance.handle().as_raw() as usize).map_err(|_e| vk::Result::ERROR_INITIALIZATION_FAILED)?;
+    fn create_vulkan_surface(
+        &self,
+        _entry: &ash::Entry,
+        instance: &ash::Instance,
+    ) -> Result<vk::SurfaceKHR, vk::Result> {
+        let surface_pointer = self
+            .window
+            .vulkan_create_surface(instance.handle().as_raw() as usize)
+            .map_err(|_e| vk::Result::ERROR_INITIALIZATION_FAILED)?;
         Ok(vk::SurfaceKHR::from_raw(surface_pointer as u64))
     }
 
     fn extension_names(&self) -> Vec<*const i8> {
-        self.window.vulkan_instance_extensions()
+        self.window
+            .vulkan_instance_extensions()
             .expect("Could not get vulkan instance extensions")
             .into_iter()
             .map(|extension| extension.as_ptr() as *const i8)

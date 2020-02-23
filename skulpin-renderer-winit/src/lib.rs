@@ -10,25 +10,26 @@ use skulpin_renderer::Window;
 
 #[derive(Clone)]
 pub struct WinitWindow<'a> {
-    window: &'a winit::window::Window
+    window: &'a winit::window::Window,
 }
 
 impl<'a> WinitWindow<'a> {
     pub fn new(window: &'a winit::window::Window) -> Self {
-        WinitWindow {
-            window
-        }
+        WinitWindow { window }
     }
 }
 
 impl<'a> Window for WinitWindow<'a> {
     fn physical_size(&self) -> PhysicalSize {
-        let physical_size : winit::dpi::PhysicalSize<u32> = self.window.inner_size();
+        let physical_size: winit::dpi::PhysicalSize<u32> = self.window.inner_size();
         PhysicalSize::new(physical_size.width, physical_size.height)
     }
 
     fn logical_size(&self) -> LogicalSize {
-        let logical_size: winit::dpi::LogicalSize<u32> = self.window.inner_size().to_logical(self.window.scale_factor());
+        let logical_size: winit::dpi::LogicalSize<u32> = self
+            .window
+            .inner_size()
+            .to_logical(self.window.scale_factor());
         LogicalSize::new(logical_size.width, logical_size.height)
     }
 
@@ -36,12 +37,13 @@ impl<'a> Window for WinitWindow<'a> {
         self.window.scale_factor()
     }
 
-    fn create_vulkan_surface(&self, entry: &ash::Entry, instance: &ash::Instance) -> Result<vk::SurfaceKHR, vk::Result> {
-        unsafe {
-            create_surface(entry, instance, &self.window.raw_window_handle())
-        }
+    fn create_vulkan_surface(
+        &self,
+        entry: &ash::Entry,
+        instance: &ash::Instance,
+    ) -> Result<vk::SurfaceKHR, vk::Result> {
+        unsafe { create_surface(entry, instance, &self.window.raw_window_handle()) }
     }
-
 
     fn extension_names(&self) -> Vec<*const i8> {
         extension_names(&self.window.raw_window_handle())

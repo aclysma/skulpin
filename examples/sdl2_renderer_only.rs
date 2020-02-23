@@ -1,5 +1,4 @@
-// This example shows how to use the renderer directly. This allows full control of winit
-// and the update loop
+// This example shows how to use the renderer with SDL2 directly.
 
 use skulpin::skia_safe;
 use skulpin::sdl2;

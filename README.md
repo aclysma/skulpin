@@ -39,7 +39,7 @@ Don't forget to install the prerequisites below appropriate to your platform! (S
 
 First, ensure that the below requirements are met depending on OS. Afterwards, the examples can be run normally.
 
-The [interactive](examples/interactive.rs) example is good to look at for an easy way to get keyboard/mouse input.
+The [interactive](examples/interactive_winit_app.rs) example is good to look at for an easy way to get keyboard/mouse input.
 
 `cargo run --example interactive`
 

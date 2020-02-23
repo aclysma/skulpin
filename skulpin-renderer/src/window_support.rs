@@ -12,6 +12,10 @@ pub trait Window {
     fn scale_factor(&self) -> f64;
 
     //TODO: Break these out into a separate WindowSystem trait?
-    fn create_vulkan_surface(&self, entry: &ash::Entry, instance: &ash::Instance) -> Result<vk::SurfaceKHR, vk::Result>;
+    fn create_vulkan_surface(
+        &self,
+        entry: &ash::Entry,
+        instance: &ash::Instance,
+    ) -> Result<vk::SurfaceKHR, vk::Result>;
     fn extension_names(&self) -> Vec<*const i8>;
 }

@@ -385,7 +385,7 @@ impl Renderer {
             let coordinate_system_helper = CoordinateSystemHelper::new(
                 surface_extents,
                 window_logical_size,
-                window_physical_size
+                window_physical_size,
             );
 
             match self.coordinate_system {
