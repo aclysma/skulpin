@@ -283,6 +283,42 @@ impl Renderer {
         })
     }
 
+    pub fn vulkan_entry(&self) -> &ash::Entry {
+        &self.instance.entry
+    }
+
+    pub fn vulkan_instance(&self) -> &ash::Instance {
+        &self.instance.instance
+    }
+
+    pub fn vulkan_physical_device(&self) -> vk::PhysicalDevice {
+        self.device.physical_device
+    }
+
+    pub fn vulkan_logical_device(&self) -> &ash::Device {
+        &self.device.logical_device
+    }
+
+    pub fn vulkan_graphics_queue_family_index(&self) -> u32 {
+        self.device.queue_family_indices.graphics_queue_family_index
+    }
+
+    pub fn vulkan_graphics_queue(&self) -> vk::Queue {
+        self.device.queues.graphics_queue
+    }
+
+    pub fn vulkan_present_queue_family_index(&self) -> u32 {
+        self.device.queue_family_indices.present_queue_family_index
+    }
+
+    pub fn vulkan_present_queue(&self) -> vk::Queue {
+        self.device.queues.graphics_queue
+    }
+
+    pub fn skia_context(&self) -> &skia_safe::gpu::Context {
+        &self.skia_context.context
+    }
+
     /// Call to render a frame. This can block for certain presentation modes. This will rebuild
     /// the swapchain if necessary.
     pub fn draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
