@@ -381,34 +381,35 @@ impl Renderer {
             let mut canvas = surface.surface.canvas();
 
             let surface_extents = self.swapchain.swapchain_info.extents;
-            let window_logical_size = LogicalSize::new(&window).unwrap();
-            let window_physical_size = PhysicalSize::new(&window);
+            if let Ok(window_logical_size) = LogicalSize::new(&window) {
+                let window_physical_size = PhysicalSize::new(&window);
 
-            let coordinate_system_helper = CoordinateSystemHelper::new(
-                surface_extents,
-                window_logical_size,
-                window_physical_size
-            );
+                let coordinate_system_helper = CoordinateSystemHelper::new(
+                    surface_extents,
+                    window_logical_size,
+                    window_physical_size
+                );
 
-            match self.coordinate_system {
-                CoordinateSystem::None => {}
-                CoordinateSystem::Physical => {
-                    coordinate_system_helper.use_physical_coordinates(&mut canvas)
+                match self.coordinate_system {
+                    CoordinateSystem::None => {}
+                    CoordinateSystem::Physical => {
+                        coordinate_system_helper.use_physical_coordinates(&mut canvas)
+                    }
+                    CoordinateSystem::Logical => {
+                        coordinate_system_helper.use_logical_coordinates(&mut canvas)
+                    }
+                    CoordinateSystem::VisibleRange(range, scale_to_fit) => coordinate_system_helper
+                        .use_visible_range(&mut canvas, range, scale_to_fit)
+                        .unwrap(),
+                    CoordinateSystem::FixedWidth(center, x_half_extents) => coordinate_system_helper
+                        .use_fixed_width(&mut canvas, center, x_half_extents)
+                        .unwrap(),
                 }
-                CoordinateSystem::Logical => {
-                    coordinate_system_helper.use_logical_coordinates(&mut canvas)
-                }
-                CoordinateSystem::VisibleRange(range, scale_to_fit) => coordinate_system_helper
-                    .use_visible_range(&mut canvas, range, scale_to_fit)
-                    .unwrap(),
-                CoordinateSystem::FixedWidth(center, x_half_extents) => coordinate_system_helper
-                    .use_fixed_width(&mut canvas, center, x_half_extents)
-                    .unwrap(),
+
+                f(&mut canvas, &coordinate_system_helper);
+
+                canvas.flush();
             }
-
-            f(&mut canvas, &coordinate_system_helper);
-
-            canvas.flush();
         }
 
         let wait_semaphores = [self.swapchain.image_available_semaphores[self.sync_frame_index]];
