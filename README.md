@@ -16,25 +16,6 @@ This crate mainly depends on:
 NOTE: See [skia-bindings](https://crates.io/crates/skia-bindings) for more info on how a skia binary acquired. In many
 cases, this crate will download a binary created by their project's CI.
 
-Additionally, two optional windowing backends are supported:
- * [sdl2](https://github.com/Rust-SDL2/rust-sdl2) - SDL2 isn't written in rust, and it does far more than windowing. 
-   However, it's a mature project that's been around for a long time. 
- * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling implemented in Rust. 
-
-If you're just poking around, winit is fine. If stability and maturity is most important, sdl2 is a good choice. If
-you want to use something else, you can use `skulpin-renderer` directly and implement `Window` trait for yourself.
- 
-## Usage
-
-Currently there are two ways to use this library.
- * [app](examples/skulpin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
-   This is currently only supported when using winit.
- * [renderer_only](examples/renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to 
-   draw to it. The window should be wrapped in an implementation of `skulpin::Window`. Implementations for `sdl2` and
-   `winit` are provided.
-
-Don't forget to install the prerequisites below appropriate to your platform! (See "Requirements")
-
 ## Running the Examples
 
 First, ensure that the below requirements are met depending on OS. Afterwards, the examples can be run normally.
@@ -50,6 +31,35 @@ The [physics](examples/physics.rs) demo is fun too.
 Here's a video of the physics and interactive examples.
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/El99FgGSzfg/0.jpg)](https://www.youtube.com/watch?v=El99FgGSzfg "Video of Skulpin")
+
+## Backends
+
+This library currently supports two windowing backends:
+ * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling implemented in Rust. 
+ * [sdl2](https://github.com/Rust-SDL2/rust-sdl2) - SDL2 isn't written in rust, and it does far more than windowing. 
+   However, it's a mature project that's been around for a long time. 
+
+If you're just poking around, winit is fine. For a "shipping" project, I'd consider using sdl2 since at time of this
+writing, it's more stable.
+
+You can also use the `skulpin-renderer` crate directly and implement `Window` trait for yourself.
+
+By default, support (and dependencies) for both `winit` and `sdl2` are pulled in when building against the `skulpin`
+crate. This can be avoided either by directly linking against crates like `skulpin-renderer` or by using feature flags.
+See the Feature Flags section for more info.
+
+## Usage
+
+Currently there are two ways to use this library with `winit`.
+ * [app](examples/skulpin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
+   This is currently only supported when using winit.
+ * [renderer_only](examples/winit_renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to 
+   draw to it. The window should be wrapped in an implementation of `skulpin::Window`. Implementations for `sdl2` and
+   `winit` are provided.
+
+If you prefer `sdl2` you'll need to use the renderer directly. See [sdl2 renderer only](examples/sdl2_renderer_only.rs)
+
+Don't forget to install the prerequisites below appropriate to your platform! (See "Requirements")
 
 ## Feature Flags
 
@@ -69,6 +79,19 @@ features (default behavior), or disable all features. (use `default-features = f
 * `skulpin_sdl2` - Re-export sdl2-related types from the skulpin crate
 * `skulpin_winit` - Re-export winit-related types from the skulpin crate
 
+### Examples of Feature Flag Usage
+
+```
+# Pull in all skia features and support for all backends (sdl2 and winit)
+skulpin = "0"
+
+# Pull in all skia features and support for winit only
+skulpin = { version = "0", default-features = false, features = ["skia_complete", skulpin_winit"] }
+
+# Pull in no optional skia features and support for sdl2 only
+skulpin = { version = "0", default-features = false, features = ["skulpin_sdl2"] }
+```
+
 ## Documentation
 
 Documentation fails to build on docs.rs because the skia_safe crate requires an internet connection to build. (It will
@@ -78,7 +101,9 @@ either grab skia source code, or grab a prebuilt binary.) So the best way to vie
 
 ## Requirements
 
-Minimum required rust version: **1.37.0**
+Minimum required rust version: **1.40.0**
+
+This is mostly due to skia bindings. The code in this library will likely work with 1.37.0 or later.
 
 ### Windows
 
@@ -117,18 +142,20 @@ It may be possible to build this for mobile platforms, but I've not investigated
 
 ## Status
 
-Originally this was just a proof-of-concept, but it is now being used . I think there is desire for a simple entry point to drawing on the screen, and that
-this approach can provide a good balance of performance, features, and ease-of-use for many applications.
+Originally this was just a proof-of-concept, but it is now being used by [neovide](https://github.com/Kethku/neovide).
+I've received anecdotal reports that this library is working will on windows, macOS and linux (including wayland.) There
+are some bugs with `winit`, so I added `sdl2` support as a more stable option. I think this could realistically be used
+for shipping software when used with the sdl2 backend. 
 
-Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. So I expect this
-type of usage to be maintained and improved as needed in the upstream libraries.
+Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. Because Google is
+deeply invested in this stack, I anticipate relatively long term support of this type of usage in Skia. 
 
 ## A note on High-DPI Display Support
 
-For the common case, you can draw to the skia canvas using winit's "logical" coordinates and not worry about dpi/scaling 
+For the common case, you can draw to the skia canvas using "logical" coordinates and not worry about dpi/scaling 
 issues.
 
-Internally, the skia surface will match the swapchain size, but this size is not necessarily winit's LogicalSize or
+Internally, the skia surface will match the swapchain size, but this size is not necessarily LogicalSize or
 PhysicalSize of the window. In order to produce consistently-sized results, the renderer will apply a scaling factor to
 the skia canvas before handing it off to your draw implementation. 
 
@@ -175,6 +202,8 @@ Licensed under either of
 * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 at your option.
+
+[`sdl2` uses the zlib license.](https://www.libsdl.org/license.php)
 
 ### Contribution
 
