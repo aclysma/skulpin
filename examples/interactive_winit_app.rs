@@ -107,11 +107,7 @@ impl AppHandler for ExampleApp {
         // Push new clicks onto the previous_clicks list
         //
         if input_state.is_mouse_just_down(MouseButton::Left) {
-            let previous_click = PreviousClick::new(
-                input_state
-                    .mouse_position(),
-                now,
-            );
+            let previous_click = PreviousClick::new(input_state.mouse_position(), now);
 
             self.previous_clicks.push_back(previous_click);
         }
@@ -164,7 +160,11 @@ impl AppHandler for ExampleApp {
 
             let position = previous_click.position;
 
-            canvas.draw_circle(skia_safe::Point::new(position.x as f32, position.y as f32), 25.0, &paint);
+            canvas.draw_circle(
+                skia_safe::Point::new(position.x as f32, position.y as f32),
+                25.0,
+                &paint,
+            );
         }
 
         //
