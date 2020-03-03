@@ -3,11 +3,16 @@ name = "skulpin-app-winit"
 version = "0.1.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/aclysma/skulpin"
+homepage = "https://github.com/aclysma/skulpin"
+keywords = ["skia", "vulkan", "ash", "2d", "graphics"]
+categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-skulpin-renderer = { path = "../skulpin-renderer" }
-skulpin-renderer-winit = { path = "../skulpin-renderer-winit" }
+skulpin-renderer = { version = "0.1", path = "../skulpin-renderer" }
+skulpin-renderer-winit = { version = "0.1", path = "../skulpin-renderer-winit" }
 
 log="0.4"
