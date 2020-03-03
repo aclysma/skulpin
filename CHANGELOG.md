@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.1
  * Fixed an array index out of bound issue that could occur if khr::Swapchain created more images than the specified
    minimum
 
