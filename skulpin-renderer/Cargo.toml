@@ -3,6 +3,7 @@ name = "skulpin-renderer"
 version = "0.1.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
+description = "A vulkan renderer for skia, a component of skulpin"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/aclysma/skulpin"
 homepage = "https://github.com/aclysma/skulpin"

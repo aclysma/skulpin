@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0
+ * Add an abstraction layer so that multiple windowing backends can be supported. Built-in support is provided for
+   `sdl2` and `winit`
+ * Refactored into multiple crates:
+     * Existing rendering code was moved to `skulpin-renderer`
+     * Existing `winit` support was moved to `skulpin-renderer-winit`
+     * New `sdl2` support was implemented in `skulpin-renderer-sdl2`
+     * Existing winit-based app layer was moved to `skulpin-app-winit`
+     * `skulpin` crate now pulls in these crates and supports turning them on/off via feature flags
+
 ## 0.6.1
  * Fixed an array index out of bound issue that could occur if khr::Swapchain created more images than the specified
    minimum

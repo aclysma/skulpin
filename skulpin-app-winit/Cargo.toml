@@ -3,6 +3,7 @@ name = "skulpin-app-winit"
 version = "0.1.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
+description = "A winit-based application layer for skulpin"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/aclysma/skulpin"
 homepage = "https://github.com/aclysma/skulpin"
