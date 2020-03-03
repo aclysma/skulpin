@@ -1,16 +1,22 @@
 // This example shows a bit more interaction with mouse input
 
-use skulpin::AppHandler;
+use skulpin::skia_safe;
+use skulpin::app::AppHandler;
+use skulpin::app::AppError;
+use skulpin::app::AppBuilder;
 use skulpin::CoordinateSystemHelper;
-use skulpin::AppControl;
-use skulpin::InputState;
-use skulpin::TimeState;
-use skulpin::MouseButton;
-use skulpin::VirtualKeyCode;
+use skulpin::app::AppControl;
+use skulpin::app::InputState;
+use skulpin::app::TimeState;
+use skulpin::app::MouseButton;
+use skulpin::app::VirtualKeyCode;
+use skulpin::app::PhysicalPosition;
 use skulpin::LogicalSize;
 
 use std::ffi::CString;
 use std::collections::VecDeque;
+
+use skulpin::winit;
 use winit::dpi::LogicalPosition;
 
 fn main() {
@@ -21,7 +27,7 @@ fn main() {
 
     let example_app = ExampleApp::new();
 
-    skulpin::AppBuilder::new()
+    AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
         .use_vulkan_debug_layer(true)
         .inner_size(LogicalSize::new(900, 600))
@@ -29,13 +35,13 @@ fn main() {
 }
 
 struct PreviousClick {
-    position: LogicalPosition<f32>,
+    position: PhysicalPosition<f64>,
     time: std::time::Instant,
 }
 
 impl PreviousClick {
     fn new(
-        position: LogicalPosition<f32>,
+        position: PhysicalPosition<f64>,
         time: std::time::Instant,
     ) -> Self {
         PreviousClick { position, time }
@@ -103,8 +109,7 @@ impl AppHandler for ExampleApp {
         if input_state.is_mouse_just_down(MouseButton::Left) {
             let previous_click = PreviousClick::new(
                 input_state
-                    .mouse_position()
-                    .to_logical(input_state.scale_factor()),
+                    .mouse_position(),
                 now,
             );
 
@@ -159,7 +164,7 @@ impl AppHandler for ExampleApp {
 
             let position = previous_click.position;
 
-            canvas.draw_circle(skia_safe::Point::new(position.x, position.y), 25.0, &paint);
+            canvas.draw_circle(skia_safe::Point::new(position.x as f32, position.y as f32), 25.0, &paint);
         }
 
         //
@@ -216,7 +221,7 @@ impl AppHandler for ExampleApp {
 
     fn fatal_error(
         &mut self,
-        error: &skulpin::AppError,
+        error: &AppError,
     ) {
         println!("{}", error);
     }

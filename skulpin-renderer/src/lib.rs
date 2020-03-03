@@ -1,3 +1,10 @@
+#[macro_use]
+extern crate log;
+
+pub use ash;
+pub use skia_safe;
+pub use skia_bindings;
+
 use ash::vk;
 
 mod alignment;
@@ -6,6 +13,7 @@ use alignment::Align;
 pub mod util;
 
 mod window_support;
+pub use window_support::Window;
 
 mod instance;
 pub use instance::VkInstance;
@@ -39,8 +47,10 @@ pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::CreateRendererError;
 
-pub use winit::dpi::LogicalSize;
-pub use winit::dpi::PhysicalSize;
+mod coordinates;
+pub use coordinates::Size;
+pub use coordinates::LogicalSize;
+pub use coordinates::PhysicalSize;
 
 /// Used to select which PresentMode is preferred. Some of this is hardware/platform dependent and
 /// it's a good idea to read the Vulkan spec.
@@ -52,7 +62,7 @@ pub use winit::dpi::PhysicalSize;
 #[derive(Copy, Clone, Debug)]
 pub enum PresentMode {
     /// (`VK_PRESENT_MODE_IMMEDIATE_KHR`) - No internal buffering, and can result in screen
-    /// tearing.
+    /// tearin.
     Immediate = 0,
 
     /// (`VK_PRESENT_MODE_MAILBOX_KHR`) - This allows rendering as fast as the hardware will
@@ -169,8 +179,8 @@ impl Default for CoordinateSystem {
 /// manually
 pub struct CoordinateSystemHelper {
     surface_extents: vk::Extent2D,
-    window_logical_size: LogicalSize<u32>,
-    window_physical_size: PhysicalSize<u32>,
+    window_logical_size: LogicalSize,
+    window_physical_size: PhysicalSize,
     scale_factor: f64,
 }
 
@@ -178,8 +188,8 @@ impl CoordinateSystemHelper {
     /// Create a CoordinateSystemHelper for a window of the given parameters
     pub fn new(
         surface_extents: vk::Extent2D,
-        window_logical_size: LogicalSize<u32>,
-        window_physical_size: PhysicalSize<u32>,
+        window_logical_size: LogicalSize,
+        window_physical_size: PhysicalSize,
         scale_factor: f64,
     ) -> Self {
         CoordinateSystemHelper {
@@ -196,12 +206,12 @@ impl CoordinateSystemHelper {
     }
 
     /// Get the logical inner size of the window
-    pub fn window_logical_size(&self) -> LogicalSize<u32> {
+    pub fn window_logical_size(&self) -> LogicalSize {
         self.window_logical_size
     }
 
     /// Get the physical inner size of the window
-    pub fn window_physical_size(&self) -> PhysicalSize<u32> {
+    pub fn window_physical_size(&self) -> PhysicalSize {
         self.window_physical_size
     }
 

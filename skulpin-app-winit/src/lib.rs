@@ -1,4 +1,6 @@
-#[allow(clippy::module_inception)]
+#[macro_use]
+extern crate log;
+
 mod app;
 pub use app::App;
 pub use app::AppHandler;
@@ -30,3 +32,7 @@ pub use time_state::TimeContext;
 mod util;
 pub use util::PeriodicEvent;
 pub use util::ScopeTimer;
+
+pub use skulpin_renderer::ash;
+pub use skulpin_renderer::skia_safe;
+pub use skulpin_renderer_winit::winit;

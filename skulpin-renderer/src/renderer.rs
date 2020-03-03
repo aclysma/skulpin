@@ -16,8 +16,9 @@ use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
 use super::CoordinateSystemHelper;
-use winit::dpi::PhysicalSize;
-use crate::CoordinateSystem;
+use super::PhysicalSize;
+use super::CoordinateSystem;
+use super::Window;
 
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
@@ -158,7 +159,7 @@ impl RendererBuilder {
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
         &self,
-        window: &winit::window::Window,
+        window: &dyn Window,
     ) -> Result<Renderer, CreateRendererError> {
         Renderer::new(
             &self.app_name,
@@ -187,7 +188,7 @@ pub struct Renderer {
 
     present_mode_priority: Vec<PresentMode>,
 
-    previous_inner_size: PhysicalSize<u32>,
+    previous_inner_size: PhysicalSize,
 
     coordinate_system: CoordinateSystem,
 }
@@ -236,7 +237,7 @@ impl Renderer {
     /// Create the renderer
     pub fn new(
         app_name: &CString,
-        window: &winit::window::Window,
+        window: &dyn Window,
         validation_layer_debug_report_flags: vk::DebugReportFlagsEXT,
         physical_device_type_priority: Vec<PhysicalDeviceType>,
         present_mode_priority: Vec<PresentMode>,
@@ -267,7 +268,7 @@ impl Renderer {
         )?);
         let sync_frame_index = 0;
 
-        let previous_inner_size = window.inner_size();
+        let previous_inner_size = window.physical_size();
 
         Ok(Renderer {
             instance,
@@ -282,14 +283,50 @@ impl Renderer {
         })
     }
 
+    pub fn vulkan_entry(&self) -> &ash::Entry {
+        &self.instance.entry
+    }
+
+    pub fn vulkan_instance(&self) -> &ash::Instance {
+        &self.instance.instance
+    }
+
+    pub fn vulkan_physical_device(&self) -> vk::PhysicalDevice {
+        self.device.physical_device
+    }
+
+    pub fn vulkan_logical_device(&self) -> &ash::Device {
+        &self.device.logical_device
+    }
+
+    pub fn vulkan_graphics_queue_family_index(&self) -> u32 {
+        self.device.queue_family_indices.graphics_queue_family_index
+    }
+
+    pub fn vulkan_graphics_queue(&self) -> vk::Queue {
+        self.device.queues.graphics_queue
+    }
+
+    pub fn vulkan_present_queue_family_index(&self) -> u32 {
+        self.device.queue_family_indices.present_queue_family_index
+    }
+
+    pub fn vulkan_present_queue(&self) -> vk::Queue {
+        self.device.queues.graphics_queue
+    }
+
+    pub fn skia_context(&self) -> &skia_safe::gpu::Context {
+        &self.skia_context.context
+    }
+
     /// Call to render a frame. This can block for certain presentation modes. This will rebuild
     /// the swapchain if necessary.
     pub fn draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
         &mut self,
-        window: &winit::window::Window,
+        window: &dyn Window,
         f: F,
     ) -> VkResult<()> {
-        if window.inner_size() != self.previous_inner_size {
+        if window.physical_size() != self.previous_inner_size {
             debug!("Detected window inner size change, rebuilding swapchain");
             self.rebuild_swapchain(window)?;
         }
@@ -312,7 +349,7 @@ impl Renderer {
 
     fn rebuild_swapchain(
         &mut self,
-        window: &winit::window::Window,
+        window: &dyn Window,
     ) -> VkResult<()> {
         unsafe {
             self.device.logical_device.device_wait_idle()?;
@@ -338,7 +375,7 @@ impl Renderer {
             &mut self.skia_context,
         )?);
 
-        self.previous_inner_size = window.inner_size();
+        self.previous_inner_size = window.physical_size();
 
         Ok(())
     }
@@ -346,7 +383,7 @@ impl Renderer {
     /// Do the render
     fn do_draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
         &mut self,
-        window: &winit::window::Window,
+        window: &dyn Window,
         f: F,
     ) -> VkResult<()> {
         let frame_fence = self.swapchain.in_flight_fences[self.sync_frame_index];
@@ -378,9 +415,9 @@ impl Renderer {
             let mut canvas = surface.surface.canvas();
 
             let surface_extents = self.swapchain.swapchain_info.extents;
-            let window_physical_size = window.inner_size();
+            let window_logical_size = window.logical_size();
+            let window_physical_size = window.physical_size();
             let scale_factor = window.scale_factor();
-            let window_logical_size = window_physical_size.to_logical(scale_factor);
 
             let coordinate_system_helper = CoordinateSystemHelper::new(
                 surface_extents,

@@ -1,8 +1,9 @@
 //! Skia + Vulkan = Skulpin
 //!
 //! This crate provides an easy option for drawing hardware-accelerated 2D by combining vulkan and
-//! skia. (And a dash of winit!)
+//! skia.
 //!
+//! Two windowing backends are supported out of the box - winit and sdl2.
 //!
 //! Currently there are two ways to use this library.
 //!
@@ -21,43 +22,31 @@
 //!
 //!
 
-#[macro_use]
-extern crate log;
-
-mod app;
-pub use app::AppError;
-pub use app::InputState;
-pub use app::MouseDragState;
-
-// These are re-exported winit types
-pub use app::VirtualKeyCode; // This is the same type as winit::event::VirtualKeyCode
-pub use app::MouseButton; // This is the same type as winit::event::MouseButton
-pub use app::ElementState; // This is the same type as winit::event::ElementState
-pub use app::LogicalSize; // This is the same type as winit::dpi::LogicalSize
-pub use app::PhysicalSize; // This is the same type as winit::dpi::PhysicalSize
-pub use app::LogicalPosition; // This is the same type as winit::dpi::LogicalPosition
-pub use app::PhysicalPosition; // This is the same type as winit::dpi::PhysicalPosition
-pub use app::Position; // This is the same type as winit::dpi::Position
-pub use app::Size; // This is the same type as winit::dpi::Size
-
-pub use app::TimeState;
-pub use app::AppControl;
-pub use app::PeriodicEvent;
-pub use app::ScopeTimer;
-pub use app::App;
-pub use app::AppBuilder;
-pub use app::AppHandler;
-
-mod renderer;
-pub use renderer::RendererBuilder;
-pub use renderer::Renderer;
-pub use renderer::PresentMode;
-pub use renderer::PhysicalDeviceType;
-pub use renderer::CoordinateSystemHelper;
-pub use renderer::CoordinateSystem;
-pub use renderer::CreateRendererError;
-
 // Export these crates so that downstream crates can easily use the same version of them as we do
-pub use ash;
-pub use skia_safe;
-pub use winit;
+pub use skulpin_renderer::ash;
+pub use skulpin_renderer::skia_safe;
+pub use skulpin_renderer::skia_bindings;
+
+pub use skulpin_renderer::RendererBuilder;
+pub use skulpin_renderer::Renderer;
+pub use skulpin_renderer::PresentMode;
+pub use skulpin_renderer::PhysicalDeviceType;
+pub use skulpin_renderer::CoordinateSystemHelper;
+pub use skulpin_renderer::CoordinateSystem;
+pub use skulpin_renderer::CreateRendererError;
+pub use skulpin_renderer::Size;
+pub use skulpin_renderer::LogicalSize;
+pub use skulpin_renderer::PhysicalSize;
+pub use skulpin_renderer::Window;
+
+#[cfg(feature = "skulpin_winit")]
+pub use skulpin_renderer_winit::winit;
+#[cfg(feature = "skulpin_winit")]
+pub use skulpin_renderer_winit::WinitWindow;
+#[cfg(feature = "skulpin_winit")]
+pub use skulpin_app_winit as app;
+
+#[cfg(feature = "skulpin_sdl2")]
+pub use skulpin_renderer_sdl2::sdl2;
+#[cfg(feature = "skulpin_sdl2")]
+pub use skulpin_renderer_sdl2::Sdl2Window;

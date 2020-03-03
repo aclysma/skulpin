@@ -1,6 +1,14 @@
+[workspace]
+members = [
+    "skulpin-renderer",
+    "skulpin-renderer-sdl2",
+    "skulpin-renderer-winit",
+    "skulpin-app-winit"
+]
+
 [package]
 name = "skulpin"
-version = "0.6.1"
+version = "0.7.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
@@ -28,28 +36,23 @@ include = [
 # builds of skia are available for ALL of the features or NONE of the features. Only selecting some of the features will
 # require building skia from scratch, which will greatly increase build times
 [features]
-default = ["complete"]
-shaper = ["skia-safe/shaper"]
-svg = ["skia-safe/svg"]
-textlayout = ["skia-safe/textlayout"]
-complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
+skia_shaper = ["skulpin-renderer/shaper"]
+skia_svg = ["skulpin-renderer/svg"]
+skia_textlayout = ["skulpin-renderer/textlayout"]
+skia_complete = ["skulpin-renderer/complete"]
+
+skulpin_winit = ["skulpin-renderer-winit", "skulpin-app-winit"]
+skulpin_sdl2 = ["skulpin-renderer-sdl2"]
+
+default = ["skulpin_winit", "skulpin_sdl2", "skia_complete"]
 
 [dependencies]
-winit = "0.21"
-raw-window-handle = "0.3"
-ash = "0.29"
-skia-safe = { version = ">=0.21", features = ["vulkan"] }
+skulpin-renderer = { path = "skulpin-renderer" }
+skulpin-renderer-sdl2 = { path = "skulpin-renderer-sdl2", optional = true }
+skulpin-renderer-winit = { path = "skulpin-renderer-winit", optional = true }
+skulpin-app-winit = { path = "skulpin-app-winit", optional = true }
 
 log="0.4"
-
-# From ash example code
-[target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3", features = ["windef", "winuser"] }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-metal = "0.17"
-cocoa = "0.19"
-objc = "0.2"
 
 [dev-dependencies]
 env_logger = "0.6"
@@ -57,3 +60,7 @@ env_logger = "0.6"
 nalgebra = "0.18"
 ncollide2d = "0.20"
 nphysics2d = "0.12"
+
+# The skulpin-renderer-sdl2 crate doesn't specify any features, but downstream libraries can do so by including sdl2
+# for themselves
+sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }

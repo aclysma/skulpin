@@ -1,5 +1,7 @@
 //! Handles input tracking and provides an easy way to detect clicks, dragging, etc.
 
+use crate::winit;
+
 // Re-export winit types
 pub use winit::event::VirtualKeyCode;
 pub use winit::event::MouseButton;
@@ -12,7 +14,7 @@ pub use winit::dpi::Size;
 pub use winit::dpi::Position;
 
 use super::AppControl;
-use winit::window::Window;
+use crate::winit::window::Window;
 
 /// Encapsulates the state of a mouse drag
 #[derive(Copy, Clone, Debug)]
@@ -507,8 +509,8 @@ impl InputState {
         event: &winit::event::Event<T>,
         _window_target: &winit::event_loop::EventLoopWindowTarget<T>,
     ) {
-        use winit::event::Event;
-        use winit::event::WindowEvent;
+        use crate::winit::event::Event;
+        use crate::winit::event::WindowEvent;
 
         let mut is_close_requested = false;
 

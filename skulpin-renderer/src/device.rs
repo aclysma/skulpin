@@ -1,10 +1,10 @@
 use ash::vk;
 use ash::prelude::VkResult;
 use super::VkInstance;
-use super::window_support;
 
 use ash::version::DeviceV1_0;
 use ash::version::InstanceV1_0;
+use super::Window;
 
 use std::ffi::CStr;
 
@@ -41,18 +41,13 @@ pub struct VkDevice {
 impl VkDevice {
     pub fn new(
         instance: &VkInstance,
-        window: &winit::window::Window,
+        window: &dyn Window,
         physical_device_type_priority: &[PhysicalDeviceType],
     ) -> VkResult<Self> {
         // Get the surface, needed to select the best queue family
-        use raw_window_handle::HasRawWindowHandle;
-        let surface = unsafe {
-            window_support::create_surface(
-                &instance.entry,
-                &instance.instance,
-                &window.raw_window_handle(),
-            )?
-        };
+        let surface = window
+            .create_vulkan_surface(&instance.entry, &instance.instance)
+            .expect("Could not create vulkan surface");
 
         let surface_loader = khr::Surface::new(&instance.entry, &instance.instance);
 

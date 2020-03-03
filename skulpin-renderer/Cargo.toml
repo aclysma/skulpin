@@ -1,0 +1,21 @@
+[package]
+name = "skulpin-renderer"
+version = "0.1.0"
+authors = ["Philip Degarmo <aclysma@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["complete"]
+shaper = ["skia-safe/shaper"]
+svg = ["skia-safe/svg"]
+textlayout = ["skia-safe/textlayout"]
+complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
+
+[dependencies]
+ash = ">=0.29"
+skia-safe = { version = ">=0.21", features = ["vulkan"] }
+skia-bindings = { version = ">=0.21" }
+
+log="0.4"

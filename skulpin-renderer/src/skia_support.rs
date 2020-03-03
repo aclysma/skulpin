@@ -55,7 +55,7 @@ impl VkSkiaContext {
         VkSkiaContext { context }
     }
 
-    pub unsafe fn get_proc(
+    unsafe fn get_proc(
         instance: &VkInstance,
         of: skia_safe::gpu::vk::GetProcOf,
     ) -> Option<unsafe extern "system" fn() -> c_void> {

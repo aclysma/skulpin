@@ -1,20 +1,24 @@
 //! Contains the main types a user needs to interact with to configure and run a skulpin app
 
+use crate::ash;
+use crate::skia_safe;
+use crate::winit;
+
 use super::app_control::AppControl;
 use super::input_state::InputState;
 use super::time_state::TimeState;
 use super::util::PeriodicEvent;
 use std::ffi::CString;
 
-use winit::dpi::LogicalSize;
-use winit::dpi::Size;
-
-use crate::RendererBuilder;
-use crate::CreateRendererError;
-use crate::CoordinateSystem;
-use crate::CoordinateSystemHelper;
-use crate::PresentMode;
-use crate::PhysicalDeviceType;
+use skulpin_renderer::LogicalSize;
+use skulpin_renderer::Size;
+use skulpin_renderer::RendererBuilder;
+use skulpin_renderer::CreateRendererError;
+use skulpin_renderer::CoordinateSystem;
+use skulpin_renderer::CoordinateSystemHelper;
+use skulpin_renderer::PresentMode;
+use skulpin_renderer::PhysicalDeviceType;
+use skulpin_renderer_winit::WinitWindow;
 
 /// Represents an error from creating the renderer
 #[derive(Debug)]
@@ -95,7 +99,7 @@ pub trait AppHandler {
 
     fn fatal_error(
         &mut self,
-        error: &crate::AppError,
+        error: &AppError,
     );
 }
 
@@ -267,13 +271,23 @@ impl App {
         // Create the event loop
         let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
 
+        let winit_size = match inner_size {
+            Size::Physical(physical_size) => winit::dpi::Size::Physical(
+                winit::dpi::PhysicalSize::new(physical_size.width, physical_size.height),
+            ),
+            Size::Logical(logical_size) => winit::dpi::Size::Logical(winit::dpi::LogicalSize::new(
+                logical_size.width as f64,
+                logical_size.height as f64,
+            )),
+        };
+
         // Create a single window
         let window_result = winit::window::WindowBuilder::new()
             .with_title("Skulpin")
-            .with_inner_size(inner_size)
+            .with_inner_size(winit_size)
             .build(&event_loop);
 
-        let window = match window_result {
+        let winit_window = match window_result {
             Ok(window) => window,
             Err(e) => {
                 warn!("Passing WindowBuilder::build() error to app {}", e);
@@ -287,9 +301,11 @@ impl App {
             }
         };
 
+        let window = WinitWindow::new(&winit_window);
+
         let mut app_control = AppControl::default();
         let mut time_state = TimeState::new();
-        let mut input_state = InputState::new(&window);
+        let mut input_state = InputState::new(&winit_window);
 
         let renderer_result = renderer_builder.build(&window);
         let mut renderer = match renderer_result {
@@ -312,6 +328,7 @@ impl App {
         // Pass control of this thread to winit until the app terminates. If this app wants to quit,
         // the update loop should send the appropriate event via the channel
         event_loop.run(move |event, window_target, control_flow| {
+            let window = WinitWindow::new(&winit_window);
             input_state.handle_winit_event(&mut app_control, &event, window_target);
 
             match event {
@@ -331,7 +348,7 @@ impl App {
                     input_state.end_frame();
 
                     // Queue a RedrawRequested event.
-                    window.request_redraw();
+                    winit_window.request_redraw();
                 }
                 winit::event::Event::RedrawRequested(_window_id) => {
                     if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
