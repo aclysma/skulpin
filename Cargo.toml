@@ -28,11 +28,12 @@ include = [
 # builds of skia are available for ALL of the features or NONE of the features. Only selecting some of the features will
 # require building skia from scratch, which will greatly increase build times
 [features]
-default = ["complete"]
+default = ["complete", "sdl2-static-link"]
 shaper = ["skia-safe/shaper"]
 svg = ["skia-safe/svg"]
 textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
+sdl2-static-link = ["sdl2/static-link"]
 
 [dependencies]
 raw-window-handle = "0.3"
@@ -48,7 +49,7 @@ winapi = { version = "0.3", features = ["windef", "winuser"] }
 [dependencies.sdl2]
 git = "https://github.com/Rust-SDL2/rust-sdl2"
 default-features = false
-features = ["bundled", "static-link"]
+features = ["bundled"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 metal = "0.17"
