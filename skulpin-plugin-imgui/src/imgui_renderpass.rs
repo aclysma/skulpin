@@ -16,7 +16,6 @@ use skulpin_renderer::VkQueueFamilyIndices;
 use skulpin_renderer::VkBuffer;
 use skulpin_renderer::util;
 
-use super::ImguiManager;
 use super::VkImage;
 
 #[derive(Clone, Debug, Copy)]
@@ -47,6 +46,22 @@ struct PipelineResources {
     pipeline: vk::Pipeline,
 }
 
+pub struct VkImGuiRenderPassFontAtlas {
+    width: u32,
+    height: u32,
+    data: Vec<u8>,
+}
+
+impl VkImGuiRenderPassFontAtlas {
+    pub fn new(texture: &imgui::FontAtlasTexture) -> Self {
+        VkImGuiRenderPassFontAtlas {
+            width: texture.width,
+            height: texture.height,
+            data: texture.data.to_vec(),
+        }
+    }
+}
+
 pub struct VkImGuiRenderPass {
     pub device: ash::Device, // This struct is not responsible for releasing this
     pub swapchain_info: SwapchainInfo,
@@ -73,7 +88,7 @@ impl VkImGuiRenderPass {
     pub fn new(
         device: &VkDevice,
         swapchain: &VkSwapchain,
-        imgui_manager: ImguiManager,
+        font_atlas: &VkImGuiRenderPassFontAtlas,
     ) -> VkResult<Self> {
         let mut pipeline_resources = None;
 
@@ -143,7 +158,7 @@ impl VkImGuiRenderPass {
             device.queues.graphics_queue,
             command_pool,
             &device.memory_properties,
-            imgui_manager,
+            font_atlas,
         )?;
 
         let image_view = Self::create_texture_image_view(&device.logical_device, &image.image);
@@ -554,10 +569,8 @@ impl VkImGuiRenderPass {
         queue: vk::Queue,
         command_pool: vk::CommandPool,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties,
-        imgui_manager: ImguiManager,
+        font_atlas: &VkImGuiRenderPassFontAtlas,
     ) -> VkResult<ManuallyDrop<VkImage>> {
-        let font_atlas = imgui_manager.font_atlas_texture();
-
         let extent = vk::Extent3D {
             width: font_atlas.width,
             height: font_atlas.height,

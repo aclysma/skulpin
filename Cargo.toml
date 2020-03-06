@@ -3,7 +3,8 @@ members = [
     "skulpin-renderer",
     "skulpin-renderer-sdl2",
     "skulpin-renderer-winit",
-    "skulpin-app-winit"
+    "skulpin-app-winit",
+    "skulpin-plugin-imgui"
 ]
 
 [package]
@@ -69,3 +70,4 @@ sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
 # Used for the imgui example only
 imgui = "0.3"
 imgui-winit-support = "0.3"
+skulpin-plugin-imgui = { path = "skulpin-plugin-imgui"}

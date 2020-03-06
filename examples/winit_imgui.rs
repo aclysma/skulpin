@@ -7,7 +7,7 @@ use skulpin::CoordinateSystemHelper;
 use skulpin::winit;
 use skulpin::skia_safe;
 
-use crate::imgui_support::ImguiRendererPlugin;
+use skulpin_plugin_imgui::ImguiRendererPlugin;
 
 fn main() {
     // Setup logging
@@ -42,7 +42,10 @@ fn main() {
 
     let window = skulpin::WinitWindow::new(&winit_window);
 
-    let imgui_plugin = Box::new(ImguiRendererPlugin::new(imgui_manager.clone()));
+    let mut imgui_plugin = None;
+    imgui_manager.with_context(|context| {
+        imgui_plugin = Some(Box::new(ImguiRendererPlugin::new(context)));
+    });
 
     // Create the renderer, which will draw to the window
     let renderer = skulpin::RendererBuilder::new()
@@ -51,7 +54,7 @@ fn main() {
             visible_range,
             scale_to_fit,
         ))
-        .add_plugin(imgui_plugin)
+        .add_plugin(imgui_plugin.unwrap())
         .build(&window);
 
     // Check if there were error setting up vulkan
