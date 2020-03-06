@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+ * Add support for injecting command buffers into the renderer. (See `RendererPlugin`)
+ * Add an example of using the `RendererPlugin` interface to inject imgui
+ * The update and draw functions on skulpin apps now take a single struct containing all parameters rather than each
+   parameter individually. This allows adding new parameters without breaking the API, and simplifies it a bit.
+ * Mouse wheel support
+ * App builder now accepts a custom window title
+
 ## 0.7.0
  * Add an abstraction layer so that multiple windowing backends can be supported. Built-in support is provided for
    `sdl2` and `winit`

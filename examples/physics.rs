@@ -5,14 +5,12 @@ extern crate nalgebra as na;
 use skulpin::skia_safe;
 
 use skulpin::app::AppHandler;
+use skulpin::app::AppUpdateArgs;
+use skulpin::app::AppDrawArgs;
 use skulpin::app::AppError;
-use skulpin::app::AppControl;
 use skulpin::app::AppBuilder;
-use skulpin::app::InputState;
-use skulpin::app::TimeState;
 use skulpin::app::VirtualKeyCode;
 
-use skulpin::CoordinateSystemHelper;
 use skulpin::LogicalSize;
 
 use std::ffi::CString;
@@ -180,10 +178,12 @@ impl ExampleApp {
 impl AppHandler for ExampleApp {
     fn update(
         &mut self,
-        app_control: &mut AppControl,
-        input_state: &InputState,
-        time_state: &TimeState,
+        update_args: AppUpdateArgs,
     ) {
+        let time_state = update_args.time_state;
+        let input_state = update_args.input_state;
+        let app_control = update_args.app_control;
+
         let now = time_state.current_instant();
 
         //
@@ -214,12 +214,11 @@ impl AppHandler for ExampleApp {
 
     fn draw(
         &mut self,
-        _app_control: &AppControl,
-        _input_state: &InputState,
-        _time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas,
-        coordinate_system_helper: &CoordinateSystemHelper,
+        draw_args: AppDrawArgs,
     ) {
+        let coordinate_system_helper = draw_args.coordinate_system_helper;
+        let canvas = draw_args.canvas;
+
         let x_half_extents = GROUND_HALF_EXTENTS_WIDTH * 1.5;
         let y_half_extents = x_half_extents
             / (coordinate_system_helper.surface_extents().width as f32

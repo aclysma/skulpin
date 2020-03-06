@@ -35,15 +35,15 @@ matrix:
     - name: "Windows MSVC Beta"
       rust: beta-msvc
       os: windows
-      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "OSX Beta"
       rust: beta
       os: osx
-      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "Linux Beta"
       rust: beta
       os: linux
-      env: SKIP_FORMAT_CHECK=0 SKIP_CLIPPY=0
+      env: SKIP_FORMAT_CHECK=1 SKIP_CLIPPY=1
     - name: "Windows MSVC Nightly"
       rust: nightly-msvc
       os: windows

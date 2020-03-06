@@ -69,6 +69,20 @@ impl From<winit::error::OsError> for AppError {
     }
 }
 
+pub struct AppUpdateArgs<'a, 'b, 'c> {
+    pub app_control: &'a mut AppControl,
+    pub input_state: &'b InputState,
+    pub time_state: &'c TimeState,
+}
+
+pub struct AppDrawArgs<'a, 'b, 'c, 'd> {
+    pub app_control: &'a AppControl,
+    pub input_state: &'b InputState,
+    pub time_state: &'c TimeState,
+    pub canvas: &'d mut skia_safe::Canvas,
+    pub coordinate_system_helper: CoordinateSystemHelper,
+}
+
 /// A skulpin app requires implementing the AppHandler. A separate update and draw call must be
 /// implemented.
 ///
@@ -82,19 +96,13 @@ pub trait AppHandler {
     /// Called frequently, this is the intended place to put non-rendering logic
     fn update(
         &mut self,
-        app_control: &mut AppControl,
-        input_state: &InputState,
-        time_state: &TimeState,
+        update_args: AppUpdateArgs,
     );
 
     /// Called frequently, this is the intended place to put drawing code
     fn draw(
         &mut self,
-        app_control: &AppControl,
-        input_state: &InputState,
-        time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas,
-        coordinate_system_helper: &CoordinateSystemHelper,
+        draw_args: AppDrawArgs,
     );
 
     fn fatal_error(
@@ -106,6 +114,7 @@ pub trait AppHandler {
 /// Used to configure the app behavior and create the app
 pub struct AppBuilder {
     inner_size: Size,
+    window_title: String,
     renderer_builder: RendererBuilder,
 }
 
@@ -120,6 +129,7 @@ impl AppBuilder {
     pub fn new() -> Self {
         AppBuilder {
             inner_size: LogicalSize::new(900, 600).into(),
+            window_title: "Skulpin".to_string(),
             renderer_builder: RendererBuilder::new(),
         }
     }
@@ -130,6 +140,15 @@ impl AppBuilder {
         inner_size: S,
     ) -> Self {
         self.inner_size = inner_size.into();
+        self
+    }
+
+    /// Specifies the title that the window will be created with
+    pub fn window_title<T: Into<String>>(
+        mut self,
+        window_title: T,
+    ) -> Self {
+        self.window_title = window_title.into();
         self
     }
 
@@ -250,10 +269,15 @@ impl AppBuilder {
     /// This does not return because winit does not return. For consistency, we use the
     /// fatal_error() callback on the passed in AppHandler.
     pub fn run<T: 'static + AppHandler>(
-        &self,
+        self,
         app_handler: T,
     ) -> ! {
-        App::run(app_handler, self.inner_size, &self.renderer_builder)
+        App::run(
+            app_handler,
+            self.inner_size,
+            self.window_title.clone(),
+            self.renderer_builder,
+        )
     }
 }
 
@@ -266,7 +290,8 @@ impl App {
     pub fn run<T: 'static + AppHandler>(
         mut app_handler: T,
         inner_size: Size,
-        renderer_builder: &RendererBuilder,
+        window_title: String,
+        renderer_builder: RendererBuilder,
     ) -> ! {
         // Create the event loop
         let event_loop = winit::event_loop::EventLoop::<()>::with_user_event();
@@ -283,7 +308,7 @@ impl App {
 
         // Create a single window
         let window_result = winit::window::WindowBuilder::new()
-            .with_title("Skulpin")
+            .with_title(window_title)
             .with_inner_size(winit_size)
             .build(&event_loop);
 
@@ -342,7 +367,11 @@ impl App {
                         debug!("fps: {}", time_state.updates_per_second());
                     }
 
-                    app_handler.update(&mut app_control, &input_state, &time_state);
+                    app_handler.update(AppUpdateArgs {
+                        app_control: &mut app_control,
+                        input_state: &input_state,
+                        time_state: &time_state,
+                    });
 
                     // Call this to mark the start of the next frame (i.e. "key just down" will return false)
                     input_state.end_frame();
@@ -352,13 +381,13 @@ impl App {
                 }
                 winit::event::Event::RedrawRequested(_window_id) => {
                     if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
-                        app_handler.draw(
-                            &app_control,
-                            &input_state,
-                            &time_state,
+                        app_handler.draw(AppDrawArgs {
+                            app_control: &app_control,
+                            input_state: &input_state,
+                            time_state: &time_state,
                             canvas,
                             coordinate_system_helper,
-                        );
+                        });
                     }) {
                         warn!("Passing Renderer::draw() error to app {}", e);
                         app_handler.fatal_error(&e.into());

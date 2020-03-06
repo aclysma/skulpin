@@ -1,4 +1,4 @@
-//! Utilities for tracking time in a skuplin App
+//! Utilities for tracking time in a skulpin App
 
 use std::time;
 

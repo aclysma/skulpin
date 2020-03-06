@@ -191,7 +191,7 @@ fn main() {
                     &app_state,
                     &time_state,
                     canvas,
-                    coordinate_system_helper,
+                    &coordinate_system_helper,
                     &window,
                 );
                 frame_count += 1;

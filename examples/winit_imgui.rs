@@ -1,9 +1,13 @@
+mod imgui_support;
+
 // This example shows how to use the renderer directly. This allows full control of winit
 // and the update loop
 
 use skulpin::CoordinateSystemHelper;
 use skulpin::winit;
 use skulpin::skia_safe;
+
+use crate::imgui_support::ImguiRendererPlugin;
 
 fn main() {
     // Setup logging
@@ -33,7 +37,12 @@ fn main() {
         .build(&event_loop)
         .expect("Failed to create window");
 
+    let imgui_manager = imgui_support::init_imgui_manager(&winit_window);
+    imgui_manager.begin_frame(&winit_window);
+
     let window = skulpin::WinitWindow::new(&winit_window);
+
+    let imgui_plugin = Box::new(ImguiRendererPlugin::new(imgui_manager.clone()));
 
     // Create the renderer, which will draw to the window
     let renderer = skulpin::RendererBuilder::new()
@@ -42,6 +51,7 @@ fn main() {
             visible_range,
             scale_to_fit,
         ))
+        .add_plugin(imgui_plugin)
         .build(&window);
 
     // Check if there were error setting up vulkan
@@ -59,6 +69,8 @@ fn main() {
     // when important events happen.
     event_loop.run(move |event, _window_target, control_flow| {
         let window = skulpin::WinitWindow::new(&winit_window);
+
+        imgui_manager.handle_event(&winit_window, &event);
 
         match event {
             //
@@ -98,8 +110,26 @@ fn main() {
             //
             winit::event::Event::RedrawRequested(_window_id) => {
                 if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
+                    imgui_manager.begin_frame(&winit_window);
                     draw(canvas, coordinate_system_helper, frame_count);
                     frame_count += 1;
+
+                    {
+                        imgui_manager.with_ui(|ui: &mut imgui::Ui| {
+                            let mut show_demo = true;
+                            ui.show_demo_window(&mut show_demo);
+
+                            ui.main_menu_bar(|| {
+                                ui.menu(imgui::im_str!("File"), true, || {
+                                    if imgui::MenuItem::new(imgui::im_str!("New")).build(ui) {
+                                        log::info!("clicked");
+                                    }
+                                });
+                            });
+                        });
+                    }
+
+                    imgui_manager.render(&winit_window);
                 }) {
                     println!("Error during draw: {:?}", e);
                     *control_flow = winit::event_loop::ControlFlow::Exit

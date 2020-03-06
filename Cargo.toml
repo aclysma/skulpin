@@ -57,10 +57,15 @@ log="0.4"
 [dev-dependencies]
 env_logger = "0.6"
 
+# These are used for the physics demo only
 nalgebra = "0.18"
 ncollide2d = "0.20"
 nphysics2d = "0.12"
 
 # The skulpin-renderer-sdl2 crate doesn't specify any features, but downstream libraries can do so by including sdl2
-# for themselves
+# for themselves. Examples will use the features added here
 sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
+
+# Used for the imgui example only
+imgui = "0.3"
+imgui-winit-support = "0.3"

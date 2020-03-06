@@ -4,14 +4,12 @@ use skulpin::skia_safe;
 use skulpin::app::AppHandler;
 use skulpin::app::AppError;
 use skulpin::app::AppBuilder;
-use skulpin::CoordinateSystemHelper;
-use skulpin::app::AppControl;
-use skulpin::app::InputState;
-use skulpin::app::TimeState;
 use skulpin::app::MouseButton;
 use skulpin::app::VirtualKeyCode;
 use skulpin::app::PhysicalPosition;
 use skulpin::LogicalSize;
+use skulpin::app::AppUpdateArgs;
+use skulpin::app::AppDrawArgs;
 
 use std::ffi::CString;
 use std::collections::VecDeque;
@@ -67,10 +65,12 @@ impl ExampleApp {
 impl AppHandler for ExampleApp {
     fn update(
         &mut self,
-        app_control: &mut AppControl,
-        input_state: &InputState,
-        time_state: &TimeState,
+        update_args: AppUpdateArgs,
     ) {
+        let time_state = update_args.time_state;
+        let input_state = update_args.input_state;
+        let app_control = update_args.app_control;
+
         let now = time_state.current_instant();
 
         //
@@ -115,12 +115,12 @@ impl AppHandler for ExampleApp {
 
     fn draw(
         &mut self,
-        _app_control: &AppControl,
-        input_state: &InputState,
-        time_state: &TimeState,
-        canvas: &mut skia_safe::Canvas,
-        _coordinate_system_helper: &CoordinateSystemHelper,
+        draw_args: AppDrawArgs,
     ) {
+        let time_state = draw_args.time_state;
+        let canvas = draw_args.canvas;
+        let input_state = draw_args.input_state;
+
         let now = time_state.current_instant();
 
         // Generally would want to clear data every time we draw

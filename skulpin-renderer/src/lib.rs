@@ -46,6 +46,7 @@ mod renderer;
 pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
 pub use renderer::CreateRendererError;
+pub use renderer::RendererPlugin;
 
 mod coordinates;
 pub use coordinates::Size;
@@ -177,6 +178,7 @@ impl Default for CoordinateSystem {
 ///
 /// For custom behavior, it's always possible to call `canvas.reset_matrix()` and set up the matrix
 /// manually
+#[derive(Clone)]
 pub struct CoordinateSystemHelper {
     surface_extents: vk::Extent2D,
     window_logical_size: LogicalSize,

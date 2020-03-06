@@ -103,7 +103,7 @@ fn main() {
         //
         renderer
             .draw(&window, |canvas, coordinate_system_helper| {
-                draw(canvas, coordinate_system_helper, frame_count);
+                draw(canvas, &coordinate_system_helper, frame_count);
                 frame_count += 1;
             })
             .unwrap();

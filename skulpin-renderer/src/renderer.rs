@@ -12,6 +12,7 @@ use super::VkDevice;
 use super::VkSkiaContext;
 use super::VkSwapchain;
 use super::VkSkiaRenderPass;
+
 use super::MAX_FRAMES_IN_FLIGHT;
 use super::PresentMode;
 use super::PhysicalDeviceType;
@@ -19,6 +20,30 @@ use super::CoordinateSystemHelper;
 use super::PhysicalSize;
 use super::CoordinateSystem;
 use super::Window;
+
+/// May be implemented to get callbacks related to the renderer and framebuffer usage
+pub trait RendererPlugin {
+    /// Called whenever the swapchain needs to be created (the first time, and in cases where the
+    /// swapchain needs to be recreated)
+    fn swapchain_created(
+        &mut self,
+        device: &VkDevice,
+        swapchain: &VkSwapchain,
+    ) -> VkResult<()>;
+
+    /// Called whenever the swapchain will be destroyed (when renderer is dropped, and also in cases
+    /// where the swapchain needs to be recreated)
+    fn swapchain_destroyed(&mut self);
+
+    /// Called when we are presenting a new frame. The returned command buffer will be submitted
+    /// with command buffers for the skia canvas
+    fn render(
+        &mut self,
+        window: &dyn Window,
+        device: &VkDevice,
+        present_index: usize,
+    ) -> VkResult<Vec<vk::CommandBuffer>>;
+}
 
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
@@ -29,6 +54,7 @@ pub struct RendererBuilder {
     present_mode_priority: Vec<PresentMode>,
     physical_device_type_priority: Vec<PhysicalDeviceType>,
     coordinate_system: CoordinateSystem,
+    plugins: Vec<Box<dyn RendererPlugin>>,
 }
 
 impl RendererBuilder {
@@ -43,6 +69,7 @@ impl RendererBuilder {
                 PhysicalDeviceType::IntegratedGpu,
             ],
             coordinate_system: Default::default(),
+            plugins: vec![],
         }
     }
 
@@ -156,9 +183,17 @@ impl RendererBuilder {
         self.present_mode_priority(vec![PresentMode::Mailbox, PresentMode::Fifo])
     }
 
+    pub fn add_plugin(
+        mut self,
+        plugin: Box<dyn RendererPlugin>,
+    ) -> Self {
+        self.plugins.push(plugin);
+        self
+    }
+
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
-        &self,
+        self,
         window: &dyn Window,
     ) -> Result<Renderer, CreateRendererError> {
         Renderer::new(
@@ -168,6 +203,7 @@ impl RendererBuilder {
             self.physical_device_type_priority.clone(),
             self.present_mode_priority.clone(),
             self.coordinate_system,
+            self.plugins,
         )
     }
 }
@@ -191,6 +227,8 @@ pub struct Renderer {
     previous_inner_size: PhysicalSize,
 
     coordinate_system: CoordinateSystem,
+
+    plugins: Vec<Box<dyn RendererPlugin>>,
 }
 
 /// Represents an error from creating the renderer
@@ -242,6 +280,7 @@ impl Renderer {
         physical_device_type_priority: Vec<PhysicalDeviceType>,
         present_mode_priority: Vec<PresentMode>,
         coordinate_system: CoordinateSystem,
+        mut plugins: Vec<Box<dyn RendererPlugin>>,
     ) -> Result<Renderer, CreateRendererError> {
         let instance = ManuallyDrop::new(VkInstance::new(
             window,
@@ -266,6 +305,11 @@ impl Renderer {
             &swapchain,
             &mut skia_context,
         )?);
+
+        for plugin in &mut plugins {
+            plugin.swapchain_created(&device, &swapchain)?;
+        }
+
         let sync_frame_index = 0;
 
         let previous_inner_size = window.physical_size();
@@ -280,6 +324,7 @@ impl Renderer {
             present_mode_priority,
             previous_inner_size,
             coordinate_system,
+            plugins,
         })
     }
 
@@ -321,7 +366,7 @@ impl Renderer {
 
     /// Call to render a frame. This can block for certain presentation modes. This will rebuild
     /// the swapchain if necessary.
-    pub fn draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
+    pub fn draw<F: FnOnce(&mut skia_safe::Canvas, CoordinateSystemHelper)>(
         &mut self,
         window: &dyn Window,
         f: F,
@@ -354,6 +399,10 @@ impl Renderer {
         unsafe {
             self.device.logical_device.device_wait_idle()?;
             ManuallyDrop::drop(&mut self.skia_renderpass);
+
+            for plugin in &mut self.plugins {
+                plugin.swapchain_destroyed();
+            }
         }
 
         let new_swapchain = ManuallyDrop::new(VkSwapchain::new(
@@ -375,13 +424,17 @@ impl Renderer {
             &mut self.skia_context,
         )?);
 
+        for plugin in &mut self.plugins {
+            plugin.swapchain_created(&self.device, &self.swapchain)?;
+        }
+
         self.previous_inner_size = window.physical_size();
 
         Ok(())
     }
 
     /// Do the render
-    fn do_draw<F: FnOnce(&mut skia_safe::Canvas, &CoordinateSystemHelper)>(
+    fn do_draw<F: FnOnce(&mut skia_safe::Canvas, CoordinateSystemHelper)>(
         &mut self,
         window: &dyn Window,
         f: F,
@@ -442,16 +495,23 @@ impl Renderer {
                     .unwrap(),
             }
 
-            f(&mut canvas, &coordinate_system_helper);
+            f(&mut canvas, coordinate_system_helper);
 
             canvas.flush();
+        }
+
+        let mut command_buffers = vec![];
+        command_buffers.push(self.skia_renderpass.command_buffers[present_index as usize]);
+
+        for plugin in &mut self.plugins {
+            let mut buffers = plugin.render(window, &self.device, present_index as usize)?;
+            command_buffers.append(&mut buffers);
         }
 
         let wait_semaphores = [self.swapchain.image_available_semaphores[self.sync_frame_index]];
         let signal_semaphores = [self.swapchain.render_finished_semaphores[self.sync_frame_index]];
 
         let wait_dst_stage_mask = [vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
-        let command_buffers = [self.skia_renderpass.command_buffers[present_index as usize]];
 
         //add fence to queue submit
         let submit_info = [vk::SubmitInfo::builder()
@@ -496,6 +556,11 @@ impl Drop for Renderer {
         unsafe {
             self.device.logical_device.device_wait_idle().unwrap();
             ManuallyDrop::drop(&mut self.skia_renderpass);
+
+            for plugin in &mut self.plugins {
+                plugin.swapchain_destroyed();
+            }
+
             ManuallyDrop::drop(&mut self.swapchain);
             ManuallyDrop::drop(&mut self.skia_context);
             ManuallyDrop::drop(&mut self.device);
