@@ -28,6 +28,7 @@ pub use skulpin_renderer::skia_safe;
 pub use skulpin_renderer::skia_bindings;
 
 pub use skulpin_renderer::RendererBuilder;
+pub use skulpin_renderer::RendererPlugin;
 pub use skulpin_renderer::Renderer;
 pub use skulpin_renderer::PresentMode;
 pub use skulpin_renderer::PhysicalDeviceType;
@@ -40,12 +41,16 @@ pub use skulpin_renderer::PhysicalSize;
 pub use skulpin_renderer::Window;
 
 #[cfg(feature = "skulpin_winit")]
+pub use skulpin_renderer_winit;
+#[cfg(feature = "skulpin_winit")]
+pub use skulpin_app_winit as app;
+#[cfg(feature = "skulpin_winit")]
 pub use skulpin_renderer_winit::winit;
 #[cfg(feature = "skulpin_winit")]
 pub use skulpin_renderer_winit::WinitWindow;
-#[cfg(feature = "skulpin_winit")]
-pub use skulpin_app_winit as app;
 
+#[cfg(feature = "skulpin_sdl2")]
+pub use skulpin_renderer_sdl2;
 #[cfg(feature = "skulpin_sdl2")]
 pub use skulpin_renderer_sdl2::sdl2;
 #[cfg(feature = "skulpin_sdl2")]
