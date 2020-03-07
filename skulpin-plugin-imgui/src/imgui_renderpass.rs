@@ -404,12 +404,12 @@ impl VkImGuiRenderPass {
         //
         let vertex_shader_module = Self::load_shader_module(
             logical_device,
-            &include_bytes!("../../shaders/imgui.vert.spv")[..],
+            &include_bytes!("../shaders/imgui.vert.spv")[..],
         )?;
 
         let fragment_shader_module = Self::load_shader_module(
             logical_device,
-            &include_bytes!("../../shaders/imgui.frag.spv")[..],
+            &include_bytes!("../shaders/imgui.frag.spv")[..],
         )?;
 
         let shader_entry_name = CString::new("main").unwrap();

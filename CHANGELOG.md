@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.0
  * Add support for injecting command buffers into the renderer. (See `RendererPlugin`)
  * Add an example of using the `RendererPlugin` interface to inject imgui
  * The update and draw functions on skulpin apps now take a single struct containing all parameters rather than each
