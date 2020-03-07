@@ -67,9 +67,9 @@ impl LogicalSize {
             LogicalSize::from_physical_size_tuple(size, window)
         } else {
             let (width, height) = size;
-            LogicalSize {
+            Ok(LogicalSize {
                 width, height
-            }
+            })
         }
     }
 

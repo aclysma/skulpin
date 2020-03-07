@@ -38,7 +38,7 @@ sdl2-static-link = ["sdl2/static-link"]
 [dependencies]
 raw-window-handle = "0.3"
 ash = "0.29"
-skia-safe = { version = ">=0.21", features = ["vulkan"] }
+skia-safe = { version = "0.23.2", features = ["vulkan"] }
 
 log="0.4"
 
