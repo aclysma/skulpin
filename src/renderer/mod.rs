@@ -63,7 +63,14 @@ pub struct LogicalSize {
 impl LogicalSize {
     pub fn new(window: &Window) -> Result<LogicalSize, String> {
         let size = window.vulkan_drawable_size();
-        LogicalSize::from_physical_size_tuple(size, window)
+        if cfg!(target_os="windows") {
+            LogicalSize::from_physical_size_tuple(size, window)
+        } else {
+            let (width, height) = size;
+            LogicalSize {
+                width, height
+            }
+        }
     }
 
     pub fn from_physical_size_tuple(tuple: (u32, u32), window: &Window) -> Result<LogicalSize, String> {
