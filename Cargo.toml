@@ -9,7 +9,7 @@ members = [
 
 [package]
 name = "skulpin"
-version = "0.8.0"
+version = "0.8.1"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
@@ -50,7 +50,7 @@ default = ["skulpin_winit", "skulpin_sdl2", "skia_complete"]
 [dependencies]
 skulpin-renderer = { version = "0.2", path = "skulpin-renderer" }
 skulpin-renderer-sdl2 = { version = "0.2", path = "skulpin-renderer-sdl2", optional = true }
-skulpin-renderer-winit = { version = "0.2", path = "skulpin-renderer-winit", optional = true }
+skulpin-renderer-winit = { version = "0.2.1", path = "skulpin-renderer-winit", optional = true }
 skulpin-app-winit = { version = "0.2", path = "skulpin-app-winit", optional = true }
 
 log="0.4"

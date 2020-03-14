@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1
+
+ * Allow any version of winit >= 0.21
+
 ## 0.8.0
  * Add support for injecting command buffers into the renderer. (See `RendererPlugin`)
  * Add an example of using the `RendererPlugin` interface to inject imgui

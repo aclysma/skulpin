@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-renderer-winit"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "Support for winit in skulpin"
@@ -15,7 +15,7 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 [dependencies]
 skulpin-renderer = { version = "0.2", path = "../skulpin-renderer" }
 
-winit = "0.21"
+winit = ">=0.21"
 raw-window-handle = "0.3"
 
 log="0.4"
