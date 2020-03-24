@@ -9,7 +9,7 @@ members = [
 
 [package]
 name = "skulpin"
-version = "0.8.1"
+version = "0.8.2"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
@@ -48,7 +48,7 @@ skulpin_sdl2 = ["skulpin-renderer-sdl2"]
 default = ["skulpin_winit", "skulpin_sdl2", "skia_complete"]
 
 [dependencies]
-skulpin-renderer = { version = "0.2", path = "skulpin-renderer" }
+skulpin-renderer = { version = "0.2.1", path = "skulpin-renderer" }
 skulpin-renderer-sdl2 = { version = "0.2", path = "skulpin-renderer-sdl2", optional = true }
 skulpin-renderer-winit = { version = "0.2.1", path = "skulpin-renderer-winit", optional = true }
 skulpin-app-winit = { version = "0.2", path = "skulpin-app-winit", optional = true }
@@ -67,7 +67,7 @@ nphysics2d = "0.12"
 # for themselves. Examples will use the features added here
 sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
 
-# Used for the imgui example only
+# Used for the imgui example only. Must pin imgui-winit-support as 0.3.1 removed forward compatibility
 imgui = "0.3"
-imgui-winit-support = "0.3"
+imgui-winit-support = "=0.3.0"
 skulpin-plugin-imgui = { path = "skulpin-plugin-imgui"}

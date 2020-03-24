@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-renderer"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "A vulkan renderer for skia, a component of skulpin"
@@ -20,7 +20,7 @@ textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
 
 [dependencies]
-ash = ">=0.29"
+ash = "0.29"
 skia-safe = { version = ">=0.21", features = ["vulkan"] }
 skia-bindings = { version = ">=0.21" }
 
