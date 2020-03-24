@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-renderer"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "A vulkan renderer for skia, a component of skulpin"
@@ -13,15 +13,17 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+# svg and shaper are deprecated. svg is always available, and shaper is included with textlayout. However, leaving them
+# since skia_safe prints informative error messages. Complete now just contains textlayout
 default = ["complete"]
 shaper = ["skia-safe/shaper"]
 svg = ["skia-safe/svg"]
 textlayout = ["skia-safe/textlayout"]
-complete = ["skia-safe/shaper", "skia-safe/svg", "skia-safe/textlayout"]
+complete = ["skia-safe/textlayout"]
 
 [dependencies]
-ash = "0.29"
-skia-safe = { version = ">=0.21", features = ["vulkan"] }
-skia-bindings = { version = ">=0.21" }
+ash = ">=0.30"
+skia-safe = { version = ">=0.27", features = ["vulkan"] }
+skia-bindings = { version = ">=0.27" }
 
 log="0.4"

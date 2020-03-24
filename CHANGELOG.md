@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0
+
+ * Use ash >=0.30 and skia_safe >=0.27. While this release likely builds with 0.26, it has a known issue that can
+   cause a crash on MacOS (https://github.com/rust-skia/rust-skia/issues/299)
+
+## 0.8.2
+ 
+ * Build fixes for upstream changes:
+     * Require ash 0.29 rather than >=0.29
+     * Pin imgui-winit-support to 0.3.0 exactly
+
 ## 0.8.1
 
  * Allow any version of winit >= 0.21

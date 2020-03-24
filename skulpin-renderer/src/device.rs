@@ -126,9 +126,9 @@ impl VkDevice {
     fn vk_version_to_string(version: u32) -> String {
         format!(
             "{}.{}.{}",
-            ash::vk_version_major!(version),
-            ash::vk_version_minor!(version),
-            ash::vk_version_patch!(version)
+            vk::version_major(version),
+            vk::version_minor(version),
+            vk::version_patch(version)
         )
     }
 
@@ -160,7 +160,7 @@ impl VkDevice {
             unsafe { instance.get_physical_device_features(device) };
 
         let queue_family_indices =
-            Self::find_queue_families(instance, device, surface_loader, surface);
+            Self::find_queue_families(instance, device, surface_loader, surface)?;
         if let Some(queue_family_indices) = queue_family_indices {
             // Determine the index of the device_type within physical_device_type_priority
             let index = physical_device_type_priority
@@ -207,7 +207,7 @@ impl VkDevice {
         physical_device: ash::vk::PhysicalDevice,
         surface_loader: &ash::extensions::khr::Surface,
         surface: ash::vk::SurfaceKHR,
-    ) -> Option<VkQueueFamilyIndices> {
+    ) -> VkResult<Option<VkQueueFamilyIndices>> {
         let queue_families: Vec<ash::vk::QueueFamilyProperties> =
             unsafe { instance.get_physical_device_queue_family_properties(physical_device) };
 
@@ -230,7 +230,7 @@ impl VkDevice {
                     physical_device,
                     queue_family_index,
                     surface,
-                )
+                )?
             };
 
             // A queue family that supports both is ideal. If we find it, break out early.
@@ -256,10 +256,16 @@ impl VkDevice {
             graphics_queue_family_index, present_queue_family_index
         );
 
-        Some(VkQueueFamilyIndices {
-            graphics_queue_family_index: graphics_queue_family_index?,
-            present_queue_family_index: present_queue_family_index?,
-        })
+        if let (Some(graphics_queue_family_index), Some(present_queue_family_index)) =
+            (graphics_queue_family_index, present_queue_family_index)
+        {
+            Ok(Some(VkQueueFamilyIndices {
+                graphics_queue_family_index,
+                present_queue_family_index,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     fn create_logical_device(

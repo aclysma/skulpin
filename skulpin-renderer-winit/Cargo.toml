@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-renderer-winit"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "Support for winit in skulpin"
@@ -13,7 +13,7 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-skulpin-renderer = { version = "0.2", path = "../skulpin-renderer" }
+skulpin-renderer = { version = "0.3", path = "../skulpin-renderer" }
 
 winit = ">=0.21"
 raw-window-handle = "0.3"
