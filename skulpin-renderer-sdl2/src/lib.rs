@@ -9,6 +9,9 @@ use skulpin_renderer::PhysicalSize;
 use skulpin_renderer::LogicalSize;
 use skulpin_renderer::Window;
 
+#[cfg(target_os = "windows")]
+const DEFAULT_DPI: f32 = 96.0;
+
 pub struct Sdl2Window<'a> {
     window: &'a sdl2::video::Window,
 }
@@ -25,11 +28,27 @@ impl<'a> Window for Sdl2Window<'a> {
         PhysicalSize::new(physical_size.0, physical_size.1)
     }
 
+    #[cfg(target_os = "windows")]
+    fn logical_size(&self) -> LogicalSize {
+        let physical_size = self.physical_size();
+        physical_size.to_logical(self.scale_factor())
+    }
+
+    #[cfg(not(target_os = "windows"))]
     fn logical_size(&self) -> LogicalSize {
         let logical_size = self.window.size();
         LogicalSize::new(logical_size.0, logical_size.1)
     }
 
+    #[cfg(target_os = "windows")]
+    fn scale_factor(&self) -> f64 {
+        let display_index = self.window.display_index().unwrap();
+        let system = self.window.subsystem();
+        let (_, dpi, _) = system.display_dpi(display_index).unwrap();
+        (DEFAULT_DPI / dpi).into()
+    }
+
+    #[cfg(not(target_os = "windows"))]
     fn scale_factor(&self) -> f64 {
         let physical_size = self.window.vulkan_drawable_size();
         let logical_size = self.window.size();
