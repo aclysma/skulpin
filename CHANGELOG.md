@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+ * Windows-specific fix to determine scaling factor for logical vs. physical coordinates
+
 ## 0.9.0
 
  * Use ash >=0.30 and skia_safe >=0.27. While this release likely builds with 0.26, it has a known issue that can
