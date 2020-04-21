@@ -3,6 +3,7 @@ use std::ffi::CString;
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use ash::vk;
 use ash::prelude::VkResult;
+use ash::extensions::ext::DebugReport;
 
 use super::Window;
 use super::debug_reporter;
@@ -127,7 +128,11 @@ impl VkInstance {
             .collect();
 
         // Determine what extensions to use
-        let extension_names_raw = window.extension_names();
+        let mut extension_names_raw = window.extension_names();
+
+        if !validation_layer_debug_report_flags.is_empty() {
+            extension_names_raw.push(DebugReport::name().as_ptr())
+        }
 
         // Create the instance
         let create_info = vk::InstanceCreateInfo::builder()
@@ -167,7 +172,7 @@ impl VkInstance {
             .flags(debug_report_flags)
             .pfn_callback(Some(debug_reporter::vulkan_debug_callback));
 
-        let debug_report_loader = ash::extensions::ext::DebugReport::new(entry, instance);
+        let debug_report_loader = DebugReport::new(entry, instance);
         let debug_callback =
             unsafe { debug_report_loader.create_debug_report_callback(&debug_info, None)? };
 

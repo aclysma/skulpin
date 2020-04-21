@@ -50,7 +50,7 @@ impl<'a> Window for WinitWindow<'a> {
     }
 }
 
-use ash::extensions::{ext::DebugReport, khr::Surface};
+use ash::extensions::khr::Surface;
 use raw_window_handle::HasRawWindowHandle;
 
 //
@@ -195,17 +195,14 @@ pub fn extension_names(raw_window_handle: &raw_window_handle::RawWindowHandle) -
         raw_window_handle::RawWindowHandle::Xlib(_) => vec![
             Surface::name().as_ptr(),
             XlibSurface::name().as_ptr(),
-            DebugReport::name().as_ptr(),
         ],
         raw_window_handle::RawWindowHandle::Xcb(_) => vec![
             Surface::name().as_ptr(),
             XcbSurface::name().as_ptr(),
-            DebugReport::name().as_ptr(),
         ],
         raw_window_handle::RawWindowHandle::Wayland(_) => vec![
             Surface::name().as_ptr(),
             WaylandSurface::name().as_ptr(),
-            DebugReport::name().as_ptr(),
         ],
         _ => unimplemented!(),
     }
@@ -217,7 +214,6 @@ pub fn extension_names(_raw_window_handle: &raw_window_handle::RawWindowHandle) 
     vec![
         Surface::name().as_ptr(),
         MacOSSurface::name().as_ptr(),
-        DebugReport::name().as_ptr(),
     ]
 }
 
@@ -227,6 +223,5 @@ pub fn extension_names(_raw_window_handle: &raw_window_handle::RawWindowHandle) 
     vec![
         Surface::name().as_ptr(),
         Win32Surface::name().as_ptr(),
-        DebugReport::name().as_ptr(),
     ]
 }
