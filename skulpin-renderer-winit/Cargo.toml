@@ -15,7 +15,7 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 [dependencies]
 skulpin-renderer = { version = "0.3", path = "../skulpin-renderer" }
 
-winit = ">=0.21"
+winit = { git = "https://github.com/j4qfrost/winit.git" }
 raw-window-handle = "0.3"
 
 log="0.4"
@@ -25,6 +25,6 @@ log="0.4"
 winapi = { version = "0.3", features = ["windef", "winuser"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-metal = "0.17"
-cocoa = "0.19"
-objc = "0.2"
+metal = ">=0.18"
+cocoa = ">=0.20"
+objc = ">=0.2"
