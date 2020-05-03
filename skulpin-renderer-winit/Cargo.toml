@@ -15,7 +15,7 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 [dependencies]
 skulpin-renderer = { version = "0.3", path = "../skulpin-renderer" }
 
-winit = { git = "https://github.com/j4qfrost/winit.git" }
+winit = ">=0.21"
 raw-window-handle = "0.3"
 
 log="0.4"
