@@ -25,6 +25,6 @@ log="0.4"
 winapi = { version = "0.3", features = ["windef", "winuser"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-metal = ">=0.18"
-cocoa = ">=0.20"
-objc = ">=0.2"
+metal = "0.18"
+cocoa = "0.20"
+objc = "0.2"
