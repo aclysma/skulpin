@@ -20,6 +20,14 @@ impl<'a> Sdl2Window<'a> {
     pub fn new(window: &'a sdl2::video::Window) -> Self {
         Sdl2Window { window }
     }
+
+    #[cfg(target_os = "windows")]
+    fn compute_scale_factor(&self) -> Option<f64> {
+        let display_index = self.window.display_index().ok()?;
+        let system = self.window.subsystem();
+        let (_, dpi, _) = system.display_dpi(display_index).ok()?;
+        Some((DEFAULT_DPI / dpi).into())
+    }
 }
 
 impl<'a> Window for Sdl2Window<'a> {
@@ -40,12 +48,10 @@ impl<'a> Window for Sdl2Window<'a> {
         LogicalSize::new(logical_size.0, logical_size.1)
     }
 
+
     #[cfg(target_os = "windows")]
     fn scale_factor(&self) -> f64 {
-        let display_index = self.window.display_index().unwrap();
-        let system = self.window.subsystem();
-        let (_, dpi, _) = system.display_dpi(display_index).unwrap();
-        (DEFAULT_DPI / dpi).into()
+        self.compute_scale_factor().unwrap_or(1.0)
     }
 
     #[cfg(not(target_os = "windows"))]
