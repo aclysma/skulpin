@@ -192,18 +192,15 @@ pub fn extension_names(raw_window_handle: &raw_window_handle::RawWindowHandle) -
     use ash::extensions::khr::WaylandSurface;
 
     match raw_window_handle {
-        raw_window_handle::RawWindowHandle::Xlib(_) => vec![
-            Surface::name().as_ptr(),
-            XlibSurface::name().as_ptr(),
-        ],
-        raw_window_handle::RawWindowHandle::Xcb(_) => vec![
-            Surface::name().as_ptr(),
-            XcbSurface::name().as_ptr(),
-        ],
-        raw_window_handle::RawWindowHandle::Wayland(_) => vec![
-            Surface::name().as_ptr(),
-            WaylandSurface::name().as_ptr(),
-        ],
+        raw_window_handle::RawWindowHandle::Xlib(_) => {
+            vec![Surface::name().as_ptr(), XlibSurface::name().as_ptr()]
+        }
+        raw_window_handle::RawWindowHandle::Xcb(_) => {
+            vec![Surface::name().as_ptr(), XcbSurface::name().as_ptr()]
+        }
+        raw_window_handle::RawWindowHandle::Wayland(_) => {
+            vec![Surface::name().as_ptr(), WaylandSurface::name().as_ptr()]
+        }
         _ => unimplemented!(),
     }
 }
@@ -211,17 +208,11 @@ pub fn extension_names(raw_window_handle: &raw_window_handle::RawWindowHandle) -
 #[cfg(target_os = "macos")]
 pub fn extension_names(_raw_window_handle: &raw_window_handle::RawWindowHandle) -> Vec<*const i8> {
     use ash::extensions::mvk::MacOSSurface;
-    vec![
-        Surface::name().as_ptr(),
-        MacOSSurface::name().as_ptr(),
-    ]
+    vec![Surface::name().as_ptr(), MacOSSurface::name().as_ptr()]
 }
 
 #[cfg(all(windows))]
 pub fn extension_names(_raw_window_handle: &raw_window_handle::RawWindowHandle) -> Vec<*const i8> {
     use ash::extensions::khr::Win32Surface;
-    vec![
-        Surface::name().as_ptr(),
-        Win32Surface::name().as_ptr(),
-    ]
+    vec![Surface::name().as_ptr(), Win32Surface::name().as_ptr()]
 }
