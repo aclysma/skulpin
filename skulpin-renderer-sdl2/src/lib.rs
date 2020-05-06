@@ -48,7 +48,6 @@ impl<'a> Window for Sdl2Window<'a> {
         LogicalSize::new(logical_size.0, logical_size.1)
     }
 
-
     #[cfg(target_os = "windows")]
     fn scale_factor(&self) -> f64 {
         self.compute_scale_factor().unwrap_or(1.0)
