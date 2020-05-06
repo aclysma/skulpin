@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.2
+
+ * Fixed cases where the vulkan validation layer not loading when it should have, and loading when it
+   shouldn't have.
+
 ## 0.9.1
 
  * Windows-specific fix to determine scaling factor for logical vs. physical coordinates
