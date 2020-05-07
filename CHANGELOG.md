@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.4
+
+ * Fix a panic on windows that can occur when using remote desktop or unplugging monitors (Reported in #47)
+ 
+## 0.9.3
+
+ * This was 0.9.2 accidentally republished without intended changes
+ 
 ## 0.9.2
 
  * Fixed cases where the vulkan validation layer not loading when it should have, and loading when it

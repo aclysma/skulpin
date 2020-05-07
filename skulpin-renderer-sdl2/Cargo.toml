@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-renderer-sdl2"
-version = "0.3.1"
+version = "0.3.3"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "Support for sdl2 in skulpin"

@@ -92,6 +92,12 @@ skulpin = { version = "0", default-features = false, features = ["skia_complete"
 skulpin = { version = "0", default-features = false, features = ["skulpin_sdl2"] }
 ```
 
+### Upstream Versioning of ash and skia-safe
+
+Skulpin can be built and used with many versions of ash and skia-safe. In order to be accomodating to users of the
+library, the required version has been left open-ended. This allows new projects to use more recent versions of these
+libraries while not forcing old projects to update.
+
 ## Documentation
 
 Documentation fails to build on docs.rs because the skia_safe crate requires an internet connection to build. (It will
