@@ -17,6 +17,6 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 [dependencies]
 skulpin-renderer = { version = "0.3", path = "../skulpin-renderer" }
 
-sdl2 = { version = "0.33" }
+sdl2 = { version = ">=0.33" }
 
 log="0.4"

@@ -23,7 +23,7 @@ complete = ["skia-safe/textlayout"]
 
 [dependencies]
 ash = ">=0.30"
-skia-safe = { version = "0.27.3", features = ["vulkan"] }
-skia-bindings = { version = "0.27.3" }
+skia-safe = { version = ">=0.27", features = ["vulkan"] }
+skia-bindings = { version = ">=0.27" }
 
 log="0.4"
