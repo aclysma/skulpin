@@ -75,6 +75,6 @@ impl skulpin_renderer::RendererPlugin for ImguiRendererPlugin {
             window.scale_factor(),
         )?;
 
-        Ok(vec![renderpass.command_buffers[present_index].clone()])
+        Ok(vec![renderpass.command_buffers[present_index]])
     }
 }

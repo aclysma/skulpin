@@ -122,7 +122,7 @@ impl VkImGuiRenderPass {
             &device.logical_device,
             &swapchain.swapchain_image_views,
             &swapchain.swapchain_info,
-            &pipeline_resources.renderpass,
+            pipeline_resources.renderpass,
         );
 
         let command_pool =
@@ -131,7 +131,7 @@ impl VkImGuiRenderPass {
         let command_buffers = Self::create_command_buffers(
             &device.logical_device,
             &swapchain.swapchain_info,
-            &command_pool,
+            command_pool,
         )?;
 
         let mut vertex_buffers = Vec::with_capacity(swapchain.swapchain_info.image_count);
@@ -161,7 +161,7 @@ impl VkImGuiRenderPass {
             font_atlas,
         )?;
 
-        let image_view = Self::create_texture_image_view(&device.logical_device, &image.image);
+        let image_view = Self::create_texture_image_view(&device.logical_device, image.image);
 
         let image_sampler = Self::create_texture_image_sampler(&device.logical_device);
 
@@ -172,12 +172,12 @@ impl VkImGuiRenderPass {
 
         let descriptor_sets = Self::create_descriptor_sets(
             &device.logical_device,
-            &descriptor_pool,
-            &descriptor_set_layout,
+            descriptor_pool,
+            descriptor_set_layout,
             swapchain.swapchain_info.image_count,
             &uniform_buffers,
-            &image_view,
-            &image_sampler,
+            image_view,
+            image_sampler,
         )?;
 
         for i in 0..swapchain.swapchain_info.image_count {
@@ -186,16 +186,16 @@ impl VkImGuiRenderPass {
                 &device.memory_properties,
                 &device.logical_device,
                 &swapchain.swapchain_info,
-                &renderpass,
-                &frame_buffers[i],
-                &pipeline,
-                &pipeline_layout,
-                &command_buffers[i],
+                renderpass,
+                frame_buffers[i],
+                pipeline,
+                pipeline_layout,
+                command_buffers[i],
                 &mut vertex_buffers[i],
                 &mut index_buffers[i],
                 &mut staging_vertex_buffers[i],
                 &mut staging_index_buffers[i],
-                &descriptor_sets[i],
+                descriptor_sets[i],
             )?;
         }
 
@@ -297,7 +297,7 @@ impl VkImGuiRenderPass {
 
         let scissors = [vk::Rect2D {
             offset: vk::Offset2D { x: 0, y: 0 },
-            extent: swapchain_info.extents.clone(),
+            extent: swapchain_info.extents,
         }];
 
         let viewport_state_info = vk::PipelineViewportStateCreateInfo::builder()
@@ -493,16 +493,16 @@ impl VkImGuiRenderPass {
 
     fn create_framebuffers(
         logical_device: &ash::Device,
-        swapchain_image_views: &Vec<vk::ImageView>,
+        swapchain_image_views: &[vk::ImageView],
         swapchain_info: &SwapchainInfo,
-        renderpass: &vk::RenderPass,
+        renderpass: vk::RenderPass,
     ) -> Vec<vk::Framebuffer> {
         swapchain_image_views
             .iter()
             .map(|&swapchain_image_view| {
                 let framebuffer_attachments = [swapchain_image_view];
                 let frame_buffer_create_info = vk::FramebufferCreateInfo::builder()
-                    .render_pass(*renderpass)
+                    .render_pass(renderpass)
                     .attachments(&framebuffer_attachments)
                     .width(swapchain_info.extents.width)
                     .height(swapchain_info.extents.height)
@@ -539,11 +539,11 @@ impl VkImGuiRenderPass {
     fn create_command_buffers(
         logical_device: &ash::Device,
         swapchain_info: &SwapchainInfo,
-        command_pool: &vk::CommandPool,
+        command_pool: vk::CommandPool,
     ) -> VkResult<Vec<vk::CommandBuffer>> {
         let command_buffer_allocate_info = vk::CommandBufferAllocateInfo::builder()
             .command_buffer_count(swapchain_info.image_count as u32)
-            .command_pool(*command_pool)
+            .command_pool(command_pool)
             .level(vk::CommandBufferLevel::PRIMARY);
 
         unsafe { logical_device.allocate_command_buffers(&command_buffer_allocate_info) }
@@ -633,7 +633,7 @@ impl VkImGuiRenderPass {
 
     pub fn create_texture_image_view(
         logical_device: &ash::Device,
-        image: &vk::Image,
+        image: vk::Image,
     ) -> vk::ImageView {
         let subresource_range = vk::ImageSubresourceRange::builder()
             .aspect_mask(vk::ImageAspectFlags::COLOR)
@@ -643,7 +643,7 @@ impl VkImGuiRenderPass {
             .layer_count(1);
 
         let image_view_info = vk::ImageViewCreateInfo::builder()
-            .image(*image)
+            .image(image)
             .view_type(vk::ImageViewType::TYPE_2D)
             .format(vk::Format::R8G8B8A8_UNORM)
             .subresource_range(*subresource_range);
@@ -704,18 +704,18 @@ impl VkImGuiRenderPass {
 
     fn create_descriptor_sets(
         logical_device: &ash::Device,
-        descriptor_pool: &vk::DescriptorPool,
-        descriptor_set_layout: &vk::DescriptorSetLayout,
+        descriptor_pool: vk::DescriptorPool,
+        descriptor_set_layout: vk::DescriptorSetLayout,
         swapchain_image_count: usize,
-        uniform_buffers: &Vec<ManuallyDrop<VkBuffer>>,
-        image_view: &vk::ImageView,
-        image_sampler: &vk::Sampler,
+        uniform_buffers: &[ManuallyDrop<VkBuffer>],
+        image_view: vk::ImageView,
+        image_sampler: vk::Sampler,
     ) -> VkResult<Vec<vk::DescriptorSet>> {
         // DescriptorSetAllocateInfo expects an array with an element per set
-        let descriptor_set_layouts = vec![*descriptor_set_layout; swapchain_image_count];
+        let descriptor_set_layouts = vec![descriptor_set_layout; swapchain_image_count];
 
         let alloc_info = vk::DescriptorSetAllocateInfo::builder()
-            .descriptor_pool(*descriptor_pool)
+            .descriptor_pool(descriptor_pool)
             .set_layouts(descriptor_set_layouts.as_slice());
 
         let descriptor_sets = unsafe { logical_device.allocate_descriptor_sets(&alloc_info) }?;
@@ -723,8 +723,8 @@ impl VkImGuiRenderPass {
         for i in 0..swapchain_image_count {
             let descriptor_image_infos = [vk::DescriptorImageInfo::builder()
                 .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
-                .image_view(*image_view)
-                .sampler(*image_sampler)
+                .image_view(image_view)
+                .sampler(image_sampler)
                 .build()];
 
             let descriptor_buffer_infos = [vk::DescriptorBufferInfo::builder()
@@ -758,21 +758,22 @@ impl VkImGuiRenderPass {
         Ok(descriptor_sets)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn record_command_buffer(
         imgui_draw_data: Option<&imgui::DrawData>,
         device_memory_properties: &vk::PhysicalDeviceMemoryProperties,
         logical_device: &ash::Device,
         swapchain_info: &SwapchainInfo,
-        renderpass: &vk::RenderPass,
-        framebuffer: &vk::Framebuffer,
-        pipeline: &vk::Pipeline,
-        pipeline_layout: &vk::PipelineLayout,
-        command_buffer: &vk::CommandBuffer,
+        renderpass: vk::RenderPass,
+        framebuffer: vk::Framebuffer,
+        pipeline: vk::Pipeline,
+        pipeline_layout: vk::PipelineLayout,
+        command_buffer: vk::CommandBuffer,
         vertex_buffers: &mut Vec<ManuallyDrop<VkBuffer>>,
         index_buffers: &mut Vec<ManuallyDrop<VkBuffer>>,
         staging_vertex_buffers: &mut Vec<ManuallyDrop<VkBuffer>>,
         staging_index_buffers: &mut Vec<ManuallyDrop<VkBuffer>>,
-        descriptor_set: &vk::DescriptorSet,
+        descriptor_set: vk::DescriptorSet,
     ) -> VkResult<()> {
         let command_buffer_begin_info = vk::CommandBufferBeginInfo::builder();
 
@@ -860,17 +861,17 @@ impl VkImGuiRenderPass {
         }
 
         let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
-            .render_pass(*renderpass)
-            .framebuffer(*framebuffer)
+            .render_pass(renderpass)
+            .framebuffer(framebuffer)
             .render_area(vk::Rect2D {
                 offset: vk::Offset2D { x: 0, y: 0 },
-                extent: swapchain_info.extents.clone(),
+                extent: swapchain_info.extents,
             })
             .clear_values(&clear_values);
 
         // Implicitly resets the command buffer
         unsafe {
-            logical_device.begin_command_buffer(*command_buffer, &command_buffer_begin_info)?;
+            logical_device.begin_command_buffer(command_buffer, &command_buffer_begin_info)?;
 
             for i in 0..draw_list_count {
                 {
@@ -879,7 +880,7 @@ impl VkImGuiRenderPass {
                         .build()];
 
                     logical_device.cmd_copy_buffer(
-                        *command_buffer,
+                        command_buffer,
                         staging_vertex_buffers[i].buffer,
                         vertex_buffers[i].buffer,
                         &buffer_copy_info,
@@ -893,7 +894,7 @@ impl VkImGuiRenderPass {
                         .build()];
 
                     logical_device.cmd_copy_buffer(
-                        *command_buffer,
+                        command_buffer,
                         staging_index_buffers[i].buffer,
                         index_buffers[i].buffer,
                         &buffer_copy_info,
@@ -902,23 +903,23 @@ impl VkImGuiRenderPass {
             }
 
             logical_device.cmd_begin_render_pass(
-                *command_buffer,
+                command_buffer,
                 &render_pass_begin_info,
                 vk::SubpassContents::INLINE,
             );
 
             logical_device.cmd_bind_pipeline(
-                *command_buffer,
+                command_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
-                *pipeline,
+                pipeline,
             );
 
             logical_device.cmd_bind_descriptor_sets(
-                *command_buffer,
+                command_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
-                *pipeline_layout,
+                pipeline_layout,
                 0,
-                &[*descriptor_set],
+                &[descriptor_set],
                 &[],
             );
 
@@ -926,14 +927,14 @@ impl VkImGuiRenderPass {
             if let Some(draw_data) = imgui_draw_data {
                 for draw_list in draw_data.draw_lists() {
                     logical_device.cmd_bind_vertex_buffers(
-                        *command_buffer,
+                        command_buffer,
                         0, // first binding
                         &[vertex_buffers[draw_list_index].buffer],
                         &[0], // offsets
                     );
 
                     logical_device.cmd_bind_index_buffer(
-                        *command_buffer,
+                        command_buffer,
                         index_buffers[draw_list_index].buffer,
                         0, // offset
                         vk::IndexType::UINT16,
@@ -976,10 +977,10 @@ impl VkImGuiRenderPass {
                                     },
                                 };
 
-                                logical_device.cmd_set_scissor(*command_buffer, 0, &[scissors]);
+                                logical_device.cmd_set_scissor(command_buffer, 0, &[scissors]);
 
                                 logical_device.cmd_draw_indexed(
-                                    *command_buffer,
+                                    command_buffer,
                                     element_end_index - element_begin_index,
                                     1,
                                     element_begin_index,
@@ -997,9 +998,9 @@ impl VkImGuiRenderPass {
                 }
             }
 
-            logical_device.cmd_end_render_pass(*command_buffer);
+            logical_device.cmd_end_render_pass(command_buffer);
 
-            logical_device.end_command_buffer(*command_buffer)
+            logical_device.end_command_buffer(command_buffer)
         }
     }
 
@@ -1065,16 +1066,16 @@ impl VkImGuiRenderPass {
             device_memory_properties,
             &self.device,
             &self.swapchain_info,
-            &self.renderpass,
-            &self.frame_buffers[present_index],
-            &self.pipeline,
-            &self.pipeline_layout,
-            &self.command_buffers[present_index],
+            self.renderpass,
+            self.frame_buffers[present_index],
+            self.pipeline,
+            self.pipeline_layout,
+            self.command_buffers[present_index],
             &mut self.vertex_buffers[present_index],
             &mut self.index_buffers[present_index],
             &mut self.staging_vertex_buffers[present_index],
             &mut self.staging_index_buffers[present_index],
-            &self.descriptor_sets[present_index],
+            self.descriptor_sets[present_index],
         )
     }
 }
