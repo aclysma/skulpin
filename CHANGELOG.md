@@ -2,8 +2,9 @@
 
 ## 0.9.5
 
+ * Bump macos dependencies (metal/cocoa)
  * Update to skulpin-plugin-imgui, 0.4.0 bumps imgui support from 0.3 to 0.4
- * This is a dev-dependency only so should not have any downstream effects for users not explicitly using it
+     * This is a dev-dependency only so should not have any downstream effects for users not explicitly using it
 
 ## 0.9.4
 
