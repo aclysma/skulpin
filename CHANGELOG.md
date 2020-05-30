@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.5
+
+ * Update to skulpin-plugin-imgui, 0.4.0 bumps imgui support from 0.3 to 0.4
+ * This is a dev-dependency only so should not have any downstream effects for users not explicitly using it
+
 ## 0.9.4
 
  * Fix a panic on windows that can occur when using remote desktop or unplugging monitors (Reported in #47)
