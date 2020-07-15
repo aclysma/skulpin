@@ -22,7 +22,7 @@ First, ensure that the below requirements are met depending on OS. Afterwards, t
 
 The [interactive](examples/interactive_winit_app.rs) example is good to look at for an easy way to get keyboard/mouse input.
 
-`cargo run --example interactive`
+`cargo run --example interactive_winit_app`
 
 The [physics](examples/physics.rs) demo is fun too.
 
