@@ -108,7 +108,7 @@ impl VkSkiaSurface {
 
         let mut surface = skia_safe::Surface::new_render_target(
             &mut context.context,
-            skia_safe::Budgeted::YES,
+            skia_safe::Budgeted::Yes,
             &image_info,
             None,
             skia_safe::gpu::SurfaceOrigin::TopLeft,

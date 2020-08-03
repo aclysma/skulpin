@@ -20,10 +20,11 @@ shaper = ["skia-safe/shaper"]
 svg = ["skia-safe/svg"]
 textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/textlayout"]
+gpu = ["skia-safe/gpu"]
 
 [dependencies]
-ash = ">=0.30"
-skia-safe = { version = ">=0.27", features = ["vulkan"] }
-skia-bindings = { version = ">=0.27" }
+ash = ">=0.31"
+skia-safe = { version = ">=0.30.1", features = ["vulkan"] }
+skia-bindings = { version = ">=0.30.1" }
 
 log="0.4"
