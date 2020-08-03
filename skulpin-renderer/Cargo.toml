@@ -20,7 +20,6 @@ shaper = ["skia-safe/shaper"]
 svg = ["skia-safe/svg"]
 textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/textlayout"]
-gpu = ["skia-safe/gpu"]
 
 [dependencies]
 ash = ">=0.31"

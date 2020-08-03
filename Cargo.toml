@@ -46,7 +46,6 @@ skia_complete = ["skulpin-renderer/complete"]
 
 skulpin_winit = ["skulpin-renderer-winit", "skulpin-app-winit"]
 skulpin_sdl2 = ["skulpin-renderer-sdl2"]
-gpu = ["skulpin-renderer/gpu"]
 
 default = ["skulpin_winit", "skulpin_sdl2", "skia_complete"]
 
