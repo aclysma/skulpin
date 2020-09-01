@@ -67,7 +67,7 @@ nphysics2d = "0.12"
 
 # The skulpin-renderer-sdl2 crate doesn't specify any features, but downstream libraries can do so by including sdl2
 # for themselves. Examples will use the features added here
-sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
+sdl2 = { version = ">=0.33" }
 
 # Used for the imgui example only
 imgui = "0.4"
