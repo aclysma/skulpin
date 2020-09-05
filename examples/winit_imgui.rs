@@ -49,7 +49,7 @@ fn main() {
 
     // Create the renderer, which will draw to the window
     let renderer = skulpin::RendererBuilder::new()
-        .use_vulkan_debug_layer(true)
+        .use_vulkan_debug_layer(false)
         .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
             visible_range,
             scale_to_fit,

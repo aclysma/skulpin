@@ -82,7 +82,7 @@ fn main() {
     let window = Sdl2Window::new(&sdl_window);
 
     let renderer = RendererBuilder::new()
-        .use_vulkan_debug_layer(true)
+        .use_vulkan_debug_layer(false)
         .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
             visible_range,
             scale_to_fit,
