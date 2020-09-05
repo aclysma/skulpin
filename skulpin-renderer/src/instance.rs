@@ -123,12 +123,9 @@ impl VkInstance {
             }
 
             let debug_extension = DebugReport::name();
-            let has_debug_extension = extensions
-                .iter()
-                .find(|extension| unsafe {
-                    debug_extension == CStr::from_ptr(extension.extension_name.as_ptr())
-                })
-                .is_some();
+            let has_debug_extension = extensions.iter().any(|extension| unsafe {
+                debug_extension == CStr::from_ptr(extension.extension_name.as_ptr())
+            });
 
             if !has_debug_extension {
                 log::error!("Could not find the debug extension. Check that the vulkan SDK has been installed or disable validation.");
@@ -183,7 +180,7 @@ impl VkInstance {
         })
     }
 
-    fn find_best_validation_layer(layers: &Vec<ash::vk::LayerProperties>) -> Option<&'static CStr> {
+    fn find_best_validation_layer(layers: &[ash::vk::LayerProperties]) -> Option<&'static CStr> {
         fn khronos_validation_layer_name() -> &'static CStr {
             CStr::from_bytes_with_nul(b"VK_LAYER_KHRONOS_validation\0")
                 .expect("Wrong extension string")

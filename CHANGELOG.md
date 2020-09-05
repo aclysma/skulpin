@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0 (Unreleased)
+
+ * Improvements to validation layer handling
+     * Search for VK_LAYER_KHRONOS_validation but fall back to VK_LAYER_LUNARG_standard_validation if it's not present
+     * Return a failure with a better error message if neither exist
+ * Validation is now off by default in the examples
+ * Rust minimum version is now 1.43.0
+ * skia-safe minimum version is now 0.30.1
+
 ## 0.9.5
 
  * Bump macos dependencies (metal/cocoa)
