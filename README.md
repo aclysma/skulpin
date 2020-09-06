@@ -32,7 +32,20 @@ Here's a video of the physics and interactive examples.
 
 [![IMAGE ALT TEXT](http://img.youtube.com/vi/El99FgGSzfg/0.jpg)](https://www.youtube.com/watch?v=El99FgGSzfg "Video of Skulpin")
 
-## Backends
+## Status
+
+This crate is in "maintenance" mode - I'm not adding features or planning any API reworks, but I do plan to make fixes
+as necessary to address issues that might come up and maintain compatibility with the broader rust ecosystem.
+
+Originally this was just a proof-of-concept, but it is now being used by [neovide](https://github.com/Kethku/neovide).
+I've received anecdotal reports that this library is working will on windows, macOS and linux (including wayland.) There
+are some bugs with `winit`, so I added `sdl2` support as a more stable option. I think this could realistically be used
+for shipping software when used with the sdl2 backend. 
+
+Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. Because Google is
+deeply invested in this stack, I anticipate relatively long term support of this type of usage in Skia.
+
+## Windowing Backends
 
 This library currently supports two windowing backends:
  * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling implemented in Rust. 
@@ -107,54 +120,42 @@ either grab skia source code, or grab a prebuilt binary.) So the best way to vie
 
 ## Requirements
 
-Minimum required rust version: **1.40.0**
-
-This is mostly due to skia bindings. The code in this library will likely work with 1.37.0 or later.
+Minimum required rust version: **1.43.0**
 
 ### Windows
 
-All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
-get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
-
-If you're using the GNU toolchain (MSVC is the default) you might run into an issue building curl. (Curl is a dependency
-of skia-safe bindings, which is used to download prebuilt skia binaries.) There are some 
-[workarounds listed here](https://github.com/alexcrichton/curl-rust/issues/239). Again, this should only affect you if
-you are running the non-default GNU toolchain.
-
-If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). 
+* If you're using the GNU toolchain (MSVC is the default) you might run into an issue building curl. (Curl is a 
+  dependency of skia-safe bindings, which is used to download prebuilt skia binaries.) There are some 
+  [workarounds listed here](https://github.com/alexcrichton/curl-rust/issues/239). Again, this should only affect you if
+  you are running the non-default GNU toolchain.
+* If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). The 
+  easiest method is to use the "bundled" and "static" features. To do this, add `sdl2 = { version = ">=0.33", features = 
+  ["bundled", "static-link"] }` to you Cargo.toml. These are enabled by default for the examples.
+* Enabling vulkan validation requires the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. 
+  An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
 ### MacOS
 
-All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
-get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
-
-If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). 
+* If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). The 
+  easiest method is to use the "bundled" and "static" features. To do this, add `sdl2 = { version = ">=0.33", features = 
+  ["bundled", "static-link"] }` to you Cargo.toml. These are enabled by default for the examples.
+* Enabling vulkan validation requires the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. 
+  An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
 ### Linux
 
-All examples require the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. An easy way to 
-get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
-
-If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). 
-
-On linux you'll also need to link against bz2, GL, fontconfig, and freetype.
-
-On ubuntu, you could use `libbz2-dev`, `libfreetype6-dev`, `libfontconfig1-dev`, and `libgl-dev`. (And `libvulkan-dev` 
-to pick up the Vulkan SDK)
+* If you're using SDL2, see the [requirements for the SDL2 bindings](https://github.com/Rust-SDL2/rust-sdl2). The 
+  easiest method is to use the "bundled" and "static" features. To do this, add `sdl2 = { version = ">=0.33", features = 
+  ["bundled", "static-link"] }` to you Cargo.toml. These are enabled by default for the examples.
+* On linux you'll also need to link against bz2, GL, fontconfig, and freetype.
+    * On ubuntu, you could use `libbz2-dev`, `libfreetype6-dev`, `libfontconfig1-dev`, and `libgl-dev`. (And 
+      `libvulkan-dev` to pick up the Vulkan SDK)
+* Enabling vulkan validation requires the LunarG Validation layers and a Vulkan library that is visible in your `PATH`. 
+  An easy way to get started is to use the [LunarG Vulkan SDK](https://lunarg.com/vulkan-sdk/)
 
 ### Other Platforms
 
 It may be possible to build this for mobile platforms, but I've not investigated this yet.
-
-## Status
-
-Originally this was just a proof-of-concept, but it is now being used by [neovide](https://github.com/Kethku/neovide).
-I've received anecdotal reports that this library is working will on windows, macOS and linux (including wayland.) There
-are some bugs with `winit`, so I added `sdl2` support as a more stable option. I think this could realistically be used
-for shipping software when used with the sdl2 backend. 
-
-Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. Because Google is
-deeply invested in this stack, I anticipate relatively long term support of this type of usage in Skia. 
 
 ## A note on High-DPI Display Support
 
@@ -195,7 +196,7 @@ There are a few primary choices you should consider when configuring how your ap
    - See `prefer_integrated_gpu`/`prefer_discrete_gpu` for a simple way to choose between the two recommended options or
      `physical_device_type_priority` for full control
    - For full details see documentation for `PhysicalDeviceType` and the Vulkan spec.
- * Vulkan Debug Layer - Debug logging is fully enabled by default
+ * Vulkan Debug Layer - Debug logging is not enabled by default
    - `use_vulkan_debug_layer` turns all logging on/off
    - `validation_layer_debug_report_flags` allows choosing specific log levels
    - If the Vulkan SDK is not installed, the app will fail to start if any vulkan debugging is enabled
