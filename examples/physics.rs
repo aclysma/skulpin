@@ -137,7 +137,7 @@ fn main() {
 
     AppBuilder::new()
         .app_name(CString::new("Skulpin Example App").unwrap())
-        .use_vulkan_debug_layer(true)
+        .use_vulkan_debug_layer(false)
         .inner_size(LogicalSize::new(900, 600))
         .run(example_app);
 }
