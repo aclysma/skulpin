@@ -287,8 +287,7 @@ fn init_imgui(window: &winit::window::Window) -> imgui::Context {
     }]);
 
     imgui.io_mut().font_global_scale = (1.0 / scale_factor) as f32;
-
-    return imgui;
+    imgui
 }
 
 pub fn init_imgui_manager(window: &winit::window::Window) -> ImguiManager {
