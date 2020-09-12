@@ -267,22 +267,6 @@ fn init_imgui(window: &winit::window::Window) -> imgui::Context {
     use imgui::Context;
 
     let mut imgui = Context::create();
-    {
-        // Fix incorrect colors with sRGB framebuffer
-        fn imgui_gamma_to_linear(col: [f32; 4]) -> [f32; 4] {
-            let x = col[0].powf(2.2);
-            let y = col[1].powf(2.2);
-            let z = col[2].powf(2.2);
-            let w = 1.0 - (1.0 - col[3]).powf(2.2);
-            [x, y, z, w]
-        }
-
-        let style = imgui.style_mut();
-        for col in 0..style.colors.len() {
-            style.colors[col] = imgui_gamma_to_linear(style.colors[col]);
-        }
-    }
-
     imgui.set_ini_filename(None);
 
     // In the examples we only use integer DPI factors, because the UI can get very blurry

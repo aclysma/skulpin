@@ -8,6 +8,7 @@
  * Validation is now off by default in the examples
  * Rust minimum version is now 1.43.0
  * skia-safe minimum version is now 0.30.1
+ * Remove incorrect gamma correction from imgui examples
 
 ## 0.9.5
 
