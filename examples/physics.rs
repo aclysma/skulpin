@@ -256,8 +256,7 @@ impl AppHandler for ExampleApp {
             &paint,
         );
 
-        let mut i = 0;
-        for circle_body in &self.physics.circle_body_handles {
+        for (i, circle_body) in self.physics.circle_body_handles.iter().enumerate() {
             let position = self
                 .physics
                 .bodies
@@ -273,8 +272,6 @@ impl AppHandler for ExampleApp {
                 BALL_RADIUS,
                 paint,
             );
-
-            i += 1;
         }
 
         coordinate_system_helper.use_logical_coordinates(canvas);
