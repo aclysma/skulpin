@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-renderer-sdl2"
-version = "0.3.3"
+version = "0.4.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "Support for sdl2 in skulpin"
@@ -15,7 +15,7 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 [features]
 
 [dependencies]
-skulpin-renderer = { version = "0.3", path = "../skulpin-renderer" }
+skulpin-renderer = { version = "0.4", path = "../skulpin-renderer" }
 
 sdl2 = { version = ">=0.33" }
 
