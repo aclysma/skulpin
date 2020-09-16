@@ -99,7 +99,7 @@ features (default behavior), or disable all features. (use `default-features = f
 skulpin = "0"
 
 # Pull in all skia features and support for winit only
-skulpin = { version = "0", default-features = false, features = ["skia_complete", skulpin_winit"] }
+skulpin = { version = "0", default-features = false, features = ["skia_complete", "skulpin_winit"] }
 
 # Pull in no optional skia features and support for sdl2 only
 skulpin = { version = "0", default-features = false, features = ["skulpin_sdl2"] }
