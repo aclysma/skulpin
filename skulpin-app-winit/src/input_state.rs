@@ -630,7 +630,7 @@ impl InputState {
             }
 
             // Ignore any other events
-            _ => (),
+            _ => {}
         }
 
         if is_close_requested {

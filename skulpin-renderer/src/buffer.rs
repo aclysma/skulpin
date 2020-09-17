@@ -45,7 +45,9 @@ impl VkBuffer {
 
         let buffer_memory = unsafe { logical_device.allocate_memory(&buffer_allocate_info, None)? };
 
-        unsafe { logical_device.bind_buffer_memory(buffer, buffer_memory, 0)? }
+        unsafe {
+            logical_device.bind_buffer_memory(buffer, buffer_memory, 0)?
+        }
 
         Ok(VkBuffer {
             device: logical_device.clone(),
