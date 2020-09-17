@@ -289,11 +289,7 @@ impl VkSwapchain {
 
             // Copied from num-traits under MIT/Apache-2.0 dual license. It doesn't make much sense
             // to pull in a whole crate just for this utility function
-            pub fn clamp<T: PartialOrd>(
-                input: T,
-                min: T,
-                max: T,
-            ) -> T {
+            pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
                 debug_assert!(min <= max, "min must be less than or equal to max");
                 if input < min {
                     min

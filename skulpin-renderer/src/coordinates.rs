@@ -8,17 +8,11 @@ pub struct PhysicalSize {
 }
 
 impl PhysicalSize {
-    pub fn new(
-        width: u32,
-        height: u32,
-    ) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         PhysicalSize { width, height }
     }
 
-    pub fn to_logical(
-        self,
-        scale_factor: f64,
-    ) -> LogicalSize {
+    pub fn to_logical(self, scale_factor: f64) -> LogicalSize {
         LogicalSize {
             width: (self.width as f64 * scale_factor).round() as u32,
             height: (self.height as f64 * scale_factor).round() as u32,
@@ -35,17 +29,11 @@ pub struct LogicalSize {
 }
 
 impl LogicalSize {
-    pub fn new(
-        width: u32,
-        height: u32,
-    ) -> Self {
+    pub fn new(width: u32, height: u32) -> Self {
         LogicalSize { width, height }
     }
 
-    pub fn to_physical(
-        self,
-        scale_factor: f64,
-    ) -> PhysicalSize {
+    pub fn to_physical(self, scale_factor: f64) -> PhysicalSize {
         PhysicalSize {
             width: (self.width as f64 / scale_factor).round() as u32,
             height: (self.height as f64 / scale_factor).round() as u32,
@@ -78,20 +66,14 @@ impl Size {
         size.into()
     }
 
-    pub fn to_logical(
-        &self,
-        scale_factor: f64,
-    ) -> LogicalSize {
+    pub fn to_logical(&self, scale_factor: f64) -> LogicalSize {
         match *self {
             Size::Physical(size) => size.to_logical(scale_factor),
             Size::Logical(size) => size,
         }
     }
 
-    pub fn to_physical(
-        &self,
-        scale_factor: f64,
-    ) -> PhysicalSize {
+    pub fn to_physical(&self, scale_factor: f64) -> PhysicalSize {
         match *self {
             Size::Physical(size) => size,
             Size::Logical(size) => size.to_physical(scale_factor),

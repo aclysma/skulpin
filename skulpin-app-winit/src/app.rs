@@ -39,10 +39,7 @@ impl std::error::Error for AppError {
 }
 
 impl core::fmt::Display for AppError {
-    fn fmt(
-        &self,
-        fmt: &mut core::fmt::Formatter,
-    ) -> core::fmt::Result {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
         match *self {
             AppError::CreateRendererError(ref e) => e.fmt(fmt),
             AppError::VkError(ref e) => e.fmt(fmt),
@@ -94,21 +91,12 @@ pub struct AppDrawArgs<'a, 'b, 'c, 'd> {
 /// rendering code in the `draw`.
 pub trait AppHandler {
     /// Called frequently, this is the intended place to put non-rendering logic
-    fn update(
-        &mut self,
-        update_args: AppUpdateArgs,
-    );
+    fn update(&mut self, update_args: AppUpdateArgs);
 
     /// Called frequently, this is the intended place to put drawing code
-    fn draw(
-        &mut self,
-        draw_args: AppDrawArgs,
-    );
+    fn draw(&mut self, draw_args: AppDrawArgs);
 
-    fn fatal_error(
-        &mut self,
-        error: &AppError,
-    );
+    fn fatal_error(&mut self, error: &AppError);
 }
 
 /// Used to configure the app behavior and create the app
@@ -135,19 +123,13 @@ impl AppBuilder {
     }
 
     /// Specifies the inner size of the window. Both physical and logical coordinates are accepted.
-    pub fn inner_size<S: Into<Size>>(
-        mut self,
-        inner_size: S,
-    ) -> Self {
+    pub fn inner_size<S: Into<Size>>(mut self, inner_size: S) -> Self {
         self.inner_size = inner_size.into();
         self
     }
 
     /// Specifies the title that the window will be created with
-    pub fn window_title<T: Into<String>>(
-        mut self,
-        window_title: T,
-    ) -> Self {
+    pub fn window_title<T: Into<String>>(mut self, window_title: T) -> Self {
         self.window_title = window_title.into();
         self
     }
@@ -155,10 +137,7 @@ impl AppBuilder {
     /// Name of the app. This is passed into the vulkan layer. I believe it can hint things to the
     /// vulkan driver, but it's unlikely this makes a real difference. Still a good idea to set this
     /// to something meaningful though.
-    pub fn app_name(
-        mut self,
-        app_name: CString,
-    ) -> Self {
+    pub fn app_name(mut self, app_name: CString) -> Self {
         self.renderer_builder = self.renderer_builder.app_name(app_name);
         self
     }
@@ -166,10 +145,7 @@ impl AppBuilder {
     /// If true, initialize the vulkan debug layers. This will require the vulkan SDK to be
     /// installed and the app will fail to launch if it isn't. This turns on ALL logging. For
     /// more control, see `validation_layer_debug_report_flags()`
-    pub fn use_vulkan_debug_layer(
-        mut self,
-        use_vulkan_debug_layer: bool,
-    ) -> Self {
+    pub fn use_vulkan_debug_layer(mut self, use_vulkan_debug_layer: bool) -> Self {
         self.renderer_builder = self
             .renderer_builder
             .use_vulkan_debug_layer(use_vulkan_debug_layer);
@@ -191,10 +167,7 @@ impl AppBuilder {
 
     /// Determine the coordinate system to use for the canvas. This can be overridden by using the
     /// canvas sizer passed into the draw callback
-    pub fn coordinate_system(
-        mut self,
-        coordinate_system: CoordinateSystem,
-    ) -> Self {
+    pub fn coordinate_system(mut self, coordinate_system: CoordinateSystem) -> Self {
         self.renderer_builder = self.renderer_builder.coordinate_system(coordinate_system);
         self
     }
@@ -208,10 +181,7 @@ impl AppBuilder {
     ///
     /// Since `Fifo` is always available, this is the mode that will be chosen if no desired mode is
     /// available.
-    pub fn present_mode_priority(
-        mut self,
-        present_mode_priority: Vec<PresentMode>,
-    ) -> Self {
+    pub fn present_mode_priority(mut self, present_mode_priority: Vec<PresentMode>) -> Self {
         self.renderer_builder = self
             .renderer_builder
             .present_mode_priority(present_mode_priority);
@@ -268,10 +238,7 @@ impl AppBuilder {
     /// Start the app. `app_handler` must be an implementation of [skulpin::app::AppHandler].
     /// This does not return because winit does not return. For consistency, we use the
     /// fatal_error() callback on the passed in AppHandler.
-    pub fn run<T: 'static + AppHandler>(
-        self,
-        app_handler: T,
-    ) -> ! {
+    pub fn run<T: 'static + AppHandler>(self, app_handler: T) -> ! {
         App::run(
             app_handler,
             self.inner_size,

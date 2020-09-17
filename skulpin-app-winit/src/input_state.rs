@@ -107,10 +107,7 @@ impl InputState {
     }
 
     /// Returns true if the given key is down
-    pub fn is_key_down(
-        &self,
-        key: VirtualKeyCode,
-    ) -> bool {
+    pub fn is_key_down(&self, key: VirtualKeyCode) -> bool {
         if let Some(index) = Self::keyboard_button_to_index(key) {
             self.key_is_down[index]
         } else {
@@ -119,10 +116,7 @@ impl InputState {
     }
 
     /// Returns true if the key went down during this frame
-    pub fn is_key_just_down(
-        &self,
-        key: VirtualKeyCode,
-    ) -> bool {
+    pub fn is_key_just_down(&self, key: VirtualKeyCode) -> bool {
         if let Some(index) = Self::keyboard_button_to_index(key) {
             self.key_just_down[index]
         } else {
@@ -131,10 +125,7 @@ impl InputState {
     }
 
     /// Returns true if the key went up during this frame
-    pub fn is_key_just_up(
-        &self,
-        key: VirtualKeyCode,
-    ) -> bool {
+    pub fn is_key_just_up(&self, key: VirtualKeyCode) -> bool {
         if let Some(index) = Self::keyboard_button_to_index(key) {
             self.key_just_up[index]
         } else {
@@ -153,10 +144,7 @@ impl InputState {
     }
 
     /// Returns true if the given button is down
-    pub fn is_mouse_down(
-        &self,
-        mouse_button: MouseButton,
-    ) -> bool {
+    pub fn is_mouse_down(&self, mouse_button: MouseButton) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_is_down[index]
         } else {
@@ -165,10 +153,7 @@ impl InputState {
     }
 
     /// Returns true if the button went down during this frame
-    pub fn is_mouse_just_down(
-        &self,
-        mouse_button: MouseButton,
-    ) -> bool {
+    pub fn is_mouse_just_down(&self, mouse_button: MouseButton) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_down[index].is_some()
         } else {
@@ -189,10 +174,7 @@ impl InputState {
     }
 
     /// Returns true if the button went up during this frame
-    pub fn is_mouse_just_up(
-        &self,
-        mouse_button: MouseButton,
-    ) -> bool {
+    pub fn is_mouse_just_up(&self, mouse_button: MouseButton) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_up[index].is_some()
         } else {
@@ -214,10 +196,7 @@ impl InputState {
 
     /// Returns true if the button was just clicked. "Clicked" means the button went down and came
     /// back up without being moved much. If it was moved, it would be considered a drag.
-    pub fn is_mouse_button_just_clicked(
-        &self,
-        mouse_button: MouseButton,
-    ) -> bool {
+    pub fn is_mouse_button_just_clicked(&self, mouse_button: MouseButton) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_button_just_clicked[index].is_some()
         } else {
@@ -265,10 +244,7 @@ impl InputState {
 
     /// Return true if the mouse is being dragged. (A drag means the button went down and mouse
     /// moved, but button hasn't come back up yet)
-    pub fn is_mouse_drag_in_progress(
-        &self,
-        mouse_button: MouseButton,
-    ) -> bool {
+    pub fn is_mouse_drag_in_progress(&self, mouse_button: MouseButton) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_drag_in_progress[index].is_some()
         } else {
@@ -277,10 +253,7 @@ impl InputState {
     }
 
     /// Returns the mouse drag state if a drag is in process, otherwise None.
-    pub fn mouse_drag_in_progress(
-        &self,
-        mouse_button: MouseButton,
-    ) -> Option<MouseDragState> {
+    pub fn mouse_drag_in_progress(&self, mouse_button: MouseButton) -> Option<MouseDragState> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_drag_in_progress[index]
         } else {
@@ -289,10 +262,7 @@ impl InputState {
     }
 
     /// Return true if a mouse drag completed in the previous frame, otherwise false
-    pub fn is_mouse_drag_just_finished(
-        &self,
-        mouse_button: MouseButton,
-    ) -> bool {
+    pub fn is_mouse_drag_just_finished(&self, mouse_button: MouseButton) -> bool {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_drag_just_finished[index].is_some()
         } else {
@@ -301,10 +271,7 @@ impl InputState {
     }
 
     /// Returns information about a mouse drag if it just completed, otherwise None
-    pub fn mouse_drag_just_finished(
-        &self,
-        mouse_button: MouseButton,
-    ) -> Option<MouseDragState> {
+    pub fn mouse_drag_just_finished(&self, mouse_button: MouseButton) -> Option<MouseDragState> {
         if let Some(index) = Self::mouse_button_to_index(mouse_button) {
             self.mouse_drag_just_finished[index]
         } else {
@@ -352,18 +319,12 @@ impl InputState {
     }
 
     /// Call when DPI factor changes
-    fn handle_scale_factor_changed(
-        &mut self,
-        scale_factor: f64,
-    ) {
+    fn handle_scale_factor_changed(&mut self, scale_factor: f64) {
         self.scale_factor = scale_factor;
     }
 
     /// Call when window size changes
-    fn handle_window_size_changed(
-        &mut self,
-        window_size: PhysicalSize<u32>,
-    ) {
+    fn handle_window_size_changed(&mut self, window_size: PhysicalSize<u32>) {
         self.window_size = window_size;
     }
 
@@ -390,11 +351,7 @@ impl InputState {
     }
 
     /// Call when a mouse button event occurs
-    fn handle_mouse_button_event(
-        &mut self,
-        button: MouseButton,
-        button_event: ElementState,
-    ) {
+    fn handle_mouse_button_event(&mut self, button: MouseButton, button_event: ElementState) {
         if let Some(button_index) = Self::mouse_button_to_index(button) {
             assert!(button_index < InputState::MOUSE_BUTTON_COUNT);
 
@@ -443,10 +400,7 @@ impl InputState {
     }
 
     /// Call when a mouse move occurs
-    fn handle_mouse_move_event(
-        &mut self,
-        position: PhysicalPosition<f64>,
-    ) {
+    fn handle_mouse_move_event(&mut self, position: PhysicalPosition<f64>) {
         //let old_mouse_position = self.mouse_position;
 
         // Update mouse position
@@ -512,10 +466,7 @@ impl InputState {
         }
     }
 
-    fn handle_mouse_wheel_event(
-        &mut self,
-        delta: MouseScrollDelta,
-    ) {
+    fn handle_mouse_wheel_event(&mut self, delta: MouseScrollDelta) {
         // Try to add the delta to self.mouse_wheel_delta
         if let MouseScrollDelta::LineDelta(x1, y1) = self.mouse_wheel_delta {
             if let MouseScrollDelta::LineDelta(x2, y2) = delta {
@@ -630,7 +581,7 @@ impl InputState {
             }
 
             // Ignore any other events
-            _ => (),
+            _ => {}
         }
 
         if is_close_requested {
@@ -686,10 +637,7 @@ impl InputState {
     }
 
     /// Adds two logical positions (p0 + p1)
-    fn add_physical(
-        p0: PhysicalPosition<f64>,
-        p1: PhysicalPosition<f64>,
-    ) -> PhysicalPosition<f64> {
+    fn add_physical(p0: PhysicalPosition<f64>, p1: PhysicalPosition<f64>) -> PhysicalPosition<f64> {
         PhysicalPosition::new(p0.x + p1.x, p0.y + p1.y)
     }
 
@@ -702,10 +650,7 @@ impl InputState {
     }
 
     /// Gets the distance between two logical positions
-    fn distance_physical(
-        p0: PhysicalPosition<f64>,
-        p1: PhysicalPosition<f64>,
-    ) -> f64 {
+    fn distance_physical(p0: PhysicalPosition<f64>, p1: PhysicalPosition<f64>) -> f64 {
         let x_diff = (p1.x - p0.x) as f64;
         let y_diff = (p1.y - p0.y) as f64;
 

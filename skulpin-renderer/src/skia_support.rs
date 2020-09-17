@@ -16,10 +16,7 @@ pub struct VkSkiaContext {
 }
 
 impl VkSkiaContext {
-    pub fn new(
-        instance: &VkInstance,
-        device: &VkDevice,
-    ) -> Self {
+    pub fn new(instance: &VkInstance, device: &VkDevice) -> Self {
         use vk::Handle;
 
         let get_proc = |of| unsafe {

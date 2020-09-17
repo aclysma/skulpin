@@ -39,11 +39,7 @@ impl ImguiRendererPlugin {
 }
 
 impl skulpin_renderer::RendererPlugin for ImguiRendererPlugin {
-    fn swapchain_created(
-        &mut self,
-        device: &VkDevice,
-        swapchain: &VkSwapchain,
-    ) -> VkResult<()> {
+    fn swapchain_created(&mut self, device: &VkDevice, swapchain: &VkSwapchain) -> VkResult<()> {
         self.imgui_renderpass = Some(VkImGuiRenderPass::new(device, swapchain, &self.font_atlas)?);
         Ok(())
     }

@@ -224,10 +224,7 @@ impl CoordinateSystemHelper {
     }
 
     /// Use raw pixels for the coordinate system. Top-left is (0, 0), bottom-right is (+X, +Y)
-    pub fn use_physical_coordinates(
-        &self,
-        canvas: &mut skia_safe::Canvas,
-    ) {
+    pub fn use_physical_coordinates(&self, canvas: &mut skia_safe::Canvas) {
         // For raw physical pixels, no need to do anything
         canvas.reset_matrix();
     }
@@ -235,10 +232,7 @@ impl CoordinateSystemHelper {
     /// Use logical coordinates for the coordinate system. Top-left is (0, 0), bottom-right is
     /// (+X, +Y). Logical size applies a multiplier for hi-dpi displays. For example, many
     ///   4K displays would probably have a high-dpi factor of 2.0, simulating a 1080p display.
-    pub fn use_logical_coordinates(
-        &self,
-        canvas: &mut skia_safe::Canvas,
-    ) {
+    pub fn use_logical_coordinates(&self, canvas: &mut skia_safe::Canvas) {
         // To handle hi-dpi displays, we need to compare the logical size of the window with the
         // actual canvas size. Critically, the canvas size won't necessarily be the size of the
         // window in physical pixels.

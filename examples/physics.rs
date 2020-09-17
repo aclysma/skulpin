@@ -176,10 +176,7 @@ impl ExampleApp {
 }
 
 impl AppHandler for ExampleApp {
-    fn update(
-        &mut self,
-        update_args: AppUpdateArgs,
-    ) {
+    fn update(&mut self, update_args: AppUpdateArgs) {
         let time_state = update_args.time_state;
         let input_state = update_args.input_state;
         let app_control = update_args.app_control;
@@ -212,10 +209,7 @@ impl AppHandler for ExampleApp {
         self.physics.step();
     }
 
-    fn draw(
-        &mut self,
-        draw_args: AppDrawArgs,
-    ) {
+    fn draw(&mut self, draw_args: AppDrawArgs) {
         let coordinate_system_helper = draw_args.coordinate_system_helper;
         let canvas = draw_args.canvas;
 
@@ -290,10 +284,7 @@ impl AppHandler for ExampleApp {
         canvas.draw_str(self.fps_text.clone(), (50, 50), &font, &text_paint);
     }
 
-    fn fatal_error(
-        &mut self,
-        error: &AppError,
-    ) {
+    fn fatal_error(&mut self, error: &AppError) {
         println!("{}", error);
     }
 }

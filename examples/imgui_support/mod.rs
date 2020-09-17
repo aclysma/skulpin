@@ -42,7 +42,9 @@ impl Drop for Inner {
         }
 
         // Drop the font atlas
-        unsafe { Box::from_raw(self.font_atlas_texture) };
+        unsafe {
+            Box::from_raw(self.font_atlas_texture)
+        };
     }
 }
 
@@ -90,11 +92,7 @@ impl ImguiManager {
 
     // Call when a winit event is received
     //TODO: Taking a lock per event sucks
-    pub fn handle_event<T>(
-        &self,
-        window: &winit::window::Window,
-        event: &winit::event::Event<T>,
-    ) {
+    pub fn handle_event<T>(&self, window: &winit::window::Window, event: &winit::event::Event<T>) {
         let mut inner = self.inner.lock().unwrap();
         let inner = &mut *inner;
         let context = &mut inner.context;
@@ -117,10 +115,8 @@ impl ImguiManager {
 
     // Allows access to the context without caller needing to be aware of locking
     #[allow(dead_code)]
-    pub fn with_context<F>(
-        &self,
-        f: F,
-    ) where
+    pub fn with_context<F>(&self, f: F)
+    where
         F: FnOnce(&mut imgui::Context),
     {
         let mut inner = self.inner.lock().unwrap();
@@ -128,10 +124,8 @@ impl ImguiManager {
     }
 
     // Allows access to the ui without the caller needing to be aware of locking. A frame must be started
-    pub fn with_ui<F>(
-        &self,
-        f: F,
-    ) where
+    pub fn with_ui<F>(&self, f: F)
+    where
         F: FnOnce(&mut imgui::Ui),
     {
         let inner = self.inner.lock().unwrap();
@@ -169,10 +163,7 @@ impl ImguiManager {
     }
 
     // Start a new frame
-    pub fn begin_frame(
-        &self,
-        window: &winit::window::Window,
-    ) {
+    pub fn begin_frame(&self, window: &winit::window::Window) {
         let mut inner_mutex_guard = self.inner.lock().unwrap();
         let mut inner = &mut *inner_mutex_guard;
 
@@ -209,10 +200,7 @@ impl ImguiManager {
     }
 
     // Finishes the frame. Draw data becomes available via get_draw_data()
-    pub fn render(
-        &self,
-        window: &winit::window::Window,
-    ) {
+    pub fn render(&self, window: &winit::window::Window) {
         let mut inner = self.inner.lock().unwrap();
 
         if inner.ui.is_none() {

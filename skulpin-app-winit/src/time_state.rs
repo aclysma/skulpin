@@ -124,10 +124,7 @@ impl TimeContext {
     }
 
     /// Call to capture time passing and update values
-    pub fn update(
-        &mut self,
-        elapsed: std::time::Duration,
-    ) {
+    pub fn update(&mut self, elapsed: std::time::Duration) {
         self.total_time += elapsed;
         self.current_instant += elapsed;
         self.previous_update_time = elapsed;

@@ -25,10 +25,7 @@ struct PreviousClick {
 }
 
 impl PreviousClick {
-    fn new(
-        position: Position,
-        time: std::time::Instant,
-    ) -> Self {
+    fn new(position: Position, time: std::time::Instant) -> Self {
         PreviousClick { position, time }
     }
 }
@@ -200,10 +197,7 @@ fn main() {
     }
 }
 
-fn update(
-    app_state: &mut ExampleAppState,
-    time_state: &TimeState,
-) {
+fn update(app_state: &mut ExampleAppState, time_state: &TimeState) {
     let now = time_state.current_instant();
 
     //

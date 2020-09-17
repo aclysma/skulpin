@@ -34,10 +34,7 @@ impl std::error::Error for VkCreateInstanceError {
 }
 
 impl core::fmt::Display for VkCreateInstanceError {
-    fn fmt(
-        &self,
-        fmt: &mut core::fmt::Formatter,
-    ) -> core::fmt::Result {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
         match *self {
             VkCreateInstanceError::LoadingError(ref e) => e.fmt(fmt),
             VkCreateInstanceError::InstanceError(ref e) => e.fmt(fmt),
@@ -118,7 +115,9 @@ impl VkInstance {
             // Find the best validation layer that's available
             let best_validation_layer = VkInstance::find_best_validation_layer(&layers);
             if best_validation_layer.is_none() {
-                log::error!("Could not find an appropriate validation layer. Check that the vulkan SDK has been installed or disable validation.");
+                log::error!(
+                    "Could not find an appropriate validation layer. Check that the vulkan SDK has been installed or disable validation."
+                );
                 return Err(vk::Result::ERROR_LAYER_NOT_PRESENT.into());
             }
 
@@ -128,7 +127,9 @@ impl VkInstance {
             });
 
             if !has_debug_extension {
-                log::error!("Could not find the debug extension. Check that the vulkan SDK has been installed or disable validation.");
+                log::error!(
+                    "Could not find the debug extension. Check that the vulkan SDK has been installed or disable validation."
+                );
                 return Err(vk::Result::ERROR_EXTENSION_NOT_PRESENT.into());
             }
 

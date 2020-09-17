@@ -25,11 +25,7 @@ use super::Window;
 pub trait RendererPlugin {
     /// Called whenever the swapchain needs to be created (the first time, and in cases where the
     /// swapchain needs to be recreated)
-    fn swapchain_created(
-        &mut self,
-        device: &VkDevice,
-        swapchain: &VkSwapchain,
-    ) -> VkResult<()>;
+    fn swapchain_created(&mut self, device: &VkDevice, swapchain: &VkSwapchain) -> VkResult<()>;
 
     /// Called whenever the swapchain will be destroyed (when renderer is dropped, and also in cases
     /// where the swapchain needs to be recreated)
@@ -76,10 +72,7 @@ impl RendererBuilder {
     /// Name of the app. This is passed into the vulkan layer. I believe it can hint things to the
     /// vulkan driver, but it's unlikely this makes a real difference. Still a good idea to set this
     /// to something meaningful though.
-    pub fn app_name(
-        mut self,
-        app_name: CString,
-    ) -> Self {
+    pub fn app_name(mut self, app_name: CString) -> Self {
         self.app_name = app_name;
         self
     }
@@ -87,10 +80,7 @@ impl RendererBuilder {
     /// If true, initialize the vulkan debug layers. This will require the vulkan SDK to be
     /// installed and the app will fail to launch if it isn't. This turns on ALL logging. For
     /// more control, see `validation_layer_debug_report_flags()`
-    pub fn use_vulkan_debug_layer(
-        self,
-        use_vulkan_debug_layer: bool,
-    ) -> Self {
+    pub fn use_vulkan_debug_layer(self, use_vulkan_debug_layer: bool) -> Self {
         self.validation_layer_debug_report_flags(if use_vulkan_debug_layer {
             vk::DebugReportFlagsEXT::all()
         } else {
@@ -111,10 +101,7 @@ impl RendererBuilder {
 
     /// Determine the coordinate system to use for the canvas. This can be overridden by using the
     /// canvas sizer passed into the draw callback
-    pub fn coordinate_system(
-        mut self,
-        coordinate_system: CoordinateSystem,
-    ) -> Self {
+    pub fn coordinate_system(mut self, coordinate_system: CoordinateSystem) -> Self {
         self.coordinate_system = coordinate_system;
         self
     }
@@ -128,10 +115,7 @@ impl RendererBuilder {
     ///
     /// Since `Fifo` is always available, this is the mode that will be chosen if no desired mode is
     /// available.
-    pub fn present_mode_priority(
-        mut self,
-        present_mode_priority: Vec<PresentMode>,
-    ) -> Self {
+    pub fn present_mode_priority(mut self, present_mode_priority: Vec<PresentMode>) -> Self {
         self.present_mode_priority = present_mode_priority;
         self
     }
@@ -183,19 +167,13 @@ impl RendererBuilder {
         self.present_mode_priority(vec![PresentMode::Mailbox, PresentMode::Fifo])
     }
 
-    pub fn add_plugin(
-        mut self,
-        plugin: Box<dyn RendererPlugin>,
-    ) -> Self {
+    pub fn add_plugin(mut self, plugin: Box<dyn RendererPlugin>) -> Self {
         self.plugins.push(plugin);
         self
     }
 
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
-    pub fn build(
-        self,
-        window: &dyn Window,
-    ) -> Result<Renderer, CreateRendererError> {
+    pub fn build(self, window: &dyn Window) -> Result<Renderer, CreateRendererError> {
         Renderer::new(
             &self.app_name,
             window,
@@ -248,10 +226,7 @@ impl std::error::Error for CreateRendererError {
 }
 
 impl core::fmt::Display for CreateRendererError {
-    fn fmt(
-        &self,
-        fmt: &mut core::fmt::Formatter,
-    ) -> core::fmt::Result {
+    fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
         match *self {
             CreateRendererError::CreateInstanceError(ref e) => e.fmt(fmt),
             CreateRendererError::VkError(ref e) => e.fmt(fmt),
@@ -392,10 +367,7 @@ impl Renderer {
         }
     }
 
-    fn rebuild_swapchain(
-        &mut self,
-        window: &dyn Window,
-    ) -> VkResult<()> {
+    fn rebuild_swapchain(&mut self, window: &dyn Window) -> VkResult<()> {
         unsafe {
             self.device.logical_device.device_wait_idle()?;
             ManuallyDrop::drop(&mut self.skia_renderpass);

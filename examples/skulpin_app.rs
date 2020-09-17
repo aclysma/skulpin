@@ -50,10 +50,7 @@ impl ExampleApp {
 }
 
 impl AppHandler for ExampleApp {
-    fn update(
-        &mut self,
-        update_args: AppUpdateArgs,
-    ) {
+    fn update(&mut self, update_args: AppUpdateArgs) {
         let input_state = update_args.input_state;
         let app_control = update_args.app_control;
 
@@ -62,10 +59,7 @@ impl AppHandler for ExampleApp {
         }
     }
 
-    fn draw(
-        &mut self,
-        draw_args: AppDrawArgs,
-    ) {
+    fn draw(&mut self, draw_args: AppDrawArgs) {
         let time_state = draw_args.time_state;
         let canvas = draw_args.canvas;
 
@@ -116,10 +110,7 @@ impl AppHandler for ExampleApp {
         canvas.draw_str("Hello Skulpin", (71, 206), &font, &paint);
     }
 
-    fn fatal_error(
-        &mut self,
-        error: &AppError,
-    ) {
+    fn fatal_error(&mut self, error: &AppError) {
         println!("{}", error);
     }
 }

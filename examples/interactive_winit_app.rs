@@ -38,10 +38,7 @@ struct PreviousClick {
 }
 
 impl PreviousClick {
-    fn new(
-        position: PhysicalPosition<f64>,
-        time: std::time::Instant,
-    ) -> Self {
+    fn new(position: PhysicalPosition<f64>, time: std::time::Instant) -> Self {
         PreviousClick { position, time }
     }
 }
@@ -63,10 +60,7 @@ impl ExampleApp {
 }
 
 impl AppHandler for ExampleApp {
-    fn update(
-        &mut self,
-        update_args: AppUpdateArgs,
-    ) {
+    fn update(&mut self, update_args: AppUpdateArgs) {
         let time_state = update_args.time_state;
         let input_state = update_args.input_state;
         let app_control = update_args.app_control;
@@ -113,10 +107,7 @@ impl AppHandler for ExampleApp {
         }
     }
 
-    fn draw(
-        &mut self,
-        draw_args: AppDrawArgs,
-    ) {
+    fn draw(&mut self, draw_args: AppDrawArgs) {
         let time_state = draw_args.time_state;
         let canvas = draw_args.canvas;
         let input_state = draw_args.input_state;
@@ -219,10 +210,7 @@ impl AppHandler for ExampleApp {
         );
     }
 
-    fn fatal_error(
-        &mut self,
-        error: &AppError,
-    ) {
+    fn fatal_error(&mut self, error: &AppError) {
         println!("{}", error);
     }
 }

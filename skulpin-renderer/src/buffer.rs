@@ -45,7 +45,9 @@ impl VkBuffer {
 
         let buffer_memory = unsafe { logical_device.allocate_memory(&buffer_allocate_info, None)? };
 
-        unsafe { logical_device.bind_buffer_memory(buffer, buffer_memory, 0)? }
+        unsafe {
+            logical_device.bind_buffer_memory(buffer, buffer_memory, 0)?
+        }
 
         Ok(VkBuffer {
             device: logical_device.clone(),
@@ -94,10 +96,7 @@ impl VkBuffer {
         Ok(ManuallyDrop::new(device_buffer))
     }
 
-    pub fn write_to_host_visible_buffer<T: Copy>(
-        &mut self,
-        data: &[T],
-    ) -> VkResult<()> {
+    pub fn write_to_host_visible_buffer<T: Copy>(&mut self, data: &[T]) -> VkResult<()> {
         let ptr = unsafe {
             self.device.map_memory(
                 self.buffer_memory,

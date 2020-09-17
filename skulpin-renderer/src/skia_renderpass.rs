@@ -205,7 +205,7 @@ impl VkSkiaRenderPass {
     }
 
     fn create_descriptor_set_layout(
-        logical_device: &ash::Device
+        logical_device: &ash::Device,
     ) -> VkResult<vk::DescriptorSetLayout> {
         let descriptor_set_layout_bindings = [vk::DescriptorSetLayoutBinding::builder()
             .binding(0)
@@ -444,10 +444,7 @@ impl VkSkiaRenderPass {
         })
     }
 
-    fn load_shader_module(
-        logical_device: &ash::Device,
-        data: &[u8],
-    ) -> VkResult<vk::ShaderModule> {
+    fn load_shader_module(logical_device: &ash::Device, data: &[u8]) -> VkResult<vk::ShaderModule> {
         let mut spv_file = std::io::Cursor::new(data);
         //TODO: Pass this error up
         let code =
@@ -728,10 +725,7 @@ impl VkSkiaRenderPass {
         }
     }
 
-    pub fn skia_surface(
-        &mut self,
-        index: usize,
-    ) -> &mut VkSkiaSurface {
+    pub fn skia_surface(&mut self, index: usize) -> &mut VkSkiaSurface {
         &mut self.skia_surfaces[index]
     }
 }

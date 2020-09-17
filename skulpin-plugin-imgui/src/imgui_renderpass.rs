@@ -223,7 +223,7 @@ impl VkImGuiRenderPass {
     }
 
     fn create_descriptor_set_layout(
-        logical_device: &ash::Device
+        logical_device: &ash::Device,
     ) -> VkResult<vk::DescriptorSetLayout> {
         let descriptor_set_layout_bindings = [
             vk::DescriptorSetLayoutBinding::builder()
@@ -478,10 +478,7 @@ impl VkImGuiRenderPass {
         Ok(())
     }
 
-    fn load_shader_module(
-        logical_device: &ash::Device,
-        data: &[u8],
-    ) -> VkResult<vk::ShaderModule> {
+    fn load_shader_module(logical_device: &ash::Device, data: &[u8]) -> VkResult<vk::ShaderModule> {
         let mut spv_file = std::io::Cursor::new(data);
         //TODO: Pass this error up
         let code = skulpin_renderer::util::read_spv(&mut spv_file)
