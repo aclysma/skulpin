@@ -55,3 +55,10 @@ pub use skulpin_renderer_sdl2;
 pub use skulpin_renderer_sdl2::sdl2;
 #[cfg(feature = "skulpin_sdl2")]
 pub use skulpin_renderer_sdl2::Sdl2Window;
+
+#[cfg(feature = "skulpin_glfw")]
+pub use skulpin_renderer_glfw;
+#[cfg(feature = "skulpin_glfw")]
+pub use skulpin_renderer_glfw::glfw;
+#[cfg(feature = "skulpin_glfw")]
+pub use skulpin_renderer_glfw::GlfwWindow;

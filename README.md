@@ -40,7 +40,8 @@ as necessary to address issues that might come up and maintain compatibility wit
 Originally this was just a proof-of-concept, but it is now being used by [neovide](https://github.com/Kethku/neovide).
 I've received anecdotal reports that this library is working will on windows, macOS and linux (including wayland.) There
 are some bugs with `winit`, so I added `sdl2` support as a more stable option. I think this could realistically be used
-for shipping software when used with the sdl2 backend. 
+for shipping software when used with the sdl2 backend. Additionally, the `glfw` backend was recently added but is not
+recommended for use. (It did not behave well on macOS in my testing.)
 
 Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. Because Google is
 deeply invested in this stack, I anticipate relatively long term support of this type of usage in Skia.
@@ -51,15 +52,18 @@ This library currently supports two windowing backends:
  * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling implemented in Rust. 
  * [sdl2](https://github.com/Rust-SDL2/rust-sdl2) - SDL2 isn't written in rust, and it does far more than windowing. 
    However, it's a mature project that's been around for a long time. 
+ * [glfw](https://github.com/PistonDevelopers/glfw-rs) - GLFW is another mature windowing choice implemented in C and
+   easily used from rust. It's smaller than SDL2 and has better IME support, but did not behave well in macOS for me.
 
 If you're just poking around, winit is fine. For a "shipping" project, I'd consider using sdl2 since at time of this
-writing, it's more stable.
+writing, it's more stable. The glfw backend is new but could become the recommended default due to being relatively
+small and having better IME support, but currently it is new and unreliable.
 
 You can also use the `skulpin-renderer` crate directly and implement `Window` trait for yourself.
 
-By default, support (and dependencies) for both `winit` and `sdl2` are pulled in when building against the `skulpin`
-crate. This can be avoided either by directly linking against crates like `skulpin-renderer` or by using feature flags.
-See the Feature Flags section for more info.
+By default, support (and dependencies) for ALL backends  are pulled in when building against the `skulpin` crate. This
+can be avoided either by directly linking against crates like `skulpin-renderer` or by using feature flags. See the 
+Feature Flags section for more info.
 
 ## Usage
 
@@ -67,10 +71,11 @@ Currently there are two ways to use this library with `winit`.
  * [app](examples/skulpin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
    This is currently only supported when using winit.
  * [renderer_only](examples/winit_renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to 
-   draw to it. The window should be wrapped in an implementation of `skulpin::Window`. Implementations for `sdl2` and
-   `winit` are provided.
+   draw to it. The window should be wrapped in an implementation of `skulpin::Window`. Implementations for `sdl2`,
+   `glfw`, and `winit` are provided.
 
-If you prefer `sdl2` you'll need to use the renderer directly. See [sdl2 renderer only](examples/sdl2_renderer_only.rs)
+If you prefer `sdl2` or `glfw` you'll need to use the renderer directly. See 
+[sdl2 renderer only](examples/sdl2_renderer_only.rs)
 
 Don't forget to install the prerequisites below appropriate to your platform! (See "Requirements")
 
@@ -91,11 +96,12 @@ features (default behavior), or disable all features. (use `default-features = f
 ### Skulpin features:
 * `skulpin_sdl2` - Re-export sdl2-related types from the skulpin crate
 * `skulpin_winit` - Re-export winit-related types from the skulpin crate
+* `skulpin_glfw` - Re-export glfw-related types from the skulpin crate
 
 ### Examples of Feature Flag Usage
 
 ```
-# Pull in all skia features and support for all backends (sdl2 and winit)
+# Pull in all skia features and support for all backends (sdl2, winit, glfw)
 skulpin = "0"
 
 # Pull in all skia features and support for winit only
@@ -103,6 +109,9 @@ skulpin = { version = "0", default-features = false, features = ["skia_complete"
 
 # Pull in no optional skia features and support for sdl2 only
 skulpin = { version = "0", default-features = false, features = ["skulpin_sdl2"] }
+
+# Pull in no optional skia features and support for glfw only
+skulpin = { version = "0", default-features = false, features = ["skulpin_glfw"] }
 ```
 
 ### Upstream Versioning of ash and skia-safe
@@ -216,7 +225,9 @@ The fonts directory contains several fonts under their own licenses:
  * [FontAwesome 4.7.0](https://fontawesome.com/v4.7.0/license/), available under SIL OFL 1.1
  * [`mplus-1p-regular.ttf`](http://mplus-fonts.osdn.jp), available under its own license.
 
-[`sdl2` uses the zlib license.](https://www.libsdl.org/license.php)
+Not included but worth mentioning:
+ * [`sdl2` uses the zlib license.](https://www.libsdl.org/license.php)
+ * [`glfw` uses the zlib license.](https://www.glfw.org/license.html)
 
 ### Contribution
 

@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "skulpin-renderer",
+    "skulpin-renderer-glfw",
     "skulpin-renderer-sdl2",
     "skulpin-renderer-winit",
     "skulpin-app-winit",
@@ -46,11 +47,13 @@ skia_complete = ["skulpin-renderer/complete"]
 
 skulpin_winit = ["skulpin-renderer-winit", "skulpin-app-winit"]
 skulpin_sdl2 = ["skulpin-renderer-sdl2"]
+skulpin_glfw = ["skulpin-renderer-glfw"]
 
 default = ["skulpin_winit", "skulpin_sdl2", "skia_complete"]
 
 [dependencies]
 skulpin-renderer = { version = "0.4", path = "skulpin-renderer" }
+skulpin-renderer-glfw = { version = "0.1", path = "skulpin-renderer-glfw", optional = true }
 skulpin-renderer-sdl2 = { version = "0.4", path = "skulpin-renderer-sdl2", optional = true }
 skulpin-renderer-winit = { version = "0.4", path = "skulpin-renderer-winit", optional = true }
 skulpin-app-winit = { version = "0.4", path = "skulpin-app-winit", optional = true }
