@@ -112,7 +112,8 @@ impl VkInstance {
             .api_version(api_version);
 
         let mut layer_names = vec![];
-        let mut extension_names = window.extension_names();
+
+        let mut extension_names = window.extension_names().unwrap();
 
         if !validation_layer_debug_report_flags.is_empty() {
             // Find the best validation layer that's available
@@ -134,24 +135,19 @@ impl VkInstance {
 
             if let Some(best_validation_layer) = best_validation_layer {
                 if has_debug_extension {
-                    layer_names.push(best_validation_layer.as_ptr());
-                    extension_names.push(DebugReport::name().as_ptr());
+                    layer_names.push(best_validation_layer);
+                    extension_names.push(DebugReport::name());
                 }
             }
         };
 
         if log_enabled!(log::Level::Debug) {
-            let layer_names_as_cstr: Vec<_> = layer_names
-                .iter()
-                .map(|ptr| unsafe { CStr::from_ptr(*ptr) })
-                .collect();
-            log::debug!("Using layers: {:?}", layer_names_as_cstr);
-            let extension_names_as_cstr: Vec<_> = extension_names
-                .iter()
-                .map(|ptr| unsafe { CStr::from_ptr(*ptr) })
-                .collect();
-            log::debug!("Using extensions: {:?}", extension_names_as_cstr);
+            log::debug!("Using layers: {:?}", layer_names);
+            log::debug!("Using extensions: {:?}", extension_names);
         }
+
+        let layer_names: Vec<_> = layer_names.iter().map(|x| x.as_ptr()).collect();
+        let extension_names: Vec<_> = extension_names.iter().map(|x| x.as_ptr()).collect();
 
         // Create the instance
         let create_info = vk::InstanceCreateInfo::builder()

@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "skulpin-renderer",
+    "skulpin-renderer-glfw",
     "skulpin-renderer-sdl2",
     "skulpin-renderer-winit",
     "skulpin-app-winit",
@@ -46,11 +47,13 @@ skia_complete = ["skulpin-renderer/complete"]
 
 skulpin_winit = ["skulpin-renderer-winit", "skulpin-app-winit"]
 skulpin_sdl2 = ["skulpin-renderer-sdl2"]
+skulpin_glfw = ["skulpin-renderer-glfw"]
 
-default = ["skulpin_winit", "skulpin_sdl2", "skia_complete"]
+default = ["skulpin_winit", "skulpin_sdl2", "skulpin_glfw", "skia_complete"]
 
 [dependencies]
 skulpin-renderer = { version = "0.4", path = "skulpin-renderer" }
+skulpin-renderer-glfw = { version = "0.1", path = "skulpin-renderer-glfw", optional = true }
 skulpin-renderer-sdl2 = { version = "0.4", path = "skulpin-renderer-sdl2", optional = true }
 skulpin-renderer-winit = { version = "0.4", path = "skulpin-renderer-winit", optional = true }
 skulpin-app-winit = { version = "0.4", path = "skulpin-app-winit", optional = true }
@@ -72,4 +75,4 @@ sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
 # Used for the imgui example only
 imgui = "0.4"
 imgui-winit-support = "0.4"
-skulpin-plugin-imgui = { path = "skulpin-plugin-imgui"}
+skulpin-plugin-imgui = { version = "1.0", path = "skulpin-plugin-imgui"}

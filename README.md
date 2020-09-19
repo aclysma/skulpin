@@ -51,6 +51,8 @@ This library currently supports two windowing backends:
  * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling implemented in Rust. 
  * [sdl2](https://github.com/Rust-SDL2/rust-sdl2) - SDL2 isn't written in rust, and it does far more than windowing. 
    However, it's a mature project that's been around for a long time. 
+ * [glfw](https://github.com/PistonDevelopers/glfw-rs) - GLFW is another mature windowing choice implemented in C and
+   easily used from rust
 
 If you're just poking around, winit is fine. For a "shipping" project, I'd consider using sdl2 since at time of this
 writing, it's more stable.
@@ -95,7 +97,7 @@ features (default behavior), or disable all features. (use `default-features = f
 ### Examples of Feature Flag Usage
 
 ```
-# Pull in all skia features and support for all backends (sdl2 and winit)
+# Pull in all skia features and support for all backends (sdl2, winit, glfw)
 skulpin = "0"
 
 # Pull in all skia features and support for winit only
@@ -216,7 +218,9 @@ The fonts directory contains several fonts under their own licenses:
  * [FontAwesome 4.7.0](https://fontawesome.com/v4.7.0/license/), available under SIL OFL 1.1
  * [`mplus-1p-regular.ttf`](http://mplus-fonts.osdn.jp), available under its own license.
 
-[`sdl2` uses the zlib license.](https://www.libsdl.org/license.php)
+Not included but worth mentioning:
+ * [`sdl2` uses the zlib license.](https://www.libsdl.org/license.php)
+ * [`glfw` uses the zlib license.](https://www.glfw.org/license.html)
 
 ### Contribution
 
