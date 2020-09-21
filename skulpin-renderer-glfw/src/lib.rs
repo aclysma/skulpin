@@ -25,13 +25,11 @@ impl<'a> Window for GlfwWindow<'a> {
         PhysicalSize::new(x as u32, y as u32)
     }
 
-    #[cfg(not(target_os = "windows"))]
     fn logical_size(&self) -> LogicalSize {
         let (x, y) = self.window.get_size();
         LogicalSize::new(x as u32, y as u32)
     }
 
-    #[cfg(not(target_os = "windows"))]
     fn scale_factor(&self) -> f64 {
         self.window.get_content_scale().0 as f64
     }

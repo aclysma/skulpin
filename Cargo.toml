@@ -75,4 +75,4 @@ sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
 # Used for the imgui example only
 imgui = "0.4"
 imgui-winit-support = "0.4"
-skulpin-plugin-imgui = { version = "1.0", path = "skulpin-plugin-imgui"}
+skulpin-plugin-imgui = { path = "skulpin-plugin-imgui"}
