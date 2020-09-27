@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.10.0 (Unreleased)
+## Unreleased
+
+ * The imgui plugin has been updated to use open-ended versioning. This is published as skulpin-plugin-imgui 0.6.0 but
+   does not affect the skulpin release itself as this is a dev-dependency.
+
+## 0.10.0
 
  * Improvements to validation layer handling
      * Search for VK_LAYER_KHRONOS_validation but fall back to VK_LAYER_LUNARG_standard_validation if it's not present

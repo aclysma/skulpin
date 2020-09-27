@@ -70,6 +70,6 @@ nphysics2d = "0.12"
 sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
 
 # Used for the imgui example only
-imgui = "0.4"
-imgui-winit-support = "0.4"
+imgui = "0.5"
+imgui-winit-support = "0.5"
 skulpin-plugin-imgui = { path = "skulpin-plugin-imgui"}

@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-plugin-imgui"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "A plugin for skulpin that implements imgui rendering"
@@ -14,5 +14,5 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 
 [dependencies]
 skulpin-renderer = { version = "0.4", path = "../skulpin-renderer" }
-imgui = "0.4"
+imgui = ">=0.4"
 log = "0.4"
