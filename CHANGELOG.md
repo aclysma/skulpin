@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+ * Refactor the API integrations to use ash_window, simplifying the code and removing a lot of platform-specific code
+   from the winit integration.
  * The imgui plugin has been updated to use open-ended versioning. This is published as skulpin-plugin-imgui 0.6.0 but
    does not affect the skulpin release itself as this is a dev-dependency.
 
