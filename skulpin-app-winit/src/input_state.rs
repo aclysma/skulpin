@@ -525,7 +525,7 @@ impl InputState {
             }
         } else if let MouseScrollDelta::PixelDelta(d1) = self.mouse_wheel_delta {
             if let MouseScrollDelta::PixelDelta(d2) = delta {
-                self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(LogicalPosition::<f64>::new(
+                self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(PhysicalPosition::<f64>::new(
                     d1.x + d2.x,
                     d1.y + d2.y,
                 ));
