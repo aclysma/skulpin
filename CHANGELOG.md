@@ -6,6 +6,8 @@
    from the winit integration.
  * The imgui plugin has been updated to use open-ended versioning. This is published as skulpin-plugin-imgui 0.6.0 but
    does not affect the skulpin release itself as this is a dev-dependency.
+ * Added feature flags winit-21, winit-22, winit-23, and winit-latest for easier control of what winit version to pull
+   in. This also allows us to have version-specific code (for example to handle upstream changes in winit API)
 
 ## 0.10.0
 

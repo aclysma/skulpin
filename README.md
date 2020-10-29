@@ -92,6 +92,17 @@ features (default behavior), or disable all features. (use `default-features = f
 * `skulpin_sdl2` - Re-export sdl2-related types from the skulpin crate
 * `skulpin_winit` - Re-export winit-related types from the skulpin crate
 
+### Winit versions:
+By default, skulpin uses winit 0.22. If you want to override this, use the appropriate winit feature flag. You will
+need to disable default features (i.e. --no-default-features/default-features = false) so that the default winit-22
+feature does not get included.
+* `winit-21`
+* `winit-22`
+* `winit-23`
+* `winit-latest`
+
+(These feature names match the imgui-rs crate.)
+
 ### Examples of Feature Flag Usage
 
 ```

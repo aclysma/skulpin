@@ -17,3 +17,9 @@ skulpin-renderer = { version = "0.4", path = "../skulpin-renderer" }
 skulpin-renderer-winit = { version = "0.4", path = "../skulpin-renderer-winit" }
 
 log="0.4"
+
+[features]
+winit-21 = []
+winit-22 = []
+winit-23 = []
+winit-latest = []

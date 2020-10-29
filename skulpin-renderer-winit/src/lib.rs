@@ -1,4 +1,12 @@
-pub use winit;
+#[cfg(feature = "winit-21")]
+pub use winit_21 as winit;
+#[cfg(feature = "winit-22")]
+pub use winit_22 as winit;
+#[cfg(feature = "winit-23")]
+pub use winit_23 as winit;
+#[cfg(feature = "winit-latest")]
+pub use winit_latest as winit;
+
 use skulpin_renderer::ash;
 
 pub use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};

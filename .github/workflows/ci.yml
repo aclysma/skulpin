@@ -1,10 +1,6 @@
 name: CI
 
-on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
+on: [push, pull_request]
 
 env:
   CARGO_TERM_COLOR: always
@@ -36,8 +32,24 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-check-test-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
 
+      # The normal build with all features
       - name: Build
-        run: cargo check
+        run: cargo check default
+        env:
+          CARGO_INCREMENTAL: 0
+          RUSTFLAGS: "-C debuginfo=0 -D warnings"
+
+
+      - name: Build winit 0.21
+        run: cargo check --no-default-features --features=winit-21,skulpin_winit
+        if: ${{ runner.os == 'Linux' }}
+        env:
+          CARGO_INCREMENTAL: 0
+          RUSTFLAGS: "-C debuginfo=0 -D warnings"
+
+      - name: Build winit 0.23
+        run: cargo check --no-default-features --features=winit-23,skulpin_winit
+        if: ${{ runner.os == 'Linux' }}
         env:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
@@ -67,6 +79,5 @@ jobs:
         run: >
           cargo clippy
           --all-targets
-          --all-features
           --
           -D warnings
