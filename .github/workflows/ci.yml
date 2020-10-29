@@ -34,12 +34,12 @@ jobs:
 
       # The normal build with all features
       - name: Build
-        run: cargo check default
+        run: cargo check
         env:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
-
+      # Verify winit 0.21 build works
       - name: Build winit 0.21
         run: cargo check --no-default-features --features=winit-21,skulpin_winit
         if: ${{ runner.os == 'Linux' }}
@@ -47,6 +47,7 @@ jobs:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
+      # Verify winit 0.23 build works
       - name: Build winit 0.23
         run: cargo check --no-default-features --features=winit-23,skulpin_winit
         if: ${{ runner.os == 'Linux' }}
@@ -54,6 +55,7 @@ jobs:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
+      # Run tests
       - name: Run tests
         run: cargo test --workspace
         if: ${{ runner.os == 'Linux' }}
