@@ -47,7 +47,12 @@ skia_complete = ["skulpin-renderer/complete"]
 skulpin_winit = ["skulpin-renderer-winit", "skulpin-app-winit"]
 skulpin_sdl2 = ["skulpin-renderer-sdl2"]
 
-default = ["skulpin_winit", "skulpin_sdl2", "skia_complete"]
+winit-21 = ["skulpin-renderer-winit/winit-21", "skulpin-app-winit/winit-21"]
+winit-22 = ["skulpin-renderer-winit/winit-22", "skulpin-app-winit/winit-22"]
+winit-23 = ["skulpin-renderer-winit/winit-23", "skulpin-app-winit/winit-23"]
+winit-latest = ["skulpin-renderer-winit/winit-latest", "skulpin-app-winit/winit-latest"]
+
+default = ["skulpin_winit", "skulpin_sdl2", "skia_complete", "winit-22"]
 
 [dependencies]
 skulpin-renderer = { version = "0.4", path = "skulpin-renderer" }

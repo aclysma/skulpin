@@ -525,10 +525,19 @@ impl InputState {
             }
         } else if let MouseScrollDelta::PixelDelta(d1) = self.mouse_wheel_delta {
             if let MouseScrollDelta::PixelDelta(d2) = delta {
-                self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(LogicalPosition::<f64>::new(
-                    d1.x + d2.x,
-                    d1.y + d2.y,
-                ));
+                #[cfg(any(feature = "winit-21", feature = "winit-22"))]
+                {
+                    self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(
+                        LogicalPosition::<f64>::new(d1.x + d2.x, d1.y + d2.y),
+                    );
+                }
+
+                #[cfg(any(feature = "winit-23", feature = "winit-latest"))]
+                {
+                    self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(
+                        PhysicalPosition::<f64>::new(d1.x + d2.x, d1.y + d2.y),
+                    );
+                }
             } else {
                 self.mouse_wheel_delta = delta;
             }
