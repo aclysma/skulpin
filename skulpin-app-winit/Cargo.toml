@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-app-winit"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "A winit-based application layer for skulpin"
@@ -13,13 +13,13 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-skulpin-renderer = { version = "0.4", path = "../skulpin-renderer" }
-skulpin-renderer-winit = { version = "0.4", path = "../skulpin-renderer-winit" }
+skulpin-renderer = { version = "0.5", path = "../skulpin-renderer" }
+skulpin-renderer-winit = { version = "0.5", path = "../skulpin-renderer-winit" }
 
 log="0.4"
 
 [features]
-winit-21 = []
-winit-22 = []
-winit-23 = []
-winit-latest = []
+winit-21 = ["skulpin-renderer-winit/winit-21"]
+winit-22 = ["skulpin-renderer-winit/winit-22"]
+winit-23 = ["skulpin-renderer-winit/winit-23"]
+winit-latest = ["skulpin-renderer-winit/winit-latest"]

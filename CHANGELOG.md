@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.0
 
  * Refactor the API integrations to use ash_window, simplifying the code and removing a lot of platform-specific code
    from the winit integration.
