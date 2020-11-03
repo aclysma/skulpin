@@ -158,7 +158,9 @@ impl AppHandler for ExampleApp {
             paint.set_style(skia_safe::paint::Style::Stroke);
             paint.set_stroke_width(3.0);
 
-            let position = previous_click.position;
+            let position: LogicalPosition<f64> = previous_click
+                .position
+                .to_logical(input_state.scale_factor());
 
             canvas.draw_circle(
                 skia_safe::Point::new(position.x as f32, position.y as f32),
