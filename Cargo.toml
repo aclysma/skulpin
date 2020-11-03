@@ -9,7 +9,7 @@ members = [
 
 [package]
 name = "skulpin"
-version = "0.11.0"
+version = "0.11.1"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
@@ -77,4 +77,4 @@ sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
 # Used for the imgui example only
 imgui = "0.5"
 imgui-winit-support = "0.5"
-skulpin-plugin-imgui = { version = "0.6", path = "skulpin-plugin-imgui"}
+skulpin-plugin-imgui = { version = "0.7", path = "skulpin-plugin-imgui"}
