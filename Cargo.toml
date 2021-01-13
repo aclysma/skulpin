@@ -53,7 +53,7 @@ winit-23 = ["skulpin-renderer-winit/winit-23", "skulpin-app-winit/winit-23"]
 winit-24 = ["skulpin-renderer-winit/winit-24", "skulpin-app-winit/winit-24"]
 winit-latest = ["skulpin-renderer-winit/winit-latest", "skulpin-app-winit/winit-latest"]
 
-default = ["skulpin_winit", "skulpin_sdl2", "skia_complete", "winit-22"]
+default = ["skulpin_winit", "skulpin_sdl2", "skia_complete", "winit-24"]
 
 [dependencies]
 skulpin-renderer = { version = "0.5.1", path = "skulpin-renderer" }
