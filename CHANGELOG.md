@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+ * Add winit-24 feature flag
+
 ## 0.11.0
 
  * Refactor the API integrations to use ash_window, simplifying the code and removing a lot of platform-specific code

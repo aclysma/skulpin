@@ -99,6 +99,7 @@ feature does not get included.
 * `winit-21`
 * `winit-22`
 * `winit-23`
+* `winit-24`
 * `winit-latest`
 
 (These feature names match the imgui-rs crate.)

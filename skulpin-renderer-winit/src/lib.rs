@@ -4,6 +4,8 @@ pub use winit_21 as winit;
 pub use winit_22 as winit;
 #[cfg(feature = "winit-23")]
 pub use winit_23 as winit;
+#[cfg(feature = "winit-24")]
+pub use winit_24 as winit;
 #[cfg(feature = "winit-latest")]
 pub use winit_latest as winit;
 
