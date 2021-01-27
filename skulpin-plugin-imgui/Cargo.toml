@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-plugin-imgui"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "A plugin for skulpin that implements imgui rendering"
@@ -13,6 +13,6 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-skulpin-renderer = { version = "0.5", path = "../skulpin-renderer" }
+skulpin-renderer = { version = "0.5.1", path = "../skulpin-renderer" }
 imgui = ">=0.4"
 log = "0.4"
