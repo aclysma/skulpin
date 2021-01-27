@@ -50,6 +50,7 @@ skulpin_sdl2 = ["skulpin-renderer-sdl2"]
 winit-21 = ["skulpin-renderer-winit/winit-21", "skulpin-app-winit/winit-21"]
 winit-22 = ["skulpin-renderer-winit/winit-22", "skulpin-app-winit/winit-22"]
 winit-23 = ["skulpin-renderer-winit/winit-23", "skulpin-app-winit/winit-23"]
+winit-24 = ["skulpin-renderer-winit/winit-24", "skulpin-app-winit/winit-24"]
 winit-latest = ["skulpin-renderer-winit/winit-latest", "skulpin-app-winit/winit-latest"]
 
 default = ["skulpin_winit", "skulpin_sdl2", "skia_complete", "winit-22"]
@@ -72,7 +73,8 @@ nphysics2d = "0.12"
 
 # The skulpin-renderer-sdl2 crate doesn't specify any features, but downstream libraries can do so by including sdl2
 # for themselves. Examples will use the features added here
-sdl2 = { version = ">=0.33", features = ["bundled", "static-link"] }
+sdl2-sys = { version = ">=0.33, <=0.34.2"}
+sdl2 = { version = ">=0.33, <=0.34.2", features = ["bundled", "static-link"] }
 
 # Used for the imgui example only
 imgui = "0.5"

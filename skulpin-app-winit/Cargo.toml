@@ -22,4 +22,5 @@ log="0.4"
 winit-21 = ["skulpin-renderer-winit/winit-21"]
 winit-22 = ["skulpin-renderer-winit/winit-22"]
 winit-23 = ["skulpin-renderer-winit/winit-23"]
+winit-24 = ["skulpin-renderer-winit/winit-24"]
 winit-latest = ["skulpin-renderer-winit/winit-latest"]

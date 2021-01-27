@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.1
+
+ * Add winit-24 feature flag
+ * Limit some open-ended versions to fix build issues
+
 ## 0.11.0
 
  * Refactor the API integrations to use ash_window, simplifying the code and removing a lot of platform-specific code
@@ -8,6 +13,10 @@
    does not affect the skulpin release itself as this is a dev-dependency.
  * Added feature flags winit-21, winit-22, winit-23, and winit-latest for easier control of what winit version to pull
    in. This also allows us to have version-specific code (for example to handle upstream changes in winit API)
+
+## 0.10.1
+
+ * Limit some open-ended versions to fix build issues
 
 ## 0.10.0
 
