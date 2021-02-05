@@ -79,10 +79,9 @@ fn main() {
     log::info!("window created");
 
     let (window_width, window_height) = window.vulkan_drawable_size();
-
     let extents = RafxExtents2D {
         width: window_width,
-        height: window_height
+        height: window_height,
     };
 
     let renderer = RendererBuilder::new()
@@ -185,11 +184,17 @@ fn main() {
 
         update(&mut app_state, &time_state);
 
+        let (window_width, window_height) = window.vulkan_drawable_size();
+        let extents = RafxExtents2D {
+            width: window_width,
+            height: window_height,
+        };
+
         //
         // Redraw
         //
         renderer
-            .draw(&window, |canvas, coordinate_system_helper| {
+            .draw(&window, extents, |canvas, coordinate_system_helper| {
                 draw(
                     &app_state,
                     &time_state,

@@ -32,7 +32,7 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-check-test-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
 
-      # The normal build with all features
+      # The normal build with all features (winit 0.24)
       - name: Build
         run: cargo check
         env:
@@ -47,17 +47,17 @@ jobs:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
-      # Verify winit 0.23 build works
-      - name: Build winit 0.23
-        run: cargo check --no-default-features --features=winit-23,skulpin_winit
+      # Verify winit 0.22 build works
+      - name: Build winit 0.22
+        run: cargo check --no-default-features --features=winit-22,skulpin_winit
         if: ${{ runner.os == 'Linux' }}
         env:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
-      # Verify winit 0.24 build works
-      - name: Build winit 0.24
-        run: cargo check --no-default-features --features=winit-24,skulpin_winit
+      # Verify winit 0.23 build works
+      - name: Build winit 0.23
+        run: cargo check --no-default-features --features=winit-23,skulpin_winit
         if: ${{ runner.os == 'Linux' }}
         env:
           CARGO_INCREMENTAL: 0

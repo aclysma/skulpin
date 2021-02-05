@@ -16,10 +16,10 @@ use skulpin_renderer::rafx::api::{RafxDeviceContext, RafxResult, RafxCommandBuff
 
 pub struct ImguiRendererPlugin {
     // // The renderpass, none if it's not created
-    // imgui_renderpass: Option<VkImGuiRenderPass>,
-    //
-    // // A copy of the font atlas, used so we can recreate the renderpass as needed
-    // font_atlas: VkImGuiRenderPassFontAtlas,
+// imgui_renderpass: Option<VkImGuiRenderPass>,
+//
+// // A copy of the font atlas, used so we can recreate the renderpass as needed
+// font_atlas: VkImGuiRenderPassFontAtlas,
 }
 
 impl ImguiRendererPlugin {

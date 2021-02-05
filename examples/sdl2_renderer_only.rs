@@ -46,7 +46,7 @@ fn main() {
 
     let extents = RafxExtents2D {
         width: window_width,
-        height: window_height
+        height: window_height,
     };
 
     let renderer = RendererBuilder::new()
@@ -104,8 +104,14 @@ fn main() {
         //
         // Redraw
         //
+        let (window_width, window_height) = window.vulkan_drawable_size();
+        let extents = RafxExtents2D {
+            width: window_width,
+            height: window_height,
+        };
+
         renderer
-            .draw(&window, |canvas, coordinate_system_helper| {
+            .draw(&window, extents, |canvas, coordinate_system_helper| {
                 draw(canvas, &coordinate_system_helper, frame_count);
                 frame_count += 1;
             })

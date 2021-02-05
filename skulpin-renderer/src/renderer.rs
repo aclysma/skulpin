@@ -14,7 +14,17 @@ use super::CoordinateSystemHelper;
 use super::PhysicalSize;
 use super::CoordinateSystem;
 //use super::Window;
-use rafx::api::{RafxDeviceContext, RafxCommandBuffer, RafxResult, RafxApi, RafxExtents2D, RafxSwapchainDef, RafxSwapchainHelper, RafxQueueType, RafxCommandPoolDef, RafxCommandBufferDef, RafxShaderPackage, RafxShaderPackageMetal, RafxShaderPackageVulkan, RafxShaderStageDef, RafxShaderStageReflection, RafxShaderStageFlags, RafxVertexLayout, RafxVertexLayoutAttribute, RafxFormat, RafxVertexLayoutBuffer, RafxVertexAttributeRate, RafxRootSignatureDef, RafxGraphicsPipelineDef, RafxSampleCount, RafxPrimitiveTopology, RafxPipeline, RafxRootSignature, RafxCommandPool, RafxQueue};
+use rafx::api::{
+    RafxFilterType, RafxAddressMode, RafxCompareOp, RafxMipMapMode, RafxSamplerDef,
+    RafxImmutableSamplers, RafxImmutableSamplerKey, RafxResourceType, RafxShaderResource,
+    RafxDeviceContext, RafxCommandBuffer, RafxResult, RafxApi, RafxExtents2D, RafxSwapchainDef,
+    RafxSwapchainHelper, RafxQueueType, RafxCommandPoolDef, RafxCommandBufferDef,
+    RafxShaderPackage, RafxShaderPackageMetal, RafxShaderPackageVulkan, RafxShaderStageDef,
+    RafxShaderStageReflection, RafxShaderStageFlags, RafxVertexLayout, RafxVertexLayoutAttribute,
+    RafxFormat, RafxVertexLayoutBuffer, RafxVertexAttributeRate, RafxRootSignatureDef,
+    RafxGraphicsPipelineDef, RafxSampleCount, RafxPrimitiveTopology, RafxPipeline,
+    RafxRootSignature, RafxCommandPool, RafxQueue,
+};
 use rafx::api::raw_window_handle::HasRawWindowHandle;
 use std::path::Path;
 
@@ -84,12 +94,7 @@ impl RendererBuilder {
         window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
     ) -> RafxResult<Renderer> {
-        Renderer::new(
-            window,
-            window_size,
-            self.coordinate_system,
-            self.plugins,
-        )
+        Renderer::new(window, window_size, self.coordinate_system, self.plugins)
     }
 }
 
@@ -163,18 +168,20 @@ impl Renderer {
 
         let mut vert_package = RafxShaderPackage {
             metal: None,
-            vk: Some(RafxShaderPackageVulkan::SpvBytes(include_bytes!("../shaders/skia.vert.spv").to_vec()))
+            vk: Some(RafxShaderPackageVulkan::SpvBytes(
+                include_bytes!("../shaders/skia.vert.spv").to_vec(),
+            )),
         };
 
         let mut frag_package = RafxShaderPackage {
             metal: None,
-            vk: Some(RafxShaderPackageVulkan::SpvBytes(include_bytes!("../shaders/skia.frag.spv").to_vec()))
+            vk: Some(RafxShaderPackageVulkan::SpvBytes(
+                include_bytes!("../shaders/skia.frag.spv").to_vec(),
+            )),
         };
 
-        let vert_shader_module =
-            device_context.create_shader_module(vert_package.module_def())?;
-        let frag_shader_module =
-            device_context.create_shader_module(frag_package.module_def())?;
+        let vert_shader_module = device_context.create_shader_module(vert_package.module_def())?;
+        let frag_shader_module = device_context.create_shader_module(frag_package.module_def())?;
 
         let vert_shader_stage_def = RafxShaderStageDef {
             shader_module: vert_shader_module,
@@ -192,16 +199,37 @@ impl Renderer {
                 entry_point_name: "main".to_string(),
                 shader_stage: RafxShaderStageFlags::FRAGMENT,
                 compute_threads_per_group: None,
-                resources: vec![],
+                resources: vec![RafxShaderResource {
+                    name: Some("texSampler".to_string()),
+                    set_index: 0,
+                    binding: 0,
+                    resource_type: RafxResourceType::COMBINED_IMAGE_SAMPLER,
+                    ..Default::default()
+                }],
             },
         };
 
         let shader =
             device_context.create_shader(vec![vert_shader_stage_def, frag_shader_stage_def])?;
 
+        let sampler = device_context.create_sampler(&RafxSamplerDef {
+            mag_filter: RafxFilterType::Linear,
+            min_filter: RafxFilterType::Linear,
+            address_mode_u: RafxAddressMode::Mirror,
+            address_mode_v: RafxAddressMode::Mirror,
+            address_mode_w: RafxAddressMode::Mirror,
+            compare_op: RafxCompareOp::Never,
+            mip_map_mode: RafxMipMapMode::Linear,
+            max_anisotropy: 1.0,
+            mip_lod_bias: 0.0,
+        })?;
+
         let root_signature = device_context.create_root_signature(&RafxRootSignatureDef {
             shaders: &[shader.clone()],
-            immutable_samplers: &[],
+            immutable_samplers: &[RafxImmutableSamplers {
+                key: RafxImmutableSamplerKey::from_binding(0, 0),
+                samplers: &[sampler],
+            }],
         })?;
 
         let vertex_layout = RafxVertexLayout {
@@ -278,32 +306,30 @@ impl Renderer {
     pub fn draw<F: FnOnce(&mut skia_safe::Canvas, CoordinateSystemHelper)>(
         &mut self,
         window: &dyn HasRawWindowHandle,
+        window_size: RafxExtents2D,
         f: F,
     ) -> RafxResult<()> {
+        let frame = self.swapchain_helper.acquire_next_image(
+            window_size.width,
+            window_size.height,
+            None,
+        )?;
+
+        self.command_pools[frame.rotating_frame_index()].reset_command_pool()?;
+        let command_buffer = &self.command_buffers[frame.rotating_frame_index()];
+        command_buffer.begin()?;
+        command_buffer.end()?;
+
+        frame.present(&self.graphics_queue, &[&command_buffer])?;
+
         Ok(())
     }
 }
 
-/*
 impl Drop for Renderer {
     fn drop(&mut self) {
         debug!("destroying Renderer");
-
-        unsafe {
-            self.device.logical_device.device_wait_idle().unwrap();
-            ManuallyDrop::drop(&mut self.skia_renderpass);
-
-            for plugin in &mut self.plugins {
-                plugin.swapchain_destroyed();
-            }
-
-            ManuallyDrop::drop(&mut self.swapchain);
-            ManuallyDrop::drop(&mut self.skia_context);
-            ManuallyDrop::drop(&mut self.device);
-            ManuallyDrop::drop(&mut self.instance);
-        }
-
+        self.graphics_queue.wait_for_queue_idle();
         debug!("destroyed Renderer");
     }
 }
-*/

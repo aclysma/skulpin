@@ -37,7 +37,7 @@ fn main() {
     let window_size = window.inner_size();
     let window_extents = RafxExtents2D {
         width: window_size.width,
-        height: window_size.height
+        height: window_size.height,
     };
 
     // Create the renderer, which will draw to the window
@@ -99,10 +99,20 @@ fn main() {
             // Redraw
             //
             winit::event::Event::RedrawRequested(_window_id) => {
-                if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
-                    draw(canvas, coordinate_system_helper, frame_count);
-                    frame_count += 1;
-                }) {
+                let window_size = window.inner_size();
+                let window_extents = RafxExtents2D {
+                    width: window_size.width,
+                    height: window_size.height,
+                };
+
+                if let Err(e) = renderer.draw(
+                    &window,
+                    window_extents,
+                    |canvas, coordinate_system_helper| {
+                        draw(canvas, coordinate_system_helper, frame_count);
+                        frame_count += 1;
+                    },
+                ) {
                     println!("Error during draw: {:?}", e);
                     *control_flow = winit::event_loop::ControlFlow::Exit
                 }

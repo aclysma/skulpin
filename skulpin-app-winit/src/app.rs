@@ -218,7 +218,7 @@ impl App {
         let window_size = window.inner_size();
         let window_extents = RafxExtents2D {
             width: window_size.width,
-            height: window_size.height
+            height: window_size.height,
         };
 
         let renderer_result = renderer_builder.build(&window, window_extents);
@@ -268,15 +268,25 @@ impl App {
                     window.request_redraw();
                 }
                 winit::event::Event::RedrawRequested(_window_id) => {
-                    if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
-                        app_handler.draw(AppDrawArgs {
-                            app_control: &app_control,
-                            input_state: &input_state,
-                            time_state: &time_state,
-                            canvas,
-                            coordinate_system_helper,
-                        });
-                    }) {
+                    let window_size = window.inner_size();
+                    let window_extents = RafxExtents2D {
+                        width: window_size.width,
+                        height: window_size.height,
+                    };
+
+                    if let Err(e) = renderer.draw(
+                        &window,
+                        window_extents,
+                        |canvas, coordinate_system_helper| {
+                            app_handler.draw(AppDrawArgs {
+                                app_control: &app_control,
+                                input_state: &input_state,
+                                time_state: &time_state,
+                                canvas,
+                                coordinate_system_helper,
+                            });
+                        },
+                    ) {
                         warn!("Passing Renderer::draw() error to app {}", e);
                         app_handler.fatal_error(&e.into());
                         app_control.enqueue_terminate_process();

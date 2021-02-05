@@ -49,7 +49,7 @@ fn main() {
     let window_size = window.inner_size();
     let window_extents = RafxExtents2D {
         width: window_size.width,
-        height: window_size.height
+        height: window_size.height,
     };
 
     // Create the renderer, which will draw to the window
@@ -114,28 +114,38 @@ fn main() {
             // Redraw
             //
             winit::event::Event::RedrawRequested(_window_id) => {
-                if let Err(e) = renderer.draw(&window, |canvas, coordinate_system_helper| {
-                    imgui_manager.begin_frame(&window);
-                    draw(canvas, coordinate_system_helper, frame_count);
-                    frame_count += 1;
+                let window_size = window.inner_size();
+                let window_extents = RafxExtents2D {
+                    width: window_size.width,
+                    height: window_size.height,
+                };
 
-                    {
-                        imgui_manager.with_ui(|ui: &mut imgui::Ui| {
-                            let mut show_demo = true;
-                            ui.show_demo_window(&mut show_demo);
+                if let Err(e) = renderer.draw(
+                    &window,
+                    window_extents,
+                    |canvas, coordinate_system_helper| {
+                        imgui_manager.begin_frame(&window);
+                        draw(canvas, coordinate_system_helper, frame_count);
+                        frame_count += 1;
 
-                            ui.main_menu_bar(|| {
-                                ui.menu(imgui::im_str!("File"), true, || {
-                                    if imgui::MenuItem::new(imgui::im_str!("New")).build(ui) {
-                                        log::info!("clicked");
-                                    }
+                        {
+                            imgui_manager.with_ui(|ui: &mut imgui::Ui| {
+                                let mut show_demo = true;
+                                ui.show_demo_window(&mut show_demo);
+
+                                ui.main_menu_bar(|| {
+                                    ui.menu(imgui::im_str!("File"), true, || {
+                                        if imgui::MenuItem::new(imgui::im_str!("New")).build(ui) {
+                                            log::info!("clicked");
+                                        }
+                                    });
                                 });
                             });
-                        });
-                    }
+                        }
 
-                    imgui_manager.render(&window);
-                }) {
+                        imgui_manager.render(&window);
+                    },
+                ) {
                     println!("Error during draw: {:?}", e);
                     *control_flow = winit::event_loop::ControlFlow::Exit
                 }
