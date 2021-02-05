@@ -36,6 +36,16 @@ mod util;
 pub use util::PeriodicEvent;
 pub use util::ScopeTimer;
 
-pub use skulpin_renderer::ash;
+pub use skulpin_renderer::rafx;
 pub use skulpin_renderer::skia_safe;
-pub use skulpin_renderer_winit::winit;
+
+#[cfg(feature = "winit-21")]
+pub use winit_21 as winit;
+#[cfg(feature = "winit-22")]
+pub use winit_22 as winit;
+#[cfg(feature = "winit-23")]
+pub use winit_23 as winit;
+#[cfg(feature = "winit-24")]
+pub use winit_24 as winit;
+#[cfg(feature = "winit-latest")]
+pub use winit_latest as winit;

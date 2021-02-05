@@ -22,7 +22,7 @@ textlayout = ["skia-safe/textlayout"]
 complete = ["skia-safe/textlayout"]
 
 [dependencies]
-ash = ">=0.30"
+rafx = { version = "0.0.6", features = ["rafx-vulkan"] }
 
 skia-safe = { version = ">=0.30.1, <0.37", features = ["vulkan"] }
 skia-bindings = { version = ">=0.30.1, <0.37" }

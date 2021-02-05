@@ -1,4 +1,4 @@
-use skulpin_renderer_winit::winit;
+use skulpin::winit;
 
 use imgui::sys as imgui_sys;
 

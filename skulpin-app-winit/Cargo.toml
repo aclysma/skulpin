@@ -14,13 +14,15 @@ categories = ["graphics", "gui", "multimedia", "rendering", "visualization"]
 
 [dependencies]
 skulpin-renderer = { version = "0.5.1", path = "../skulpin-renderer" }
-skulpin-renderer-winit = { version = "0.5.1", path = "../skulpin-renderer-winit" }
 
 log="0.4"
 
+winit-21 = { package = "winit", version = "0.21", optional = true }
+winit-22 = { package = "winit", version = "0.22", optional = true }
+winit-23 = { package = "winit", version = "0.23", optional = true }
+winit-24 = { package = "winit", version = "0.24", optional = true }
+winit-latest = { package = "winit", version = ">=0.23", optional = true }
+raw-window-handle = "0.3"
+
 [features]
-winit-21 = ["skulpin-renderer-winit/winit-21"]
-winit-22 = ["skulpin-renderer-winit/winit-22"]
-winit-23 = ["skulpin-renderer-winit/winit-23"]
-winit-24 = ["skulpin-renderer-winit/winit-24"]
-winit-latest = ["skulpin-renderer-winit/winit-latest"]
+

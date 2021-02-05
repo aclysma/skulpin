@@ -3,15 +3,15 @@
 // instead.
 
 use skulpin::skia_safe;
-use skulpin::sdl2;
-use skulpin::{CoordinateSystemHelper, RendererBuilder, LogicalSize, Sdl2Window};
+use skulpin::{CoordinateSystemHelper, RendererBuilder, LogicalSize};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::collections::VecDeque;
 use sdl2::mouse::{MouseState, MouseButton};
 
 use skulpin::app::TimeState;
-use skulpin_renderer::Window;
+use skulpin_app_winit::rafx::api::raw_window_handle::HasRawWindowHandle;
+use skulpin_app_winit::rafx::api::RafxExtents2D;
 
 #[derive(Clone, Copy)]
 struct Position {
@@ -69,7 +69,7 @@ fn main() {
         bottom: logical_size.height as f32,
     };
 
-    let sdl_window = video_subsystem
+    let window = video_subsystem
         .window("Skulpin", logical_size.width, logical_size.height)
         .position_centered()
         .allow_highdpi()
@@ -78,15 +78,19 @@ fn main() {
         .expect("Failed to create window");
     log::info!("window created");
 
-    let window = Sdl2Window::new(&sdl_window);
+    let (window_width, window_height) = window.vulkan_drawable_size();
+
+    let extents = RafxExtents2D {
+        width: window_width,
+        height: window_height
+    };
 
     let renderer = RendererBuilder::new()
-        .use_vulkan_debug_layer(false)
         .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
             visible_range,
             scale_to_fit,
         ))
-        .build(&window);
+        .build(&window, extents);
 
     // Check if there were error setting up vulkan
     if let Err(e) = renderer {
@@ -234,7 +238,7 @@ fn draw(
     time_state: &TimeState,
     canvas: &mut skia_safe::Canvas,
     _coordinate_system_helper: &CoordinateSystemHelper,
-    window: &dyn Window,
+    window: &dyn HasRawWindowHandle,
 ) {
     let now = time_state.current_instant();
 
@@ -309,8 +313,10 @@ fn draw(
     canvas.draw_str(app_state.fps_text.clone(), (50, 50), &font, &text_paint);
     canvas.draw_str("Click and drag the mouse", (50, 80), &font, &text_paint);
 
+    let scale_factor = 1.0;
+
     canvas.draw_str(
-        format!("scale factor: {}", window.scale_factor()),
+        format!("scale factor: {}", scale_factor),
         (50, 110),
         &font,
         &text_paint,
@@ -321,8 +327,8 @@ fn draw(
         app_state.current_mouse_state.y(),
     );
     let logical_mouse_position = (
-        physical_mouse_position.0 as f64 / window.scale_factor(),
-        physical_mouse_position.1 as f64 / window.scale_factor(),
+        physical_mouse_position.0 as f64 / scale_factor,
+        physical_mouse_position.1 as f64 / scale_factor,
     );
     canvas.draw_str(
         format!(

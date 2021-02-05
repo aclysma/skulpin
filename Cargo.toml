@@ -1,8 +1,6 @@
 [workspace]
 members = [
     "skulpin-renderer",
-    "skulpin-renderer-sdl2",
-    "skulpin-renderer-winit",
     "skulpin-app-winit",
     "skulpin-plugin-imgui"
 ]
@@ -44,21 +42,17 @@ skia_svg = ["skulpin-renderer/svg"]
 skia_textlayout = ["skulpin-renderer/textlayout"]
 skia_complete = ["skulpin-renderer/complete"]
 
-skulpin_winit = ["skulpin-renderer-winit", "skulpin-app-winit"]
-skulpin_sdl2 = ["skulpin-renderer-sdl2"]
+winit_app = ["skulpin-app-winit"]
+winit-21 = ["skulpin-app-winit/winit-21"]
+winit-22 = ["skulpin-app-winit/winit-22"]
+winit-23 = ["skulpin-app-winit/winit-23"]
+winit-24 = ["skulpin-app-winit/winit-24"]
+winit-latext = ["skulpin-app-winit/winit-latest"]
 
-winit-21 = ["skulpin-renderer-winit/winit-21", "skulpin-app-winit/winit-21"]
-winit-22 = ["skulpin-renderer-winit/winit-22", "skulpin-app-winit/winit-22"]
-winit-23 = ["skulpin-renderer-winit/winit-23", "skulpin-app-winit/winit-23"]
-winit-24 = ["skulpin-renderer-winit/winit-24", "skulpin-app-winit/winit-24"]
-winit-latest = ["skulpin-renderer-winit/winit-latest", "skulpin-app-winit/winit-latest"]
-
-default = ["skulpin_winit", "skulpin_sdl2", "skia_complete", "winit-24"]
+default = ["skia_complete", "winit_app", "winit-24"]
 
 [dependencies]
 skulpin-renderer = { version = "0.5.1", path = "skulpin-renderer" }
-skulpin-renderer-sdl2 = { version = "0.5.1", path = "skulpin-renderer-sdl2", optional = true }
-skulpin-renderer-winit = { version = "0.5.1", path = "skulpin-renderer-winit", optional = true }
 skulpin-app-winit = { version = "0.5.1", path = "skulpin-app-winit", optional = true }
 
 log="0.4"
@@ -74,9 +68,9 @@ nphysics2d = "0.12"
 # The skulpin-renderer-sdl2 crate doesn't specify any features, but downstream libraries can do so by including sdl2
 # for themselves. Examples will use the features added here
 sdl2-sys = { version = ">=0.33, <=0.34.2"}
-sdl2 = { version = ">=0.33, <=0.34.2", features = ["bundled", "static-link"] }
+sdl2 = { version = ">=0.33,<0.34.3", features = ["bundled", "static-link", "raw-window-handle"] }
 
 # Used for the imgui example only
-imgui = "0.5"
-imgui-winit-support = "0.5"
-skulpin-plugin-imgui = { version = "0.7.1", path = "skulpin-plugin-imgui"}
+imgui = "0.6.1"
+imgui-winit-support = "0.6.1"
+skulpin-plugin-imgui = { version = "0.7.1", path = "skulpin-plugin-imgui" }

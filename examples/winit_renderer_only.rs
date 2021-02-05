@@ -4,6 +4,7 @@
 use skulpin::CoordinateSystemHelper;
 use skulpin::winit;
 use skulpin::skia_safe;
+use skulpin::rafx::api::RafxExtents2D;
 
 fn main() {
     // Setup logging
@@ -27,22 +28,25 @@ fn main() {
     let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
 
     // Create a single window
-    let winit_window = winit::window::WindowBuilder::new()
+    let window = winit::window::WindowBuilder::new()
         .with_title("Skulpin")
         .with_inner_size(logical_size)
         .build(&event_loop)
         .expect("Failed to create window");
 
-    let window = skulpin::WinitWindow::new(&winit_window);
+    let window_size = window.inner_size();
+    let window_extents = RafxExtents2D {
+        width: window_size.width,
+        height: window_size.height
+    };
 
     // Create the renderer, which will draw to the window
     let renderer = skulpin::RendererBuilder::new()
-        .use_vulkan_debug_layer(false)
         .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
             visible_range,
             scale_to_fit,
         ))
-        .build(&window);
+        .build(&window, window_extents);
 
     // Check if there were error setting up vulkan
     if let Err(e) = renderer {
@@ -58,8 +62,6 @@ fn main() {
     // Start the window event loop. Winit will not return once run is called. We will get notified
     // when important events happen.
     event_loop.run(move |event, _window_target, control_flow| {
-        let window = skulpin::WinitWindow::new(&winit_window);
-
         match event {
             //
             // Halt if the user requests to close the window
@@ -90,7 +92,7 @@ fn main() {
             //
             winit::event::Event::MainEventsCleared => {
                 // Queue a RedrawRequested event.
-                winit_window.request_redraw();
+                window.request_redraw();
             }
 
             //

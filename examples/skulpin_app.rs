@@ -34,8 +34,6 @@ fn main() {
     let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
 
     AppBuilder::new()
-        .app_name(CString::new("Skulpin Example App").unwrap())
-        .use_vulkan_debug_layer(false)
         .inner_size(logical_size)
         .coordinate_system(CoordinateSystem::VisibleRange(visible_range, scale_to_fit))
         .run(example_app);
