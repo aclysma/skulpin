@@ -277,6 +277,7 @@ impl App {
                     if let Err(e) = renderer.draw(
                         &window,
                         window_extents,
+                        window.scale_factor(),
                         |canvas, coordinate_system_helper| {
                             app_handler.draw(AppDrawArgs {
                                 app_control: &app_control,

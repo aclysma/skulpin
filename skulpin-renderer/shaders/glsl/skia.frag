@@ -3,10 +3,10 @@
 
 #include "skia.glsl"
 
-layout(location = 0) in vec2 fragTexCoord;
+layout(location = 0) in vec2 uv;
 
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    outColor = texture(texSampler, fragTexCoord);
+    outColor =  texture(sampler2D(tex, smp), uv);
 }

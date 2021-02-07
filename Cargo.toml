@@ -74,3 +74,6 @@ sdl2 = { version = ">=0.33,<0.34.3", features = ["bundled", "static-link", "raw-
 imgui = "0.7.0"
 imgui-winit-support = "0.7.0"
 skulpin-plugin-imgui = { version = "0.7.1", path = "skulpin-plugin-imgui" }
+
+[patch.crates-io]
+rafx = { path = "../rafx/rafx" }

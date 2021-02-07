@@ -108,6 +108,7 @@ fn main() {
                 if let Err(e) = renderer.draw(
                     &window,
                     window_extents,
+                    window.scale_factor(),
                     |canvas, coordinate_system_helper| {
                         draw(canvas, coordinate_system_helper, frame_count);
                         frame_count += 1;

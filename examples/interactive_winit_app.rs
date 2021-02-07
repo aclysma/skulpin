@@ -20,7 +20,7 @@ use winit::dpi::LogicalPosition;
 fn main() {
     // Setup logging
     env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Trace)
+        .filter_level(log::LevelFilter::Debug)
         .init();
 
     let example_app = ExampleApp::new();

@@ -9,4 +9,6 @@
 //             address_mode_w: Repeat,
 //         )
 // ])]
-layout(binding = 0) uniform sampler2D texSampler;
+layout (set = 0, binding = 0) uniform sampler smp;
+
+layout (set = 0, binding = 1) uniform texture2D tex;
