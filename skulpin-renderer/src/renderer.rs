@@ -1,32 +1,15 @@
-use std::ffi::CString;
-
-// use ash::version::DeviceV1_0;
-// use ash::prelude::VkResult;
-
-use std::mem::ManuallyDrop;
-// use ash::vk;
+use rafx::api::*;
+use rafx::nodes::*;
+use rafx::framework::*;
 
 pub const MAX_FRAMES_IN_FLIGHT: usize = 2;
 
-//use super::PresentMode;
-//use super::PhysicalDeviceType;
 use super::CoordinateSystemHelper;
 use super::PhysicalSize;
 use super::CoordinateSystem;
-//use super::Window;
-use rafx::api::{
-    RafxFilterType, RafxAddressMode, RafxCompareOp, RafxMipMapMode, RafxSamplerDef,
-    RafxImmutableSamplers, RafxImmutableSamplerKey, RafxResourceType, RafxShaderResource,
-    RafxDeviceContext, RafxCommandBuffer, RafxResult, RafxApi, RafxExtents2D, RafxSwapchainDef,
-    RafxSwapchainHelper, RafxQueueType, RafxCommandPoolDef, RafxCommandBufferDef,
-    RafxShaderPackage, RafxShaderPackageMetal, RafxShaderPackageVulkan, RafxShaderStageDef,
-    RafxShaderStageReflection, RafxShaderStageFlags, RafxVertexLayout, RafxVertexLayoutAttribute,
-    RafxFormat, RafxVertexLayoutBuffer, RafxVertexAttributeRate, RafxRootSignatureDef,
-    RafxGraphicsPipelineDef, RafxSampleCount, RafxPrimitiveTopology, RafxPipeline,
-    RafxRootSignature, RafxCommandPool, RafxQueue,
-};
 use rafx::api::raw_window_handle::HasRawWindowHandle;
 use std::path::Path;
+use std::sync::Arc;
 
 /// May be implemented to get callbacks related to the renderer and framebuffer usage
 pub trait RendererPlugin {
@@ -117,12 +100,10 @@ pub struct Renderer {
     // previous_inner_size: PhysicalSize,
 
     // Ordered in drop order
-    pipeline: RafxPipeline,
-    root_signature: RafxRootSignature,
-    command_buffers: Vec<RafxCommandBuffer>,
-    command_pools: Vec<RafxCommandPool>,
+    skia_material_pass: MaterialPass,
     graphics_queue: RafxQueue,
     swapchain_helper: RafxSwapchainHelper,
+    resource_manager: ResourceManager,
     api: RafxApi,
 
     coordinate_system: CoordinateSystem,
@@ -141,6 +122,12 @@ impl Renderer {
         let mut api = RafxApi::new(window, &Default::default())?;
         let device_context = api.device_context();
 
+        let render_registry = RenderRegistryBuilder::default()
+            .register_render_phase::<OpaqueRenderPhase>("opaque")
+            .build();
+        let resource_manager =
+            rafx::framework::ResourceManager::new(&device_context, &render_registry);
+
         let swapchain = device_context.create_swapchain(
             window,
             &RafxSwapchainDef {
@@ -151,120 +138,20 @@ impl Renderer {
         )?;
         let mut swapchain_helper = RafxSwapchainHelper::new(&device_context, swapchain, None)?;
         let graphics_queue = device_context.create_queue(RafxQueueType::Graphics)?;
-        let mut command_pools = Vec::with_capacity(swapchain_helper.image_count());
-        let mut command_buffers = Vec::with_capacity(swapchain_helper.image_count());
 
-        for _ in 0..swapchain_helper.image_count() {
-            let mut command_pool =
-                graphics_queue.create_command_pool(&RafxCommandPoolDef { transient: true })?;
+        let resource_context = resource_manager.resource_context();
 
-            let command_buffer = command_pool.create_command_buffer(&RafxCommandBufferDef {
-                is_secondary: false,
-            })?;
-
-            command_pools.push(command_pool);
-            command_buffers.push(command_buffer);
-        }
-
-        let mut vert_package = RafxShaderPackage {
-            metal: None,
-            vk: Some(RafxShaderPackageVulkan::SpvBytes(
-                include_bytes!("../shaders/skia.vert.spv").to_vec(),
-            )),
-        };
-
-        let mut frag_package = RafxShaderPackage {
-            metal: None,
-            vk: Some(RafxShaderPackageVulkan::SpvBytes(
-                include_bytes!("../shaders/skia.frag.spv").to_vec(),
-            )),
-        };
-
-        let vert_shader_module = device_context.create_shader_module(vert_package.module_def())?;
-        let frag_shader_module = device_context.create_shader_module(frag_package.module_def())?;
-
-        let vert_shader_stage_def = RafxShaderStageDef {
-            shader_module: vert_shader_module,
-            reflection: RafxShaderStageReflection {
-                entry_point_name: "main".to_string(),
-                shader_stage: RafxShaderStageFlags::VERTEX,
-                compute_threads_per_group: None,
-                resources: vec![],
+        let skia_material_pass = Self::load_material_pass(
+            &resource_context,
+            include_bytes!("../shaders/out/skia.vert.cookedshaderpackage"),
+            include_bytes!("../shaders/out/skia.frag.cookedshaderpackage"),
+            FixedFunctionState {
+                rasterizer_state: Default::default(),
+                depth_state: Default::default(),
+                blend_state: Default::default(),
             },
-        };
+        )?;
 
-        let frag_shader_stage_def = RafxShaderStageDef {
-            shader_module: frag_shader_module,
-            reflection: RafxShaderStageReflection {
-                entry_point_name: "main".to_string(),
-                shader_stage: RafxShaderStageFlags::FRAGMENT,
-                compute_threads_per_group: None,
-                resources: vec![RafxShaderResource {
-                    name: Some("texSampler".to_string()),
-                    set_index: 0,
-                    binding: 0,
-                    resource_type: RafxResourceType::COMBINED_IMAGE_SAMPLER,
-                    ..Default::default()
-                }],
-            },
-        };
-
-        let shader =
-            device_context.create_shader(vec![vert_shader_stage_def, frag_shader_stage_def])?;
-
-        let sampler = device_context.create_sampler(&RafxSamplerDef {
-            mag_filter: RafxFilterType::Linear,
-            min_filter: RafxFilterType::Linear,
-            address_mode_u: RafxAddressMode::Mirror,
-            address_mode_v: RafxAddressMode::Mirror,
-            address_mode_w: RafxAddressMode::Mirror,
-            compare_op: RafxCompareOp::Never,
-            mip_map_mode: RafxMipMapMode::Linear,
-            max_anisotropy: 1.0,
-            mip_lod_bias: 0.0,
-        })?;
-
-        let root_signature = device_context.create_root_signature(&RafxRootSignatureDef {
-            shaders: &[shader.clone()],
-            immutable_samplers: &[RafxImmutableSamplers {
-                key: RafxImmutableSamplerKey::from_binding(0, 0),
-                samplers: &[sampler],
-            }],
-        })?;
-
-        let vertex_layout = RafxVertexLayout {
-            attributes: vec![
-                RafxVertexLayoutAttribute {
-                    format: RafxFormat::R32G32_SFLOAT,
-                    buffer_index: 0,
-                    location: 0,
-                    offset: 0,
-                },
-                RafxVertexLayoutAttribute {
-                    format: RafxFormat::R32G32_SFLOAT,
-                    buffer_index: 0,
-                    location: 1,
-                    offset: 8,
-                },
-            ],
-            buffers: vec![RafxVertexLayoutBuffer {
-                stride: 16,
-                rate: RafxVertexAttributeRate::Vertex,
-            }],
-        };
-
-        let pipeline = device_context.create_graphics_pipeline(&RafxGraphicsPipelineDef {
-            shader: &shader,
-            root_signature: &root_signature,
-            vertex_layout: &vertex_layout,
-            blend_state: &Default::default(),
-            depth_state: &Default::default(),
-            rasterizer_state: &Default::default(),
-            color_formats: &[swapchain_helper.format()],
-            sample_count: RafxSampleCount::SampleCount1,
-            depth_stencil_format: None,
-            primitive_topology: RafxPrimitiveTopology::TriangleStrip,
-        })?;
 
         //let mut skia_context = ManuallyDrop::new(VkSkiaContext::new(&instance, &device));
         // let swapchain = ManuallyDrop::new(VkSwapchain::new(
@@ -286,12 +173,10 @@ impl Renderer {
 
         Ok(Renderer {
             api,
+            resource_manager,
             swapchain_helper,
             graphics_queue,
-            command_pools,
-            command_buffers,
-            root_signature,
-            pipeline,
+            skia_material_pass,
             coordinate_system,
             plugins,
         })
@@ -315,21 +200,137 @@ impl Renderer {
             None,
         )?;
 
-        self.command_pools[frame.rotating_frame_index()].reset_command_pool()?;
-        let command_buffer = &self.command_buffers[frame.rotating_frame_index()];
+        self.resource_manager.on_frame_complete()?;
+
+        let mut command_pool = self
+            .resource_manager
+            .dyn_command_pool_allocator()
+            .allocate_dyn_pool(
+                &self.graphics_queue,
+                &RafxCommandPoolDef { transient: false },
+                0,
+            )?;
+
+        let command_buffer = command_pool.allocate_dyn_command_buffer(&RafxCommandBufferDef {
+            is_secondary: false,
+        })?;
+
         command_buffer.begin()?;
+
+        command_buffer.cmd_resource_barrier(
+            &[],
+            &[RafxTextureBarrier {
+                texture: frame.swapchain_texture(),
+                array_slice: None,
+                mip_slice: None,
+                src_state: RafxResourceState::PRESENT,
+                dst_state: RafxResourceState::RENDER_TARGET,
+                queue_transition: RafxBarrierQueueTransition::None,
+            }],
+        )?;
+
+        command_buffer.cmd_begin_render_pass(
+            &[RafxColorRenderTargetBinding {
+                texture: frame.swapchain_texture(),
+                load_op: RafxLoadOp::Clear,
+                store_op: RafxStoreOp::Store,
+                clear_value: RafxColorClearValue([0.0, 0.0, 0.0, 0.0]),
+                mip_slice: Default::default(),
+                array_slice: Default::default(),
+                resolve_target: Default::default(),
+                resolve_store_op: Default::default(),
+                resolve_mip_slice: Default::default(),
+                resolve_array_slice: Default::default(),
+            }],
+            None,
+        )?;
+
+        // self.draw_debug(
+        //     &command_buffer,
+        //     example_inspect_target,
+        //     window.scale_factor() as f32,
+        // )?;
+        // self.draw_imgui(&command_buffer, imgui_draw_data)?;
+
+        command_buffer.cmd_end_render_pass()?;
+
+        command_buffer.cmd_resource_barrier(
+            &[],
+            &[RafxTextureBarrier {
+                texture: frame.swapchain_texture(),
+                array_slice: None,
+                mip_slice: None,
+                src_state: RafxResourceState::RENDER_TARGET,
+                dst_state: RafxResourceState::PRESENT,
+                queue_transition: RafxBarrierQueueTransition::None,
+            }],
+        )?;
+
         command_buffer.end()?;
 
         frame.present(&self.graphics_queue, &[&command_buffer])?;
 
         Ok(())
     }
+
+    fn load_material_pass(
+        resource_context: &ResourceContext,
+        cooked_vertex_shader_bytes: &[u8],
+        cooked_fragment_shader_bytes: &[u8],
+        fixed_function_state: FixedFunctionState,
+    ) -> RafxResult<MaterialPass> {
+        let cooked_vertex_shader_stage =
+            bincode::deserialize::<CookedShaderPackage>(cooked_vertex_shader_bytes)
+                .map_err(|x| format!("Failed to deserialize cooked shader: {:?}", x))?;
+        let vertex_shader_module = resource_context
+            .resources()
+            .get_or_create_shader_module_from_cooked_package(&cooked_vertex_shader_stage)?;
+        let vertex_entry_point = cooked_vertex_shader_stage
+            .find_entry_point("main")
+            .unwrap()
+            .clone();
+
+        // Create the fragment shader module and find the entry point
+        let cooked_fragment_shader_stage =
+            bincode::deserialize::<CookedShaderPackage>(cooked_fragment_shader_bytes)
+                .map_err(|x| format!("Failed to deserialize cooked shader: {:?}", x))?;
+        let fragment_shader_module = resource_context
+            .resources()
+            .get_or_create_shader_module_from_cooked_package(&cooked_fragment_shader_stage)?;
+        let fragment_entry_point = cooked_fragment_shader_stage
+            .find_entry_point("main")
+            .unwrap()
+            .clone();
+
+        let fixed_function_state = Arc::new(fixed_function_state);
+
+        let material_pass = MaterialPass::new(
+            &resource_context,
+            fixed_function_state,
+            vec![vertex_shader_module, fragment_shader_module],
+            &[&vertex_entry_point, &fragment_entry_point],
+        )?;
+
+        Ok(material_pass)
+    }
 }
 
 impl Drop for Renderer {
     fn drop(&mut self) {
         debug!("destroying Renderer");
-        self.graphics_queue.wait_for_queue_idle();
+        self.graphics_queue.wait_for_queue_idle().unwrap();
         debug!("destroyed Renderer");
     }
+}
+
+
+rafx::nodes::declare_render_phase!(
+    OpaqueRenderPhase,
+    OPAQUE_RENDER_PHASE_INDEX,
+    opaque_render_phase_sort_submit_nodes
+);
+
+fn opaque_render_phase_sort_submit_nodes(submit_nodes: Vec<SubmitNode>) -> Vec<SubmitNode> {
+    // No sort needed
+    submit_nodes
 }
