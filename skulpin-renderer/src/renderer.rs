@@ -14,7 +14,6 @@ use crate::skia_support::VkSkiaSurface;
 #[derive(Default)]
 pub struct RendererBuilder {
     coordinate_system: CoordinateSystem,
-    //plugins: Vec<Box<dyn RendererPlugin>>,
 }
 
 impl RendererBuilder {
@@ -22,7 +21,6 @@ impl RendererBuilder {
     pub fn new() -> Self {
         RendererBuilder {
             coordinate_system: Default::default(),
-            //plugins: vec![],
         }
     }
 
@@ -36,14 +34,6 @@ impl RendererBuilder {
         self
     }
 
-    // pub fn add_plugin(
-    //     mut self,
-    //     plugin: Box<dyn RendererPlugin>,
-    // ) -> Self {
-    //     self.plugins.push(plugin);
-    //     self
-    // }
-
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
         self,
@@ -53,7 +43,7 @@ impl RendererBuilder {
         Renderer::new(
             window,
             window_size,
-            self.coordinate_system, /*, self.plugins*/
+            self.coordinate_system,
         )
     }
 }
