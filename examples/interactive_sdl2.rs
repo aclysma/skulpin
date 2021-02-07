@@ -9,9 +9,8 @@ use sdl2::keyboard::Keycode;
 use std::collections::VecDeque;
 use sdl2::mouse::{MouseState, MouseButton};
 
-use skulpin::app::TimeState;
-use skulpin_app_winit::rafx::api::raw_window_handle::HasRawWindowHandle;
-use skulpin_app_winit::rafx::api::RafxExtents2D;
+use skulpin::rafx::api::raw_window_handle::HasRawWindowHandle;
+use skulpin::rafx::api::RafxExtents2D;
 
 #[derive(Clone, Copy)]
 struct Position {
@@ -34,7 +33,6 @@ impl PreviousClick {
 }
 
 struct ExampleAppState {
-    last_fps_text_change: Option<std::time::Instant>,
     fps_text: String,
     current_mouse_state: MouseState,
     previous_mouse_state: MouseState,
@@ -112,7 +110,6 @@ fn main() {
     let initial_mouse_state = sdl2::mouse::MouseState::new(&event_pump);
 
     let mut app_state = ExampleAppState {
-        last_fps_text_change: None,
         fps_text: "".to_string(),
         previous_clicks: Default::default(),
         current_mouse_state: initial_mouse_state,
@@ -120,11 +117,7 @@ fn main() {
         drag_start_position: None,
     };
 
-    let mut time_state = skulpin::app::TimeState::new();
-
     'running: loop {
-        time_state.update();
-
         for event in event_pump.poll_iter() {
             log::info!("{:?}", event);
             match event {
@@ -139,7 +132,7 @@ fn main() {
                     //
                     // Push new clicks onto the previous_clicks list
                     //
-                    let now = time_state.current_instant();
+                    let now = std::time::Instant::now();
                     if mouse_btn == MouseButton::Left {
                         let position = Position { x, y };
                         let previous_click = PreviousClick::new(position, now);
@@ -182,7 +175,7 @@ fn main() {
         app_state.previous_mouse_state = app_state.current_mouse_state;
         app_state.current_mouse_state = MouseState::new(&event_pump);
 
-        update(&mut app_state, &time_state);
+        update(&mut app_state);
 
         let (window_width, window_height) = window.vulkan_drawable_size();
         let extents = RafxExtents2D {
@@ -195,38 +188,15 @@ fn main() {
         //
         renderer
             .draw(extents, 1.0, |canvas, coordinate_system_helper| {
-                draw(
-                    &app_state,
-                    &time_state,
-                    canvas,
-                    &coordinate_system_helper,
-                    &window,
-                );
+                draw(&app_state, canvas, &coordinate_system_helper, &window);
                 frame_count += 1;
             })
             .unwrap();
     }
 }
 
-fn update(
-    app_state: &mut ExampleAppState,
-    time_state: &TimeState,
-) {
-    let now = time_state.current_instant();
-
-    //
-    // Update FPS once a second
-    //
-    let update_text_string = match app_state.last_fps_text_change {
-        Some(last_update_instant) => (now - last_update_instant).as_secs_f32() >= 1.0,
-        None => true,
-    };
-
-    if update_text_string {
-        let fps = time_state.updates_per_second();
-        app_state.fps_text = format!("Fps: {:.1}", fps);
-        app_state.last_fps_text_change = Some(now);
-    }
+fn update(app_state: &mut ExampleAppState) {
+    let now = std::time::Instant::now();
 
     //
     // Pop old clicks from the previous_clicks list
@@ -240,12 +210,11 @@ fn update(
 
 fn draw(
     app_state: &ExampleAppState,
-    time_state: &TimeState,
     canvas: &mut skia_safe::Canvas,
     _coordinate_system_helper: &CoordinateSystemHelper,
-    window: &dyn HasRawWindowHandle,
+    _window: &dyn HasRawWindowHandle,
 ) {
-    let now = time_state.current_instant();
+    let now = std::time::Instant::now();
 
     // Generally would want to clear data every time we draw
     canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));

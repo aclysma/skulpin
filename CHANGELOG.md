@@ -8,6 +8,7 @@
  * The plugin system and included imgui support has been dropped. The intended way to do this
    now is to build your own renderer using `rafx` and use `VkSkiaContext`, `VkSkiaSurface`, and
    coordinate system types directly.
+ * Feature names are now consistently kabob-case (i.e. "winit-app")
 
 ## 0.11.1
 

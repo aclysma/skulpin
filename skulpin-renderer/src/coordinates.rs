@@ -101,7 +101,6 @@ impl Size {
     }
 }
 
-
 /// Default coordinate system to use
 #[derive(Copy, Clone)]
 pub enum CoordinateSystem {
@@ -166,7 +165,7 @@ impl CoordinateSystemHelper {
     ) -> Self {
         let window_physical_size = PhysicalSize {
             width: surface_extents.width,
-            height: surface_extents.height
+            height: surface_extents.height,
         };
 
         let window_logical_size = window_physical_size.to_logical(scale_factor);

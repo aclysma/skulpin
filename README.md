@@ -10,11 +10,14 @@ This crate provides an easy option for drawing hardware-accelerated 2D by combin
 ![Example Screenshot](screenshot.png "Example Screenshot")
 
 This crate mainly depends on:
- * [ash](https://github.com/MaikKlein/ash) - Vulkan bindings for Rust
+ * [rafx](https://github.com/aclysma/rafx) - A rendering framework with easy access to the vulkan backend
  * [skia-safe](https://github.com/rust-skia/rust-skia) - [Skia](https://skia.org) bindings for Rust
 
 NOTE: See [skia-bindings](https://crates.io/crates/skia-bindings) for more info on how a skia binary acquired. In many
 cases, this crate will download a binary created by their project's CI.
+
+This crate integrates with [raw-window-handle](https://crates.io/crates/raw-window-handle), which allows it to be used
+with sdl2, winit, and any other windowing framework that supports raw-window-handle.
 
 ## Running the Examples
 
@@ -22,11 +25,19 @@ First, ensure that the below requirements are met depending on OS. Afterwards, t
 
 The [interactive](examples/interactive_winit_app.rs) example is good to look at for an easy way to get keyboard/mouse input.
 
-`cargo run --example interactive_winit_app`
+```
+# winit 0.24
+cargo run --example interactive_winit_app --features winit-app,winit-24
+
+# sdl2
+cargo run --example interactive_sdl2
+```
 
 The [physics](examples/physics.rs) demo is fun too.
 
-`cargo run --example physics`
+```
+cargo run --example physics --features winit-app,winit-24
+```
 
 Here's a video of the physics and interactive examples.
 
@@ -38,28 +49,9 @@ This crate is in "maintenance" mode - I'm not adding features or planning any AP
 as necessary to address issues that might come up and maintain compatibility with the broader rust ecosystem.
 
 Originally this was just a proof-of-concept, but it is now being used by [neovide](https://github.com/Kethku/neovide).
-I've received anecdotal reports that this library is working will on windows, macOS and linux (including wayland.) There
-are some bugs with `winit`, so I added `sdl2` support as a more stable option. I think this could realistically be used
-for shipping software when used with the sdl2 backend. 
 
 Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. Because Google is
 deeply invested in this stack, I anticipate relatively long term support of this type of usage in Skia.
-
-## Windowing Backends
-
-This library currently supports two windowing backends:
- * [winit](https://github.com/rust-windowing/winit) - Cross-platform window handling implemented in Rust. 
- * [sdl2](https://github.com/Rust-SDL2/rust-sdl2) - SDL2 isn't written in rust, and it does far more than windowing. 
-   However, it's a mature project that's been around for a long time. 
-
-If you're just poking around, winit is fine. For a "shipping" project, I'd consider using sdl2 since at time of this
-writing, it's more stable.
-
-You can also use the `skulpin-renderer` crate directly and implement `Window` trait for yourself.
-
-By default, support (and dependencies) for both `winit` and `sdl2` are pulled in when building against the `skulpin`
-crate. This can be avoided either by directly linking against crates like `skulpin-renderer` or by using feature flags.
-See the Feature Flags section for more info.
 
 ## Usage
 
@@ -77,10 +69,10 @@ Don't forget to install the prerequisites below appropriate to your platform! (S
 ## Feature Flags
 
 ### Skia-related features:
-* `skia_complete` - Includes all the below skia features. ** This is on by default **
-* `skia_shaper` - Enables text shaping with Harfbuzz and ICU
-* `skia_svg` - This feature enables the SVG rendering backend
-* `skia_textlayout` - Makes the Skia module skparagraph available, which contains types that are used to lay out paragraphs
+* `skia-complete` - Includes all the below skia features. ** This is on by default **
+* `skia-shaper` - Enables text shaping with Harfbuzz and ICU
+* `skia-svg` - This feature enables the SVG rendering backend
+* `skia-textlayout` - Makes the Skia module skparagraph available, which contains types that are used to lay out paragraphs
 * More information on these flags is available in the [skia-safe readme](https://crates.io/crates/skia-safe)
 
 The `skia-bindings` prebuilt binaries are only available for certain combinations of features. As of this writing, it is
@@ -89,13 +81,11 @@ used, so enabling any features individually will substantially increase build ti
 features (default behavior), or disable all features. (use `default-features = false`) 
 
 ### Skulpin features:
-* `skulpin_sdl2` - Re-export sdl2-related types from the skulpin crate
-* `skulpin_winit` - Re-export winit-related types from the skulpin crate
+* `winit-app` - Include the winit app wrapper. It's less flexbile than using the renderer directly but is easy to use.
 
-### Winit versions:
-By default, skulpin uses winit 0.22. If you want to override this, use the appropriate winit feature flag. You will
-need to disable default features (i.e. --no-default-features/default-features = false) so that the default winit-22
-feature does not get included.
+If using winit-app, you MUST specify a winit version feature flag (see below)
+
+### Winit version feature flags:
 * `winit-21`
 * `winit-22`
 * `winit-23`
@@ -110,18 +100,24 @@ feature does not get included.
 # Pull in all skia features and support for all backends (sdl2 and winit)
 skulpin = "0"
 
-# Pull in all skia features and support for winit only
-skulpin = { version = "0", default-features = false, features = ["skia_complete", "skulpin_winit"] }
+# Pull in all skia features but not the winit app wrapper
+skulpin = { version = "0", default-features = false, features = ["skia-complete"] }
 
-# Pull in no optional skia features and support for sdl2 only
-skulpin = { version = "0", default-features = false, features = ["skulpin_sdl2"] }
+# Pull in all skia features and include the winit app wrapper
+skulpin = { version = "0", default-features = false, features = ["skia-complete", "winit-app"] }
 ```
 
-### Upstream Versioning of ash and skia-safe
+### Upstream Versioning of skia-safe
 
-Skulpin can be built and used with many versions of ash and skia-safe. In order to be accomodating to users of the
+Skulpin can be built and used with many versions of skia-safe. In order to be accomodating to users of the
 library, the required version has been left open-ended. This allows new projects to use more recent versions of these
 libraries while not forcing old projects to update.
+
+You can force a particular version of skia safe by using `cargo update`
+
+```
+cargo update -p skia-safe --precise 0.32
+```
 
 ## Documentation
 

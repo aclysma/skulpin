@@ -24,7 +24,9 @@ impl VkSkiaContext {
         let physical_device = vk_device_context.physical_device();
         let device = vk_device_context.device();
 
-        let graphics_queue_family = vk_device_context.queue_family_indices().graphics_queue_family_index;
+        let graphics_queue_family = vk_device_context
+            .queue_family_indices()
+            .graphics_queue_family_index;
 
         let get_proc = |of| unsafe {
             match Self::get_proc(instance, entry, of) {
@@ -66,7 +68,9 @@ impl VkSkiaContext {
     // Using 1.1 fails as well.. skia is using an older version of VMA with a bug that has since
     // been fixed, so for now report that we only support 1.0 to work around it
     // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/commit/f9921aefddee2437cc2e3303d3175bd8ef23e22c
-    unsafe extern "system" fn enumerate_instance_version_hooked(p_api_version: *mut u32) -> vk::Result {
+    unsafe extern "system" fn enumerate_instance_version_hooked(
+        p_api_version: *mut u32
+    ) -> vk::Result {
         *p_api_version = vk::make_version(1, 0, 0);
         vk::Result::SUCCESS
     }
@@ -82,7 +86,9 @@ impl VkSkiaContext {
                 // See comments on enumerate_instance_version_hooked for why we have to hook this fn
                 let name_cstr = std::ffi::CStr::from_ptr(name as _);
                 if name_cstr.to_string_lossy() == "vkEnumerateInstanceVersion" {
-                    Some(std::mem::transmute(Self::enumerate_instance_version_hooked as *const ()))
+                    Some(std::mem::transmute(
+                        Self::enumerate_instance_version_hooked as *const (),
+                    ))
                 } else {
                     let ash_instance = vk::Instance::from_raw(instance_proc as _);
                     entry.get_instance_proc_addr(ash_instance, name)
@@ -161,7 +167,7 @@ impl VkSkiaSurface {
 
         let raw_image = RafxRawImageVulkan {
             allocation: None,
-            image
+            image,
         };
 
         let image = rafx::api::vulkan::RafxTextureVulkan::from_existing(
@@ -171,17 +177,21 @@ impl VkSkiaSurface {
                 extents: RafxExtents3D {
                     width: extents.width,
                     height: extents.height,
-                    depth: 1
+                    depth: 1,
                 },
                 format,
                 resource_type: RafxResourceType::TEXTURE,
                 sample_count: RafxSampleCount::SampleCount1,
                 ..Default::default()
-            }
+            },
         )?;
 
-        let image = resource_manager.resources().insert_image(RafxTexture::Vk(image));
-        let image_view = resource_manager.resources().get_or_create_image_view(&image, None)?;
+        let image = resource_manager
+            .resources()
+            .insert_image(RafxTexture::Vk(image));
+        let image_view = resource_manager
+            .resources()
+            .get_or_create_image_view(&image, None)?;
 
         Ok(VkSkiaSurface {
             device_context: device_context.clone(),
@@ -191,4 +201,3 @@ impl VkSkiaSurface {
         })
     }
 }
-

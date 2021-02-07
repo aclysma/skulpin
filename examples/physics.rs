@@ -13,7 +13,9 @@ use skulpin::LogicalSize;
 
 // Used for physics
 type Vector2 = rapier2d::na::Vector2<f32>;
-use rapier2d::dynamics::{JointSet, RigidBodySet, IntegrationParameters, RigidBodyBuilder, RigidBodyHandle};
+use rapier2d::dynamics::{
+    JointSet, RigidBodySet, IntegrationParameters, RigidBodyBuilder, RigidBodyHandle,
+};
 use rapier2d::geometry::{BroadPhase, NarrowPhase, ColliderSet, ColliderBuilder};
 use rapier2d::pipeline::PhysicsPipeline;
 
@@ -80,8 +82,8 @@ impl Physics {
 
         let ground_body_handle = rigid_body_set.insert(ground_body);
 
-        let ground_collider = ColliderBuilder::cuboid(GROUND_HALF_EXTENTS_WIDTH, GROUND_THICKNESS)
-            .build();
+        let ground_collider =
+            ColliderBuilder::cuboid(GROUND_HALF_EXTENTS_WIDTH, GROUND_THICKNESS).build();
         collider_set.insert(ground_collider, ground_body_handle, &mut rigid_body_set);
 
         //
@@ -106,15 +108,11 @@ impl Physics {
                 let x = i as f32 * shift - centerx;
                 let y = j as f32 * shift + centery + height;
 
-                let rigid_body = RigidBodyBuilder::new_dynamic()
-                    .translation(x, y)
-                    .build();
+                let rigid_body = RigidBodyBuilder::new_dynamic().translation(x, y).build();
 
                 let rigid_body_handle = rigid_body_set.insert(rigid_body);
 
-                let ball_collider = ColliderBuilder::ball(BALL_RADIUS)
-                    .density(1.0)
-                    .build();
+                let ball_collider = ColliderBuilder::ball(BALL_RADIUS).density(1.0).build();
 
                 // Insert the collider to the body set.
                 collider_set.insert(ball_collider, rigid_body_handle, &mut rigid_body_set);
@@ -136,7 +134,7 @@ impl Physics {
             joint_set,
             circle_body_handles,
             last_update,
-            accumulated_time: 0.0
+            accumulated_time: 0.0,
         }
     }
 
@@ -161,7 +159,7 @@ impl Physics {
                 &mut self.joint_set,
                 None,
                 None,
-                &()
+                &(),
             );
         }
     }

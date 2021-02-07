@@ -6,7 +6,7 @@ members = [
 
 [package]
 name = "skulpin"
-version = "0.11.2"
+version = "0.12.0"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "This crate provides an easy option for drawing hardware-accelerated 2D by combining Vulkan and Skia."
@@ -36,19 +36,19 @@ include = [
 [features]
 # svg and shaper are deprecated. svg is always available, and shaper is included with textlayout. However, leaving them
 # since skia_safe prints informative error messages.
-skia_shaper = ["skulpin-renderer/shaper"]
-skia_svg = ["skulpin-renderer/svg"]
-skia_textlayout = ["skulpin-renderer/textlayout"]
-skia_complete = ["skulpin-renderer/complete"]
+skia-shaper = ["skulpin-renderer/shaper"]
+skia-svg = ["skulpin-renderer/svg"]
+skia-textlayout = ["skulpin-renderer/textlayout"]
+skia-complete = ["skulpin-renderer/complete"]
 
-winit_app = ["skulpin-app-winit"]
+winit-app = ["skulpin-app-winit"]
 winit-21 = ["skulpin-app-winit/winit-21"]
 winit-22 = ["skulpin-app-winit/winit-22"]
 winit-23 = ["skulpin-app-winit/winit-23"]
 winit-24 = ["skulpin-app-winit/winit-24"]
-winit-latext = ["skulpin-app-winit/winit-latest"]
+winit-latest = ["skulpin-app-winit/winit-latest"]
 
-default = ["skia_complete", "winit_app", "winit-24"]
+default = []
 
 [dependencies]
 skulpin-renderer = { version = "0.12.0", path = "skulpin-renderer" }
@@ -66,3 +66,28 @@ rapier2d = "0.5"
 # for themselves. Examples will use the features added here
 sdl2-sys = { version = ">=0.33, <=0.34.2"}
 sdl2 = { version = ">=0.33,<0.34.3", features = ["bundled", "static-link", "raw-window-handle"] }
+
+[[example]]
+name = "hello_skulpin_sdl2"
+required-features = []
+
+[[example]]
+name = "hello_skulpin_winit"
+required-features = ["winit-app", "winit-24"]
+
+[[example]]
+name = "hello_skulpin_winit_app"
+required-features = ["winit-app", "winit-24"]
+
+[[example]]
+name = "interactive_sdl2"
+required-features = []
+
+[[example]]
+name = "interactive_winit_app"
+required-features = ["winit-app", "winit-24"]
+
+[[example]]
+name = "physics"
+required-features = ["winit-app", "winit-24"]
+

@@ -9,31 +9,6 @@ use std::sync::Arc;
 use crate::VkSkiaContext;
 use crate::skia_support::VkSkiaSurface;
 
-/// May be implemented to get callbacks related to the renderer and framebuffer usage
-pub trait RendererPlugin {
-    // /// Called whenever the swapchain needs to be created (the first time, and in cases where the
-    // /// swapchain needs to be recreated)
-    // fn swapchain_created(
-    //     &mut self,
-    //     device: &RafxDeviceContext,
-    //     //swapchain: &Swapchain,
-    // ) -> RafxResult<()>;
-    //
-    // /// Called whenever the swapchain will be destroyed (when renderer is dropped, and also in cases
-    // /// where the swapchain needs to be recreated)
-    // fn swapchain_destroyed(&mut self);
-
-    /// Called when we are presenting a new frame. The returned command buffer will be submitted
-    /// with command buffers for the skia canvas
-    fn render(
-        &mut self,
-        window: &dyn HasRawWindowHandle,
-        device: &RafxDeviceContext,
-        command_buffer: &RafxCommandBuffer,
-        present_index: usize,
-    ) -> RafxResult<()>;
-}
-
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
 #[derive(Default)]
@@ -75,10 +50,13 @@ impl RendererBuilder {
         window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
     ) -> RafxResult<Renderer> {
-        Renderer::new(window, window_size, self.coordinate_system/*, self.plugins*/)
+        Renderer::new(
+            window,
+            window_size,
+            self.coordinate_system, /*, self.plugins*/
+        )
     }
 }
-
 struct SwapchainEventListener<'a> {
     skia_context: &'a mut VkSkiaContext,
     skia_surfaces: &'a mut Vec<VkSkiaSurface>,
@@ -86,13 +64,21 @@ struct SwapchainEventListener<'a> {
 }
 
 impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
-    fn swapchain_created(&mut self, _device_context: &RafxDeviceContext, swapchain: &RafxSwapchain) -> RafxResult<()> {
+    fn swapchain_created(
+        &mut self,
+        _device_context: &RafxDeviceContext,
+        swapchain: &RafxSwapchain,
+    ) -> RafxResult<()> {
         self.skia_surfaces.clear();
         for _ in 0..swapchain.image_count() {
-            let skia_surface = VkSkiaSurface::new(&self.resource_manager, &mut self.skia_context, RafxExtents2D {
-                width: swapchain.swapchain_def().width,
-                height: swapchain.swapchain_def().height
-            })?;
+            let skia_surface = VkSkiaSurface::new(
+                &self.resource_manager,
+                &mut self.skia_context,
+                RafxExtents2D {
+                    width: swapchain.swapchain_def().width,
+                    height: swapchain.swapchain_def().height,
+                },
+            )?;
 
             self.skia_surfaces.push(skia_surface);
         }
@@ -100,7 +86,11 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
         Ok(())
     }
 
-    fn swapchain_destroyed(&mut self, _device_context: &RafxDeviceContext, _swapchain: &RafxSwapchain) -> RafxResult<()> {
+    fn swapchain_destroyed(
+        &mut self,
+        _device_context: &RafxDeviceContext,
+        _swapchain: &RafxSwapchain,
+    ) -> RafxResult<()> {
         self.skia_surfaces.clear();
         Ok(())
     }
@@ -109,32 +99,16 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
 /// Vulkan renderer that creates and manages the vulkan instance, device, swapchain, and
 /// render passes.
 pub struct Renderer {
-    // instance: ManuallyDrop<VkInstance>,
-    // device: ManuallyDrop<VkDevice>,
-    //
-    // skia_context: ManuallyDrop<VkSkiaContext>,
-    //
-    // swapchain: ManuallyDrop<VkSwapchain>,
-    // skia_renderpass: ManuallyDrop<VkSkiaRenderPass>,
-    //
-    // // Increase until > MAX_FRAMES_IN_FLIGHT, then set to 0, or -1 if no frame drawn yet
-    // sync_frame_index: usize,
-    //
-    // present_mode_priority: Vec<PresentMode>,
-    //
-    // previous_inner_size: PhysicalSize,
-
     // Ordered in drop order
-    //plugins: Vec<Box<dyn RendererPlugin>>,
-    coordinate_system: CoordinateSystem,
-    skia_surfaces: Vec<VkSkiaSurface>,
-    skia_context: VkSkiaContext,
-    skia_material_pass: MaterialPass,
-    graphics_queue: RafxQueue,
-    swapchain_helper: RafxSwapchainHelper,
-    resource_manager: ResourceManager,
+    pub coordinate_system: CoordinateSystem,
+    pub skia_surfaces: Vec<VkSkiaSurface>,
+    pub skia_context: VkSkiaContext,
+    pub skia_material_pass: MaterialPass,
+    pub graphics_queue: RafxQueue,
+    pub swapchain_helper: RafxSwapchainHelper,
+    pub resource_manager: ResourceManager,
     #[allow(dead_code)]
-    api: RafxApi,
+    pub api: RafxApi,
 }
 
 impl Renderer {
@@ -143,7 +117,6 @@ impl Renderer {
         window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
         coordinate_system: CoordinateSystem,
-        //mut plugins: Vec<Box<dyn RendererPlugin>>,
     ) -> RafxResult<Renderer> {
         let api = RafxApi::new(window, &Default::default())?;
         let device_context = api.device_context();
@@ -168,11 +141,15 @@ impl Renderer {
         let mut skia_context = VkSkiaContext::new(&device_context, &graphics_queue);
         let mut skia_surfaces = Vec::default();
 
-        let swapchain_helper = RafxSwapchainHelper::new(&device_context, swapchain, Some(&mut SwapchainEventListener {
-            skia_context: &mut skia_context,
-            skia_surfaces: &mut skia_surfaces,
-            resource_manager: &resource_manager
-        }))?;
+        let swapchain_helper = RafxSwapchainHelper::new(
+            &device_context,
+            swapchain,
+            Some(&mut SwapchainEventListener {
+                skia_context: &mut skia_context,
+                skia_surfaces: &mut skia_surfaces,
+                resource_manager: &resource_manager,
+            }),
+        )?;
 
         let resource_context = resource_manager.resource_context();
 
@@ -194,15 +171,10 @@ impl Renderer {
             graphics_queue,
             skia_material_pass,
             coordinate_system,
-            //plugins,
             skia_context,
-            skia_surfaces
+            skia_surfaces,
         })
     }
-
-    // pub fn skia_context(&self) -> &skia_safe::gpu::Context {
-    //     &self.skia_context.context
-    // }
 
     /// Call to render a frame. This can block for certain presentation modes. This will rebuild
     /// the swapchain if necessary.
@@ -221,7 +193,7 @@ impl Renderer {
             Some(&mut SwapchainEventListener {
                 skia_context: &mut self.skia_context,
                 skia_surfaces: &mut self.skia_surfaces,
-                resource_manager: &self.resource_manager
+                resource_manager: &self.resource_manager,
             }),
         )?;
 
@@ -234,10 +206,7 @@ impl Renderer {
         let skia_surface = &mut self.skia_surfaces[frame.rotating_frame_index()];
         let mut canvas = skia_surface.surface.canvas();
 
-        let coordinate_system_helper = CoordinateSystemHelper::new(
-            window_size,
-            scale_factor
-        );
+        let coordinate_system_helper = CoordinateSystemHelper::new(window_size, scale_factor);
 
         match self.coordinate_system {
             CoordinateSystem::None => {}
@@ -263,16 +232,14 @@ impl Renderer {
         // Convert the skia texture to a shader resources, draw a quad, and convert it back to a
         // render target
         //
-        let mut descriptor_set_allocator =
-            self.resource_manager.create_descriptor_set_allocator();
-        let mut descriptor_set = descriptor_set_allocator
-            .create_dyn_descriptor_set_uninitialized(
-                &self
-                    .skia_material_pass
-                    .material_pass_resource
-                    .get_raw()
-                    .descriptor_set_layouts[0],
-            )?;
+        let mut descriptor_set_allocator = self.resource_manager.create_descriptor_set_allocator();
+        let mut descriptor_set = descriptor_set_allocator.create_dyn_descriptor_set_uninitialized(
+            &self
+                .skia_material_pass
+                .material_pass_resource
+                .get_raw()
+                .descriptor_set_layouts[0],
+        )?;
 
         descriptor_set.set_image(1, &skia_surface.image_view);
 
@@ -312,7 +279,7 @@ impl Renderer {
                     src_state: RafxResourceState::RENDER_TARGET,
                     dst_state: RafxResourceState::SHADER_RESOURCE,
                     queue_transition: RafxBarrierQueueTransition::None,
-                }
+                },
             ],
         )?;
 
@@ -332,29 +299,39 @@ impl Renderer {
             None,
         )?;
 
-        let pipeline = self.resource_manager.graphics_pipeline_cache().get_or_create_graphics_pipeline(
-            OpaqueRenderPhase::render_phase_index(),
-            &self.skia_material_pass.material_pass_resource,
-            &GraphicsPipelineRenderTargetMeta::new(
-                vec![self.swapchain_helper.format()],
-                None,
-                RafxSampleCount::SampleCount1
-            ),
-            &*VERTEX_LAYOUT
-        )?;
+        let pipeline = self
+            .resource_manager
+            .graphics_pipeline_cache()
+            .get_or_create_graphics_pipeline(
+                OpaqueRenderPhase::render_phase_index(),
+                &self.skia_material_pass.material_pass_resource,
+                &GraphicsPipelineRenderTargetMeta::new(
+                    vec![self.swapchain_helper.format()],
+                    None,
+                    RafxSampleCount::SampleCount1,
+                ),
+                &*VERTEX_LAYOUT,
+            )?;
 
-        let vertex_buffer = self.resource_manager.device_context().create_buffer(&RafxBufferDef::for_staging_vertex_buffer_data(&VERTEX_LIST))?;
+        let vertex_buffer = self
+            .resource_manager
+            .device_context()
+            .create_buffer(&RafxBufferDef::for_staging_vertex_buffer_data(&VERTEX_LIST))?;
         vertex_buffer.copy_to_host_visible_buffer(&VERTEX_LIST)?;
 
-        let vertex_buffer = self.resource_manager.create_dyn_resource_allocator_set().insert_buffer(vertex_buffer);
+        let vertex_buffer = self
+            .resource_manager
+            .create_dyn_resource_allocator_set()
+            .insert_buffer(vertex_buffer);
 
         command_buffer.cmd_bind_pipeline(&*pipeline.get_raw().pipeline)?;
-        command_buffer.cmd_bind_vertex_buffers(0, &[
-            RafxVertexBufferBinding {
+        command_buffer.cmd_bind_vertex_buffers(
+            0,
+            &[RafxVertexBufferBinding {
                 buffer: &*vertex_buffer.get_raw().buffer,
-                offset: 0
-            }
-        ])?;
+                offset: 0,
+            }],
+        )?;
         descriptor_set.bind(&command_buffer)?;
 
         command_buffer.cmd_draw(6, 0)?;
@@ -379,7 +356,7 @@ impl Renderer {
                     src_state: RafxResourceState::SHADER_RESOURCE,
                     dst_state: RafxResourceState::RENDER_TARGET,
                     queue_transition: RafxBarrierQueueTransition::None,
-                }
+                },
             ],
         )?;
 
@@ -439,7 +416,6 @@ impl Drop for Renderer {
         debug!("destroyed Renderer");
     }
 }
-
 
 rafx::nodes::declare_render_phase!(
     OpaqueRenderPhase,
