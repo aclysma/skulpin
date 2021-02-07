@@ -22,8 +22,8 @@ impl PhysicalSize {
         scale_factor: f64,
     ) -> LogicalSize {
         LogicalSize {
-            width: (self.width as f64 * scale_factor).round() as u32,
-            height: (self.height as f64 * scale_factor).round() as u32,
+            width: (self.width as f64 / scale_factor).round() as u32,
+            height: (self.height as f64 / scale_factor).round() as u32,
         }
     }
 }
@@ -49,8 +49,8 @@ impl LogicalSize {
         scale_factor: f64,
     ) -> PhysicalSize {
         PhysicalSize {
-            width: (self.width as f64 / scale_factor).round() as u32,
-            height: (self.height as f64 / scale_factor).round() as u32,
+            width: (self.width as f64 * scale_factor).round() as u32,
+            height: (self.height as f64 * scale_factor).round() as u32,
         }
     }
 }

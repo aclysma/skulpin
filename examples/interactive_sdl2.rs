@@ -59,13 +59,6 @@ fn main() {
         width: 900,
         height: 600,
     };
-    let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
-    let visible_range = skulpin::skia_safe::Rect {
-        left: 0.0,
-        right: logical_size.width as f32,
-        top: 0.0,
-        bottom: logical_size.height as f32,
-    };
 
     let window = video_subsystem
         .window("Skulpin", logical_size.width, logical_size.height)
@@ -83,10 +76,7 @@ fn main() {
     };
 
     let renderer = RendererBuilder::new()
-        .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
-            visible_range,
-            scale_to_fit,
-        ))
+        .coordinate_system(skulpin::CoordinateSystem::Physical)
         .build(&window, extents);
 
     // Check if there were error setting up vulkan

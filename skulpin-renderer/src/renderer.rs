@@ -40,11 +40,7 @@ impl RendererBuilder {
         window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
     ) -> RafxResult<Renderer> {
-        Renderer::new(
-            window,
-            window_size,
-            self.coordinate_system,
-        )
+        Renderer::new(window, window_size, self.coordinate_system)
     }
 }
 struct SwapchainEventListener<'a> {
