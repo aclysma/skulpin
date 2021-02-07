@@ -1,7 +1,5 @@
 // This example does a physics demo, because physics is fun :)
 
-extern crate nalgebra as na;
-
 use skulpin::skia_safe;
 
 use skulpin::app::AppHandler;
@@ -13,18 +11,20 @@ use skulpin::app::VirtualKeyCode;
 
 use skulpin::LogicalSize;
 
-use std::ffi::CString;
-
 // Used for physics
-use na::Vector2;
-use ncollide2d::shape::{Cuboid, ShapeHandle, Ball};
-use nphysics2d::object::{
-    ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle,
-    DefaultBodyHandle,
-};
-use nphysics2d::force_generator::DefaultForceGeneratorSet;
-use nphysics2d::joint::DefaultJointConstraintSet;
-use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
+type Vector2 = rapier2d::na::Vector2<f32>;
+use rapier2d::dynamics::{JointSet, RigidBodySet, IntegrationParameters, RigidBodyBuilder, RigidBodyHandle};
+use rapier2d::geometry::{BroadPhase, NarrowPhase, ColliderSet, ColliderBuilder};
+use rapier2d::pipeline::PhysicsPipeline;
+
+// use ncollide2d::shape::{Cuboid, ShapeHandle, Ball};
+// use nphysics2d::object::{
+//     ColliderDesc, RigidBodyDesc, DefaultBodySet, DefaultColliderSet, Ground, BodyPartHandle,
+//     DefaultBodyHandle,
+// };
+// use nphysics2d::force_generator::DefaultForceGeneratorSet;
+// use nphysics2d::joint::DefaultJointConstraintSet;
+// use nphysics2d::world::{DefaultMechanicalWorld, DefaultGeometricalWorld};
 
 const GROUND_THICKNESS: f32 = 0.2;
 const GROUND_HALF_EXTENTS_WIDTH: f32 = 3.0;
@@ -34,48 +34,61 @@ const BALL_COUNT: usize = 5;
 
 // Will contain all the physics simulation state
 struct Physics {
-    geometrical_world: DefaultGeometricalWorld<f32>,
-    mechanical_world: DefaultMechanicalWorld<f32>,
+    // geometrical_world: DefaultGeometricalWorld<f32>,
+    // mechanical_world: DefaultMechanicalWorld<f32>,
+    //
+    // bodies: DefaultBodySet<f32>,
+    // colliders: DefaultColliderSet<f32>,
+    // joint_constraints: DefaultJointConstraintSet<f32>,
+    // force_generators: DefaultForceGeneratorSet<f32>,
+    //
+    circle_body_handles: Vec<RigidBodyHandle>,
 
-    bodies: DefaultBodySet<f32>,
-    colliders: DefaultColliderSet<f32>,
-    joint_constraints: DefaultJointConstraintSet<f32>,
-    force_generators: DefaultForceGeneratorSet<f32>,
+    physics_pipeline: PhysicsPipeline,
+    gravity: Vector2,
+    integration_parameters: IntegrationParameters,
+    broad_phase: BroadPhase,
+    narrow_phase: NarrowPhase,
+    rigid_body_set: RigidBodySet,
+    collider_set: ColliderSet,
+    joint_set: JointSet,
 
-    circle_body_handles: Vec<DefaultBodyHandle>,
+    last_update: std::time::Instant,
+    accumulated_time: f64,
 }
 
 impl Physics {
     fn new() -> Self {
-        let geometrical_world = DefaultGeometricalWorld::<f32>::new();
-        let mechanical_world = DefaultMechanicalWorld::new(Vector2::y() * GRAVITY);
+        //
+        // Basic physics system setup
+        //
+        let physics_pipeline = PhysicsPipeline::new();
+        let gravity = Vector2::new(0.0, GRAVITY);
+        let integration_parameters = IntegrationParameters::default();
+        let broad_phase = BroadPhase::new();
+        let narrow_phase = NarrowPhase::new();
+        let mut rigid_body_set = RigidBodySet::new();
+        let mut collider_set = ColliderSet::new();
+        let joint_set = JointSet::new();
 
-        let mut bodies = DefaultBodySet::<f32>::new();
-        let mut colliders = DefaultColliderSet::new();
-        let joint_constraints = DefaultJointConstraintSet::<f32>::new();
-        let force_generators = DefaultForceGeneratorSet::<f32>::new();
+        //
+        // Create the "ground"
+        //
+        let ground_body = RigidBodyBuilder::new_static()
+            .translation(0.0, -GROUND_THICKNESS)
+            .build();
 
-        // A rectangle that the balls will fall on
-        let ground_shape = ShapeHandle::new(Cuboid::new(Vector2::new(
-            GROUND_HALF_EXTENTS_WIDTH,
-            GROUND_THICKNESS,
-        )));
+        let ground_body_handle = rigid_body_set.insert(ground_body);
 
-        // Build a static ground body and add it to the body set.
-        let ground_body_handle = bodies.insert(Ground::new());
+        let ground_collider = ColliderBuilder::cuboid(GROUND_HALF_EXTENTS_WIDTH, GROUND_THICKNESS)
+            .build();
+        collider_set.insert(ground_collider, ground_body_handle, &mut rigid_body_set);
 
-        // Build the collider.
-        let ground_collider = ColliderDesc::new(ground_shape)
-            .translation(Vector2::y() * -GROUND_THICKNESS)
-            .build(BodyPartHandle(ground_body_handle, 0));
-
-        // Add the collider to the collider set.
-        colliders.insert(ground_collider);
-
-        let ball_shape_handle = ShapeHandle::new(Ball::new(BALL_RADIUS));
-
-        let shift = (BALL_RADIUS + ColliderDesc::<f32>::default_margin()) * 2.0;
-        let centerx = shift * (BALL_COUNT as f32) / 2.0;
+        //
+        // Create falling objects
+        //
+        let shift = (BALL_RADIUS + 0.01) * 2.0;
+        let centerx_base = shift * (BALL_COUNT as f32) / 2.0;
         let centery = shift / 2.0;
         let height = 3.0;
 
@@ -83,47 +96,74 @@ impl Physics {
 
         for i in 0usize..BALL_COUNT {
             for j in 0usize..BALL_COUNT {
+                // Vary the x so the balls don't stack
+                let centerx = if j % 2 == 0 {
+                    centerx_base + 0.1
+                } else {
+                    centerx_base - 0.1
+                };
+
                 let x = i as f32 * shift - centerx;
                 let y = j as f32 * shift + centery + height;
 
-                // Build the rigid body.
-                let rigid_body = RigidBodyDesc::new().translation(Vector2::new(x, y)).build();
+                let rigid_body = RigidBodyBuilder::new_dynamic()
+                    .translation(x, y)
+                    .build();
 
-                // Insert the rigid body to the body set.
-                let rigid_body_handle = bodies.insert(rigid_body);
+                let rigid_body_handle = rigid_body_set.insert(rigid_body);
 
-                // Build the collider.
-                let ball_collider = ColliderDesc::new(ball_shape_handle.clone())
+                let ball_collider = ColliderBuilder::ball(BALL_RADIUS)
                     .density(1.0)
-                    .build(BodyPartHandle(rigid_body_handle, 0));
+                    .build();
 
                 // Insert the collider to the body set.
-                colliders.insert(ball_collider);
+                collider_set.insert(ball_collider, rigid_body_handle, &mut rigid_body_set);
 
                 circle_body_handles.push(rigid_body_handle);
             }
         }
 
+        let last_update = std::time::Instant::now();
+
         Physics {
-            geometrical_world,
-            mechanical_world,
-            bodies,
-            colliders,
-            joint_constraints,
-            force_generators,
+            physics_pipeline,
+            gravity,
+            integration_parameters,
+            broad_phase,
+            narrow_phase,
+            rigid_body_set,
+            collider_set,
+            joint_set,
             circle_body_handles,
+            last_update,
+            accumulated_time: 0.0
         }
     }
 
-    fn step(&mut self) {
-        // Run the simulation.
-        self.mechanical_world.step(
-            &mut self.geometrical_world,
-            &mut self.bodies,
-            &mut self.colliders,
-            &mut self.joint_constraints,
-            &mut self.force_generators,
-        );
+    fn update(&mut self) {
+        let now = std::time::Instant::now();
+        let time_since_last_update = (now - self.last_update).as_secs_f64();
+        self.accumulated_time += time_since_last_update;
+        self.last_update = now;
+
+        const STEP_TIME: f64 = 1.0 / 60.0;
+        while self.accumulated_time > STEP_TIME {
+            self.accumulated_time -= STEP_TIME;
+
+            // Run the simulation.
+            self.physics_pipeline.step(
+                &self.gravity,
+                &self.integration_parameters,
+                &mut self.broad_phase,
+                &mut self.narrow_phase,
+                &mut self.rigid_body_set,
+                &mut self.collider_set,
+                &mut self.joint_set,
+                None,
+                None,
+                &()
+            );
+        }
     }
 }
 
@@ -207,7 +247,7 @@ impl AppHandler for ExampleApp {
         }
 
         // Update physics
-        self.physics.step();
+        self.physics.update();
     }
 
     fn draw(
@@ -236,7 +276,7 @@ impl AppHandler for ExampleApp {
             .unwrap();
 
         // Generally would want to clear data every time we draw
-        canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
+        canvas.clear(skia_safe::Color::from_argb(255, 0, 0, 0));
 
         // Make a color to draw with
         let mut paint = skia_safe::Paint::new(skia_safe::Color4f::new(0.0, 1.0, 0.0, 1.0), None);
@@ -257,8 +297,8 @@ impl AppHandler for ExampleApp {
         for (i, circle_body) in self.physics.circle_body_handles.iter().enumerate() {
             let position = self
                 .physics
-                .bodies
-                .rigid_body(*circle_body)
+                .rigid_body_set
+                .get(*circle_body)
                 .unwrap()
                 .position()
                 .translation;

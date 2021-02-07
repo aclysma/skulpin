@@ -11,7 +11,6 @@ use skulpin::app::AppDrawArgs;
 use skulpin::app::AppError;
 use skulpin::app::AppHandler;
 use skulpin::app::VirtualKeyCode;
-use std::ffi::CString;
 
 fn main() {
     // Setup logging

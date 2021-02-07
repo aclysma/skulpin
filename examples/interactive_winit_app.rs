@@ -11,7 +11,6 @@ use skulpin::LogicalSize;
 use skulpin::app::AppUpdateArgs;
 use skulpin::app::AppDrawArgs;
 
-use std::ffi::CString;
 use std::collections::VecDeque;
 
 use skulpin::winit;

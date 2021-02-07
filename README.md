@@ -64,13 +64,13 @@ See the Feature Flags section for more info.
 ## Usage
 
 Currently there are two ways to use this library with `winit`.
- * [app](examples/skulpin_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
+ * [app](examples/hello_skulpin_winit_app.rs) - Implement the AppHandler trait and launch the app. It's simple but not as flexible.
    This is currently only supported when using winit.
- * [renderer_only](examples/winit_renderer_only.rs) - You manage the window and event loop yourself. Then add the renderer to 
+ * [renderer_only](examples/hello_skulpin_winit.rs) - You manage the window and event loop yourself. Then add the renderer to 
    draw to it. The window should be wrapped in an implementation of `skulpin::Window`. Implementations for `sdl2` and
    `winit` are provided.
 
-If you prefer `sdl2` you'll need to use the renderer directly. See [sdl2 renderer only](examples/sdl2_renderer_only.rs)
+If you prefer `sdl2` you'll need to use the renderer directly. See [sdl2 renderer only](examples/hello_skulpin_sdl2.rs)
 
 Don't forget to install the prerequisites below appropriate to your platform! (See "Requirements")
 

@@ -7,7 +7,6 @@ use super::app_control::AppControl;
 use super::input_state::InputState;
 use super::time_state::TimeState;
 use super::util::PeriodicEvent;
-use std::ffi::CString;
 
 use skulpin_renderer::LogicalSize;
 use skulpin_renderer::Size;
@@ -275,7 +274,6 @@ impl App {
                     };
 
                     if let Err(e) = renderer.draw(
-                        &window,
                         window_extents,
                         window.scale_factor(),
                         |canvas, coordinate_system_helper| {

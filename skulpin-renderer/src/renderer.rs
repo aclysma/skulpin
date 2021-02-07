@@ -2,17 +2,12 @@ use rafx::api::*;
 use rafx::nodes::*;
 use rafx::framework::*;
 
-pub const MAX_FRAMES_IN_FLIGHT: usize = 2;
-
 use super::CoordinateSystemHelper;
-use super::PhysicalSize;
 use super::CoordinateSystem;
 use rafx::api::raw_window_handle::HasRawWindowHandle;
-use std::path::Path;
 use std::sync::Arc;
 use crate::VkSkiaContext;
 use crate::skia_support::VkSkiaSurface;
-use std::path::Prefix::Verbatim;
 
 /// May be implemented to get callbacks related to the renderer and framebuffer usage
 pub trait RendererPlugin {
@@ -44,7 +39,7 @@ pub trait RendererPlugin {
 #[derive(Default)]
 pub struct RendererBuilder {
     coordinate_system: CoordinateSystem,
-    plugins: Vec<Box<dyn RendererPlugin>>,
+    //plugins: Vec<Box<dyn RendererPlugin>>,
 }
 
 impl RendererBuilder {
@@ -52,7 +47,7 @@ impl RendererBuilder {
     pub fn new() -> Self {
         RendererBuilder {
             coordinate_system: Default::default(),
-            plugins: vec![],
+            //plugins: vec![],
         }
     }
 
@@ -66,13 +61,13 @@ impl RendererBuilder {
         self
     }
 
-    pub fn add_plugin(
-        mut self,
-        plugin: Box<dyn RendererPlugin>,
-    ) -> Self {
-        self.plugins.push(plugin);
-        self
-    }
+    // pub fn add_plugin(
+    //     mut self,
+    //     plugin: Box<dyn RendererPlugin>,
+    // ) -> Self {
+    //     self.plugins.push(plugin);
+    //     self
+    // }
 
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
@@ -80,7 +75,7 @@ impl RendererBuilder {
         window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
     ) -> RafxResult<Renderer> {
-        Renderer::new(window, window_size, self.coordinate_system, self.plugins)
+        Renderer::new(window, window_size, self.coordinate_system/*, self.plugins*/)
     }
 }
 
@@ -91,7 +86,7 @@ struct SwapchainEventListener<'a> {
 }
 
 impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
-    fn swapchain_created(&mut self, device_context: &RafxDeviceContext, swapchain: &RafxSwapchain) -> RafxResult<()> {
+    fn swapchain_created(&mut self, _device_context: &RafxDeviceContext, swapchain: &RafxSwapchain) -> RafxResult<()> {
         self.skia_surfaces.clear();
         for _ in 0..swapchain.image_count() {
             let skia_surface = VkSkiaSurface::new(&self.resource_manager, &mut self.skia_context, RafxExtents2D {
@@ -105,7 +100,7 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
         Ok(())
     }
 
-    fn swapchain_destroyed(&mut self, device_context: &RafxDeviceContext, swapchain: &RafxSwapchain) -> RafxResult<()> {
+    fn swapchain_destroyed(&mut self, _device_context: &RafxDeviceContext, _swapchain: &RafxSwapchain) -> RafxResult<()> {
         self.skia_surfaces.clear();
         Ok(())
     }
@@ -130,17 +125,16 @@ pub struct Renderer {
     // previous_inner_size: PhysicalSize,
 
     // Ordered in drop order
+    //plugins: Vec<Box<dyn RendererPlugin>>,
+    coordinate_system: CoordinateSystem,
     skia_surfaces: Vec<VkSkiaSurface>,
     skia_context: VkSkiaContext,
     skia_material_pass: MaterialPass,
     graphics_queue: RafxQueue,
     swapchain_helper: RafxSwapchainHelper,
     resource_manager: ResourceManager,
+    #[allow(dead_code)]
     api: RafxApi,
-
-    coordinate_system: CoordinateSystem,
-
-    plugins: Vec<Box<dyn RendererPlugin>>,
 }
 
 impl Renderer {
@@ -149,9 +143,9 @@ impl Renderer {
         window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
         coordinate_system: CoordinateSystem,
-        mut plugins: Vec<Box<dyn RendererPlugin>>,
+        //mut plugins: Vec<Box<dyn RendererPlugin>>,
     ) -> RafxResult<Renderer> {
-        let mut api = RafxApi::new(window, &Default::default())?;
+        let api = RafxApi::new(window, &Default::default())?;
         let device_context = api.device_context();
 
         let render_registry = RenderRegistryBuilder::default()
@@ -174,7 +168,7 @@ impl Renderer {
         let mut skia_context = VkSkiaContext::new(&device_context, &graphics_queue);
         let mut skia_surfaces = Vec::default();
 
-        let mut swapchain_helper = RafxSwapchainHelper::new(&device_context, swapchain, Some(&mut SwapchainEventListener {
+        let swapchain_helper = RafxSwapchainHelper::new(&device_context, swapchain, Some(&mut SwapchainEventListener {
             skia_context: &mut skia_context,
             skia_surfaces: &mut skia_surfaces,
             resource_manager: &resource_manager
@@ -200,7 +194,7 @@ impl Renderer {
             graphics_queue,
             skia_material_pass,
             coordinate_system,
-            plugins,
+            //plugins,
             skia_context,
             skia_surfaces
         })
@@ -214,7 +208,6 @@ impl Renderer {
     /// the swapchain if necessary.
     pub fn draw<F: FnOnce(&mut skia_safe::Canvas, CoordinateSystemHelper)>(
         &mut self,
-        window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
         scale_factor: f64,
         f: F,
@@ -326,7 +319,7 @@ impl Renderer {
         command_buffer.cmd_begin_render_pass(
             &[RafxColorRenderTargetBinding {
                 texture: frame.swapchain_texture(),
-                load_op: RafxLoadOp::Clear,
+                load_op: RafxLoadOp::DontCare,
                 store_op: RafxStoreOp::Store,
                 clear_value: RafxColorClearValue([0.0, 0.0, 0.0, 0.0]),
                 mip_slice: Default::default(),
@@ -351,7 +344,7 @@ impl Renderer {
         )?;
 
         let vertex_buffer = self.resource_manager.device_context().create_buffer(&RafxBufferDef::for_staging_vertex_buffer_data(&VERTEX_LIST))?;
-        vertex_buffer.copy_to_host_visible_buffer(&VERTEX_LIST);
+        vertex_buffer.copy_to_host_visible_buffer(&VERTEX_LIST)?;
 
         let vertex_buffer = self.resource_manager.create_dyn_resource_allocator_set().insert_buffer(vertex_buffer);
 

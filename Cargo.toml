@@ -2,7 +2,6 @@
 members = [
     "skulpin-renderer",
     "skulpin-app-winit",
-    "skulpin-plugin-imgui"
 ]
 
 [package]
@@ -52,8 +51,8 @@ winit-latext = ["skulpin-app-winit/winit-latest"]
 default = ["skia_complete", "winit_app", "winit-24"]
 
 [dependencies]
-skulpin-renderer = { version = "0.5.1", path = "skulpin-renderer" }
-skulpin-app-winit = { version = "0.5.1", path = "skulpin-app-winit", optional = true }
+skulpin-renderer = { version = "0.12.0", path = "skulpin-renderer" }
+skulpin-app-winit = { version = "0.12.0", path = "skulpin-app-winit", optional = true }
 
 log="0.4"
 
@@ -61,19 +60,9 @@ log="0.4"
 env_logger = "0.6"
 
 # These are used for the physics demo only
-nalgebra = "0.18"
-ncollide2d = "0.20"
-nphysics2d = "0.12"
+rapier2d = "0.5"
 
 # The skulpin-renderer-sdl2 crate doesn't specify any features, but downstream libraries can do so by including sdl2
 # for themselves. Examples will use the features added here
 sdl2-sys = { version = ">=0.33, <=0.34.2"}
 sdl2 = { version = ">=0.33,<0.34.3", features = ["bundled", "static-link", "raw-window-handle"] }
-
-# Used for the imgui example only
-imgui = "0.7.0"
-imgui-winit-support = "0.7.0"
-skulpin-plugin-imgui = { version = "0.7.1", path = "skulpin-plugin-imgui" }
-
-[patch.crates-io]
-rafx = { path = "../rafx/rafx" }

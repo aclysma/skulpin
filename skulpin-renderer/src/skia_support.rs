@@ -3,10 +3,7 @@ use rafx::api::*;
 use rafx::framework::*;
 use rafx::api::ash;
 use ash::vk;
-use ash::version::EntryV1_0;
-use ash::version::EntryV1_1;
 use ash::version::InstanceV1_0;
-use ash::version::InstanceV1_1;
 use rafx::api::vulkan::RafxRawImageVulkan;
 
 /// Handles setting up skia to use the same vulkan instance we initialize
@@ -121,7 +118,7 @@ impl VkSkiaSurface {
         // MacOS it's RGB
         let color_type = skia_safe::ColorType::n32();
         let alpha_type = skia_safe::AlphaType::Premul;
-        let color_space = None;
+        let color_space = Some(skia_safe::ColorSpace::new_srgb_linear());
 
         let image_info = skia_safe::ImageInfo::new(
             (extents.width as i32, extents.height as i32),

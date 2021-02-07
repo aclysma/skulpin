@@ -111,7 +111,7 @@ fn main() {
         };
 
         renderer
-            .draw(&window, extents, |canvas, coordinate_system_helper| {
+            .draw(extents, 1.0, |canvas, coordinate_system_helper| {
                 draw(canvas, &coordinate_system_helper, frame_count);
                 frame_count += 1;
             })

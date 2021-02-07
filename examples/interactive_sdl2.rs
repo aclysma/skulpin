@@ -194,7 +194,7 @@ fn main() {
         // Redraw
         //
         renderer
-            .draw(&window, extents, |canvas, coordinate_system_helper| {
+            .draw(extents, 1.0, |canvas, coordinate_system_helper| {
                 draw(
                     &app_state,
                     &time_state,
