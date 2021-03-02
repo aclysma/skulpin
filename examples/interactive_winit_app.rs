@@ -11,7 +11,6 @@ use skulpin::LogicalSize;
 use skulpin::app::AppUpdateArgs;
 use skulpin::app::AppDrawArgs;
 
-use std::ffi::CString;
 use std::collections::VecDeque;
 
 use skulpin::winit;
@@ -20,14 +19,12 @@ use winit::dpi::LogicalPosition;
 fn main() {
     // Setup logging
     env_logger::Builder::from_default_env()
-        .filter_level(log::LevelFilter::Trace)
+        .filter_level(log::LevelFilter::Debug)
         .init();
 
     let example_app = ExampleApp::new();
 
     AppBuilder::new()
-        .app_name(CString::new("Skulpin Example App").unwrap())
-        .use_vulkan_debug_layer(false)
         .inner_size(LogicalSize::new(900, 600))
         .run(example_app);
 }

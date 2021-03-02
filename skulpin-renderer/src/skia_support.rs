@@ -1,14 +1,10 @@
-use ash::vk;
-use ash::prelude::VkResult;
-
-use super::VkInstance;
-use super::VkDevice;
-
 use std::ffi::c_void;
-
-use ash::version::EntryV1_0;
-use ash::version::DeviceV1_0;
+use rafx::api::*;
+use rafx::framework::*;
+use rafx::api::ash;
+use ash::vk;
 use ash::version::InstanceV1_0;
+use rafx::api::vulkan::RafxRawImageVulkan;
 
 /// Handles setting up skia to use the same vulkan instance we initialize
 pub struct VkSkiaContext {
@@ -17,13 +13,23 @@ pub struct VkSkiaContext {
 
 impl VkSkiaContext {
     pub fn new(
-        instance: &VkInstance,
-        device: &VkDevice,
+        device_context: &RafxDeviceContext,
+        queue: &RafxQueue,
     ) -> Self {
         use vk::Handle;
 
+        let vk_device_context = device_context.vk_device_context().unwrap();
+        let entry = vk_device_context.entry();
+        let instance = vk_device_context.instance();
+        let physical_device = vk_device_context.physical_device();
+        let device = vk_device_context.device();
+
+        let graphics_queue_family = vk_device_context
+            .queue_family_indices()
+            .graphics_queue_family_index;
+
         let get_proc = |of| unsafe {
-            match Self::get_proc(instance, of) {
+            match Self::get_proc(instance, entry, of) {
                 Some(f) => f as _,
                 None => {
                     error!("resolve of {} failed", of.name().to_str().unwrap());
@@ -34,17 +40,18 @@ impl VkSkiaContext {
 
         info!(
             "Setting up skia backend context with queue family index {}",
-            device.queue_family_indices.graphics_queue_family_index
+            graphics_queue_family
         );
 
         let backend_context = unsafe {
+            let vk_queue_handle = *queue.vk_queue().unwrap().queue().queue().lock().unwrap();
             skia_safe::gpu::vk::BackendContext::new(
-                instance.instance.handle().as_raw() as _,
-                device.physical_device.as_raw() as _,
-                device.logical_device.handle().as_raw() as _,
+                instance.handle().as_raw() as _,
+                physical_device.as_raw() as _,
+                device.handle().as_raw() as _,
                 (
-                    device.queues.graphics_queue.as_raw() as _,
-                    device.queue_family_indices.graphics_queue_family_index as usize,
+                    vk_queue_handle.as_raw() as _,
+                    graphics_queue_family as usize,
                 ),
                 &get_proc,
             )
@@ -55,20 +62,41 @@ impl VkSkiaContext {
         VkSkiaContext { context }
     }
 
-    unsafe fn get_proc(
-        instance: &VkInstance,
+    // We must not return vulkan 1.2 because skia compiles VMA with support only up to 1.1 and will
+    // fail if we return 1.2.
+    //
+    // Using 1.1 fails as well.. skia is using an older version of VMA with a bug that has since
+    // been fixed, so for now report that we only support 1.0 to work around it
+    // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/commit/f9921aefddee2437cc2e3303d3175bd8ef23e22c
+    unsafe extern "system" fn enumerate_instance_version_hooked(
+        p_api_version: *mut u32
+    ) -> vk::Result {
+        *p_api_version = vk::make_version(1, 0, 0);
+        vk::Result::SUCCESS
+    }
+
+    unsafe fn get_proc<E: ash::version::EntryV1_0>(
+        instance: &ash::Instance,
+        entry: &E,
         of: skia_safe::gpu::vk::GetProcOf,
     ) -> Option<unsafe extern "system" fn() -> c_void> {
-        use vk::Handle;
-
+        use rafx::api::ash::vk::Handle;
         match of {
             skia_safe::gpu::vk::GetProcOf::Instance(instance_proc, name) => {
-                let ash_instance = vk::Instance::from_raw(instance_proc as _);
-                instance.entry.get_instance_proc_addr(ash_instance, name)
+                // See comments on enumerate_instance_version_hooked for why we have to hook this fn
+                let name_cstr = std::ffi::CStr::from_ptr(name as _);
+                if name_cstr.to_string_lossy() == "vkEnumerateInstanceVersion" {
+                    Some(std::mem::transmute(
+                        Self::enumerate_instance_version_hooked as *const (),
+                    ))
+                } else {
+                    let ash_instance = vk::Instance::from_raw(instance_proc as _);
+                    entry.get_instance_proc_addr(ash_instance, name)
+                }
             }
             skia_safe::gpu::vk::GetProcOf::Device(device_proc, name) => {
                 let ash_device = vk::Device::from_raw(device_proc as _);
-                instance.instance.get_device_proc_addr(ash_device, name)
+                instance.get_device_proc_addr(ash_device, name)
             }
         }
     }
@@ -76,11 +104,10 @@ impl VkSkiaContext {
 
 /// Wraps a skia surface/canvas that can be drawn on and makes the vulkan resources accessible
 pub struct VkSkiaSurface {
-    pub device: ash::Device, // VkDevice is responsible for cleaning this up
-
+    pub device_context: RafxDeviceContext,
+    pub image_view: ResourceArc<ImageViewResource>,
     pub surface: skia_safe::Surface,
     pub texture: skia_safe::gpu::BackendTexture,
-    pub image_view: vk::ImageView,
 }
 
 impl VkSkiaSurface {
@@ -89,18 +116,18 @@ impl VkSkiaSurface {
     }
 
     pub fn new(
-        device: &VkDevice,
+        resource_manager: &ResourceManager,
         context: &mut VkSkiaContext,
-        extent: vk::Extent2D,
-    ) -> VkResult<Self> {
+        extents: RafxExtents2D,
+    ) -> RafxResult<Self> {
         // The "native" color type is based on platform. For example, on Windows it's BGR and on
         // MacOS it's RGB
         let color_type = skia_safe::ColorType::n32();
         let alpha_type = skia_safe::AlphaType::Premul;
-        let color_space = None;
+        let color_space = Some(skia_safe::ColorSpace::new_srgb_linear());
 
         let image_info = skia_safe::ImageInfo::new(
-            (extent.width as i32, extent.height as i32),
+            (extents.width as i32, extents.height as i32),
             color_type,
             alpha_type,
             color_space,
@@ -128,76 +155,49 @@ impl VkSkiaSurface {
         // kBGRA_8888_SkColorType. Whatever it is, we need to set up the image view with the
         // matching format
         let format = match color_type {
-            skia_safe::ColorType::RGBA8888 => vk::Format::R8G8B8A8_UNORM,
-            skia_safe::ColorType::BGRA8888 => vk::Format::B8G8R8A8_UNORM,
+            skia_safe::ColorType::RGBA8888 => RafxFormat::R8G8B8A8_UNORM,
+            skia_safe::ColorType::BGRA8888 => RafxFormat::B8G8R8A8_UNORM,
             _ => {
                 warn!("Unexpected native color type {:?}", color_type);
-                vk::Format::R8G8B8A8_UNORM
+                RafxFormat::R8G8B8A8_UNORM
             }
         };
 
-        let skia_tex_image_view_info = vk::ImageViewCreateInfo {
-            view_type: vk::ImageViewType::TYPE_2D,
-            format,
-            components: vk::ComponentMapping {
-                r: vk::ComponentSwizzle::R,
-                g: vk::ComponentSwizzle::G,
-                b: vk::ComponentSwizzle::B,
-                a: vk::ComponentSwizzle::A,
-            },
-            subresource_range: vk::ImageSubresourceRange {
-                aspect_mask: vk::ImageAspectFlags::COLOR,
-                level_count: 1,
-                layer_count: 1,
+        let device_context = resource_manager.device_context();
+
+        let raw_image = RafxRawImageVulkan {
+            allocation: None,
+            image,
+        };
+
+        let image = rafx::api::vulkan::RafxTextureVulkan::from_existing(
+            device_context.vk_device_context().unwrap(),
+            Some(raw_image),
+            &RafxTextureDef {
+                extents: RafxExtents3D {
+                    width: extents.width,
+                    height: extents.height,
+                    depth: 1,
+                },
+                format,
+                resource_type: RafxResourceType::TEXTURE,
+                sample_count: RafxSampleCount::SampleCount1,
                 ..Default::default()
             },
-            image,
-            ..Default::default()
-        };
+        )?;
 
-        let image_view = unsafe {
-            device
-                .logical_device
-                .create_image_view(&skia_tex_image_view_info, None)?
-        };
+        let image = resource_manager
+            .resources()
+            .insert_image(RafxTexture::Vk(image));
+        let image_view = resource_manager
+            .resources()
+            .get_or_create_image_view(&image, None)?;
 
         Ok(VkSkiaSurface {
-            device: device.logical_device.clone(),
+            device_context: device_context.clone(),
             surface,
             texture,
             image_view,
         })
-    }
-
-    /// Creates a sampler appropriate for rendering skia surfaces. We don't create one per surface
-    /// since one can be shared among all code that renders surfaces
-    pub fn create_sampler(logical_device: &ash::Device) -> VkResult<vk::Sampler> {
-        let sampler_info = vk::SamplerCreateInfo::builder()
-            .mag_filter(vk::Filter::LINEAR)
-            .min_filter(vk::Filter::LINEAR)
-            .address_mode_u(vk::SamplerAddressMode::MIRRORED_REPEAT)
-            .address_mode_v(vk::SamplerAddressMode::MIRRORED_REPEAT)
-            .address_mode_w(vk::SamplerAddressMode::MIRRORED_REPEAT)
-            .anisotropy_enable(false)
-            .max_anisotropy(1.0)
-            .border_color(vk::BorderColor::FLOAT_OPAQUE_WHITE)
-            .unnormalized_coordinates(false)
-            .compare_enable(false)
-            .compare_op(vk::CompareOp::NEVER)
-            .mipmap_mode(vk::SamplerMipmapMode::LINEAR)
-            .mip_lod_bias(0.0)
-            .min_lod(0.0)
-            .max_lod(0.0);
-
-        unsafe { logical_device.create_sampler(&sampler_info, None) }
-    }
-}
-
-impl Drop for VkSkiaSurface {
-    fn drop(&mut self) {
-        unsafe {
-            //self.device.destroy_sampler(self.sampler, None);
-            self.device.destroy_image_view(self.image_view, None);
-        }
     }
 }

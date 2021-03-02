@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.12.0
+
+ * Complete rewrite! Almost all the rendering code has been removed. `skulpin` now uses
+   `rafx`. (The vulkan backend in `rafx` was originally from `skulpin` but is much
+   more general and user-friendly).
+ * The plugin system and included imgui support has been dropped. The intended way to do this
+   now is to build your own renderer using `rafx` and use `VkSkiaContext`, `VkSkiaSurface`, and
+   coordinate system types directly.
+ * Feature names are now consistently kabob-case (i.e. "winit-app")
+
 ## 0.11.1
 
  * Add winit-24 feature flag

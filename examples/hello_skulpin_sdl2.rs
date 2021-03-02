@@ -1,10 +1,10 @@
 // This example shows how to use the renderer with SDL2 directly.
 
 use skulpin::skia_safe;
-use skulpin::sdl2;
-use skulpin::{CoordinateSystemHelper, RendererBuilder, LogicalSize, Sdl2Window};
+use skulpin::{CoordinateSystemHelper, RendererBuilder, LogicalSize};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
+use skulpin::rafx::api::RafxExtents2D;
 
 fn main() {
     // Setup logging
@@ -33,7 +33,7 @@ fn main() {
         bottom: logical_size.height as f32,
     };
 
-    let sdl_window = video_subsystem
+    let window = video_subsystem
         .window("Skulpin", logical_size.width, logical_size.height)
         .position_centered()
         .allow_highdpi()
@@ -42,15 +42,19 @@ fn main() {
         .expect("Failed to create window");
     log::info!("window created");
 
-    let window = Sdl2Window::new(&sdl_window);
+    let (window_width, window_height) = window.vulkan_drawable_size();
+
+    let extents = RafxExtents2D {
+        width: window_width,
+        height: window_height,
+    };
 
     let renderer = RendererBuilder::new()
-        .use_vulkan_debug_layer(false)
         .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
             visible_range,
             scale_to_fit,
         ))
-        .build(&window);
+        .build(&window, extents);
 
     // Check if there were error setting up vulkan
     if let Err(e) = renderer {
@@ -100,8 +104,14 @@ fn main() {
         //
         // Redraw
         //
+        let (window_width, window_height) = window.vulkan_drawable_size();
+        let extents = RafxExtents2D {
+            width: window_width,
+            height: window_height,
+        };
+
         renderer
-            .draw(&window, |canvas, coordinate_system_helper| {
+            .draw(extents, 1.0, |canvas, coordinate_system_helper| {
                 draw(canvas, &coordinate_system_helper, frame_count);
                 frame_count += 1;
             })

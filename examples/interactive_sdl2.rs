@@ -3,15 +3,14 @@
 // instead.
 
 use skulpin::skia_safe;
-use skulpin::sdl2;
-use skulpin::{CoordinateSystemHelper, RendererBuilder, LogicalSize, Sdl2Window};
+use skulpin::{CoordinateSystemHelper, RendererBuilder, LogicalSize};
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use std::collections::VecDeque;
 use sdl2::mouse::{MouseState, MouseButton};
 
-use skulpin::app::TimeState;
-use skulpin_renderer::Window;
+use skulpin::rafx::api::raw_window_handle::HasRawWindowHandle;
+use skulpin::rafx::api::RafxExtents2D;
 
 #[derive(Clone, Copy)]
 struct Position {
@@ -34,7 +33,6 @@ impl PreviousClick {
 }
 
 struct ExampleAppState {
-    last_fps_text_change: Option<std::time::Instant>,
     fps_text: String,
     current_mouse_state: MouseState,
     previous_mouse_state: MouseState,
@@ -61,15 +59,8 @@ fn main() {
         width: 900,
         height: 600,
     };
-    let scale_to_fit = skulpin::skia_safe::matrix::ScaleToFit::Center;
-    let visible_range = skulpin::skia_safe::Rect {
-        left: 0.0,
-        right: logical_size.width as f32,
-        top: 0.0,
-        bottom: logical_size.height as f32,
-    };
 
-    let sdl_window = video_subsystem
+    let window = video_subsystem
         .window("Skulpin", logical_size.width, logical_size.height)
         .position_centered()
         .allow_highdpi()
@@ -78,15 +69,15 @@ fn main() {
         .expect("Failed to create window");
     log::info!("window created");
 
-    let window = Sdl2Window::new(&sdl_window);
+    let (window_width, window_height) = window.vulkan_drawable_size();
+    let extents = RafxExtents2D {
+        width: window_width,
+        height: window_height,
+    };
 
     let renderer = RendererBuilder::new()
-        .use_vulkan_debug_layer(false)
-        .coordinate_system(skulpin::CoordinateSystem::VisibleRange(
-            visible_range,
-            scale_to_fit,
-        ))
-        .build(&window);
+        .coordinate_system(skulpin::CoordinateSystem::Physical)
+        .build(&window, extents);
 
     // Check if there were error setting up vulkan
     if let Err(e) = renderer {
@@ -109,7 +100,6 @@ fn main() {
     let initial_mouse_state = sdl2::mouse::MouseState::new(&event_pump);
 
     let mut app_state = ExampleAppState {
-        last_fps_text_change: None,
         fps_text: "".to_string(),
         previous_clicks: Default::default(),
         current_mouse_state: initial_mouse_state,
@@ -117,11 +107,7 @@ fn main() {
         drag_start_position: None,
     };
 
-    let mut time_state = skulpin::app::TimeState::new();
-
     'running: loop {
-        time_state.update();
-
         for event in event_pump.poll_iter() {
             log::info!("{:?}", event);
             match event {
@@ -136,7 +122,7 @@ fn main() {
                     //
                     // Push new clicks onto the previous_clicks list
                     //
-                    let now = time_state.current_instant();
+                    let now = std::time::Instant::now();
                     if mouse_btn == MouseButton::Left {
                         let position = Position { x, y };
                         let previous_click = PreviousClick::new(position, now);
@@ -179,45 +165,28 @@ fn main() {
         app_state.previous_mouse_state = app_state.current_mouse_state;
         app_state.current_mouse_state = MouseState::new(&event_pump);
 
-        update(&mut app_state, &time_state);
+        update(&mut app_state);
+
+        let (window_width, window_height) = window.vulkan_drawable_size();
+        let extents = RafxExtents2D {
+            width: window_width,
+            height: window_height,
+        };
 
         //
         // Redraw
         //
         renderer
-            .draw(&window, |canvas, coordinate_system_helper| {
-                draw(
-                    &app_state,
-                    &time_state,
-                    canvas,
-                    &coordinate_system_helper,
-                    &window,
-                );
+            .draw(extents, 1.0, |canvas, coordinate_system_helper| {
+                draw(&app_state, canvas, &coordinate_system_helper, &window);
                 frame_count += 1;
             })
             .unwrap();
     }
 }
 
-fn update(
-    app_state: &mut ExampleAppState,
-    time_state: &TimeState,
-) {
-    let now = time_state.current_instant();
-
-    //
-    // Update FPS once a second
-    //
-    let update_text_string = match app_state.last_fps_text_change {
-        Some(last_update_instant) => (now - last_update_instant).as_secs_f32() >= 1.0,
-        None => true,
-    };
-
-    if update_text_string {
-        let fps = time_state.updates_per_second();
-        app_state.fps_text = format!("Fps: {:.1}", fps);
-        app_state.last_fps_text_change = Some(now);
-    }
+fn update(app_state: &mut ExampleAppState) {
+    let now = std::time::Instant::now();
 
     //
     // Pop old clicks from the previous_clicks list
@@ -231,12 +200,11 @@ fn update(
 
 fn draw(
     app_state: &ExampleAppState,
-    time_state: &TimeState,
     canvas: &mut skia_safe::Canvas,
     _coordinate_system_helper: &CoordinateSystemHelper,
-    window: &dyn Window,
+    _window: &dyn HasRawWindowHandle,
 ) {
-    let now = time_state.current_instant();
+    let now = std::time::Instant::now();
 
     // Generally would want to clear data every time we draw
     canvas.clear(skia_safe::Color::from_argb(0, 0, 0, 255));
@@ -309,8 +277,10 @@ fn draw(
     canvas.draw_str(app_state.fps_text.clone(), (50, 50), &font, &text_paint);
     canvas.draw_str("Click and drag the mouse", (50, 80), &font, &text_paint);
 
+    let scale_factor = 1.0;
+
     canvas.draw_str(
-        format!("scale factor: {}", window.scale_factor()),
+        format!("scale factor: {}", scale_factor),
         (50, 110),
         &font,
         &text_paint,
@@ -321,8 +291,8 @@ fn draw(
         app_state.current_mouse_state.y(),
     );
     let logical_mouse_position = (
-        physical_mouse_position.0 as f64 / window.scale_factor(),
-        physical_mouse_position.1 as f64 / window.scale_factor(),
+        physical_mouse_position.0 as f64 / scale_factor,
+        physical_mouse_position.1 as f64 / scale_factor,
     );
     canvas.draw_str(
         format!(
