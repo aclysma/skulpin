@@ -35,6 +35,7 @@ impl PreviousClick {
 struct ExampleAppState {
     fps_text: String,
     current_mouse_state: MouseState,
+    #[allow(dead_code)]
     previous_mouse_state: MouseState,
     drag_start_position: Option<Position>,
     previous_clicks: VecDeque<PreviousClick>,

@@ -8,7 +8,7 @@ use rafx::api::vulkan::RafxRawImageVulkan;
 
 /// Handles setting up skia to use the same vulkan instance we initialize
 pub struct VkSkiaContext {
-    pub context: skia_safe::gpu::Context,
+    pub context: skia_safe::gpu::DirectContext,
 }
 
 impl VkSkiaContext {
@@ -57,7 +57,7 @@ impl VkSkiaContext {
             )
         };
 
-        let context = skia_safe::gpu::Context::new_vulkan(&backend_context).unwrap();
+        let context = skia_safe::gpu::DirectContext::new_vulkan(&backend_context, None).unwrap();
 
         VkSkiaContext { context }
     }
