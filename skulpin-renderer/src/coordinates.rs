@@ -275,7 +275,7 @@ impl CoordinateSystemHelper {
         let m = skia_safe::Matrix::from_rect_to_rect(visible_range, dst, scale_to_fit);
         match m {
             Some(m) => {
-                canvas.set_matrix(&m);
+                canvas.set_matrix(&m.into());
                 canvas.scale((x_scale, y_scale));
                 Ok(())
             }

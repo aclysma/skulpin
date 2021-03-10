@@ -211,8 +211,7 @@ impl Renderer {
         }
 
         f(&mut canvas, coordinate_system_helper);
-
-        canvas.flush();
+        self.skia_context.context.flush_and_submit();
 
         //
         // Convert the skia texture to a shader resources, draw a quad, and convert it back to a
@@ -315,7 +314,7 @@ impl Renderer {
             0,
             &[RafxVertexBufferBinding {
                 buffer: &*vertex_buffer.get_raw().buffer,
-                offset: 0,
+                byte_offset: 0,
             }],
         )?;
         descriptor_set.bind(&command_buffer)?;
@@ -403,7 +402,7 @@ impl Drop for Renderer {
     }
 }
 
-rafx::nodes::declare_render_phase!(
+rafx::declare_render_phase!(
     OpaqueRenderPhase,
     OPAQUE_RENDER_PHASE_INDEX,
     opaque_render_phase_sort_submit_nodes
