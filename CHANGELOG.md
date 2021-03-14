@@ -1,9 +1,17 @@
 # Changelog
 
-## 0.11.1
+## 0.11.3
+
+* Limit open-ended version of ash to fix build issue from changes in upstream crates
+
+## 0.11.2
 
  * Add winit-24 feature flag
- * Limit some open-ended versions to fix build issues
+ * Limit some open-ended versions to fix build issues from changes in upstream crates
+
+## 0.11.1
+
+ * Bump imgui due to fix build issue from changes in upstream crates
 
 ## 0.11.0
 
