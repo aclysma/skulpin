@@ -14,6 +14,7 @@ use crate::skia_support::VkSkiaSurface;
 #[derive(Default)]
 pub struct RendererBuilder {
     coordinate_system: CoordinateSystem,
+    vsync_enabled: bool,
 }
 
 impl RendererBuilder {
@@ -21,6 +22,7 @@ impl RendererBuilder {
     pub fn new() -> Self {
         RendererBuilder {
             coordinate_system: Default::default(),
+            vsync_enabled: true,
         }
     }
 
@@ -34,13 +36,26 @@ impl RendererBuilder {
         self
     }
 
+    pub fn vsync_enabled(
+        mut self,
+        vsync_enabled: bool,
+    ) -> Self {
+        self.vsync_enabled = vsync_enabled;
+        self
+    }
+
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
         self,
         window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
     ) -> RafxResult<Renderer> {
-        Renderer::new(window, window_size, self.coordinate_system)
+        Renderer::new(
+            window,
+            window_size,
+            self.coordinate_system,
+            self.vsync_enabled,
+        )
     }
 }
 struct SwapchainEventListener<'a> {
@@ -103,6 +118,7 @@ impl Renderer {
         window: &dyn HasRawWindowHandle,
         window_size: RafxExtents2D,
         coordinate_system: CoordinateSystem,
+        vsync_enabled: bool,
     ) -> RafxResult<Renderer> {
         let api = RafxApi::new(window, &Default::default())?;
         let device_context = api.device_context();
@@ -118,7 +134,7 @@ impl Renderer {
             &RafxSwapchainDef {
                 width: window_size.width,
                 height: window_size.height,
-                enable_vsync: true,
+                enable_vsync: vsync_enabled,
             },
         )?;
 
