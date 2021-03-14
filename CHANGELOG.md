@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.0
+
+ * Add vsync config option
+
 ## 0.12.0
 
  * Complete rewrite! Almost all the rendering code has been removed. `skulpin` now uses
@@ -10,10 +14,18 @@
    coordinate system types directly.
  * Feature names are now consistently kabob-case (i.e. "winit-app")
 
+## 0.11.3
+
+* Limit open-ended version of ash to fix build issue from changes in upstream crates
+
+## 0.11.2
+
+* Add winit-24 feature flag
+* Limit some open-ended versions to fix build issues from changes in upstream crates
+
 ## 0.11.1
 
- * Add winit-24 feature flag
- * Limit some open-ended versions to fix build issues
+* Bump imgui due to fix build issue from changes in upstream crates
 
 ## 0.11.0
 
