@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.1
+
+ * Fix a crash that occurs when minimizing
+
 ## 0.13.0
 
  * Add vsync config option

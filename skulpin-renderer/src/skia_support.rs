@@ -112,6 +112,8 @@ impl VkSkiaSurface {
         context: &mut VkSkiaContext,
         extents: RafxExtents2D,
     ) -> RafxResult<Self> {
+        assert!(extents.width > 0);
+        assert!(extents.height > 0);
         // The "native" color type is based on platform. For example, on Windows it's BGR and on
         // MacOS it's RGB
         let color_type = skia_safe::ColorType::n32();

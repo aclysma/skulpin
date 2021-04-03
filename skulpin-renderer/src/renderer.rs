@@ -76,8 +76,8 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
                 &self.resource_manager,
                 &mut self.skia_context,
                 RafxExtents2D {
-                    width: swapchain.swapchain_def().width,
-                    height: swapchain.swapchain_def().height,
+                    width: swapchain.swapchain_def().width.max(1),
+                    height: swapchain.swapchain_def().height.max(1),
                 },
             )?;
 
