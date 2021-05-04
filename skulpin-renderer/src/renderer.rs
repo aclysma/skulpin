@@ -15,6 +15,7 @@ use crate::skia_support::VkSkiaSurface;
 pub struct RendererBuilder {
     coordinate_system: CoordinateSystem,
     vsync_enabled: bool,
+    keep_surface: bool,
 }
 
 impl RendererBuilder {
@@ -23,6 +24,7 @@ impl RendererBuilder {
         RendererBuilder {
             coordinate_system: Default::default(),
             vsync_enabled: true,
+            keep_surface: false,
         }
     }
 
@@ -44,6 +46,21 @@ impl RendererBuilder {
         self
     }
 
+    /// When set to true, the skia surface from the last frame will be reused for the next frame if
+    /// neither the window size nor the scale factor have changed since the last Renderer.draw call.
+    /// This allows partial updates of the shown content. This feature defaults to false.
+    ///
+    /// (Note: If set to false, you will still get the same surface every few frames dependent
+    /// on the image count of the used swapchain. To avoid flickering when doing so you should clear
+    /// the canvas every frame).
+    pub fn keep_skia_surface(
+        mut self,
+        keep_surface: bool,
+    ) -> Self {
+        self.keep_surface = keep_surface;
+        self
+    }
+
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
         self,
@@ -55,6 +72,7 @@ impl RendererBuilder {
             window_size,
             self.coordinate_system,
             self.vsync_enabled,
+            self.keep_surface,
         )
     }
 }
@@ -62,6 +80,7 @@ struct SwapchainEventListener<'a> {
     skia_context: &'a mut VkSkiaContext,
     skia_surfaces: &'a mut Vec<VkSkiaSurface>,
     resource_manager: &'a ResourceManager,
+    single_skia_surface: bool,
 }
 
 impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
@@ -71,7 +90,14 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
         swapchain: &RafxSwapchain,
     ) -> RafxResult<()> {
         self.skia_surfaces.clear();
-        for _ in 0..swapchain.image_count() {
+        let surface_count = {
+            if self.single_skia_surface {
+                1
+            } else {
+                swapchain.image_count()
+            }
+        };
+        for _ in 0..surface_count {
             let skia_surface = VkSkiaSurface::new(
                 &self.resource_manager,
                 &mut self.skia_context,
@@ -110,6 +136,7 @@ pub struct Renderer {
     pub resource_manager: ResourceManager,
     #[allow(dead_code)]
     pub api: RafxApi,
+    pub single_skia_surface: bool,
 }
 
 impl Renderer {
@@ -119,6 +146,7 @@ impl Renderer {
         window_size: RafxExtents2D,
         coordinate_system: CoordinateSystem,
         vsync_enabled: bool,
+        single_skia_surface: bool,
     ) -> RafxResult<Renderer> {
         let api = RafxApi::new(window, &Default::default())?;
         let device_context = api.device_context();
@@ -150,6 +178,7 @@ impl Renderer {
                 skia_context: &mut skia_context,
                 skia_surfaces: &mut skia_surfaces,
                 resource_manager: &resource_manager,
+                single_skia_surface,
             }),
         )?;
 
@@ -175,6 +204,7 @@ impl Renderer {
             coordinate_system,
             skia_context,
             skia_surfaces,
+            single_skia_surface,
         })
     }
 
@@ -196,6 +226,7 @@ impl Renderer {
                 skia_context: &mut self.skia_context,
                 skia_surfaces: &mut self.skia_surfaces,
                 resource_manager: &self.resource_manager,
+                single_skia_surface: self.single_skia_surface,
             }),
         )?;
 
@@ -205,7 +236,13 @@ impl Renderer {
         //
         // Do skia drawing (including the user's callback)
         //
-        let skia_surface = &mut self.skia_surfaces[frame.rotating_frame_index()];
+        let skia_surface = {
+            if self.single_skia_surface {
+                &mut self.skia_surfaces[0]
+            } else {
+                &mut self.skia_surfaces[frame.rotating_frame_index()]
+            }
+        };
         let mut canvas = skia_surface.surface.canvas();
 
         let coordinate_system_helper = CoordinateSystemHelper::new(window_size, scale_factor);
