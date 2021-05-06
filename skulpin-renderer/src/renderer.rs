@@ -15,7 +15,6 @@ use crate::skia_support::VkSkiaSurface;
 pub struct RendererBuilder {
     coordinate_system: CoordinateSystem,
     vsync_enabled: bool,
-    keep_surface: bool,
 }
 
 impl RendererBuilder {
@@ -24,7 +23,6 @@ impl RendererBuilder {
         RendererBuilder {
             coordinate_system: Default::default(),
             vsync_enabled: true,
-            keep_surface: false,
         }
     }
 
@@ -46,21 +44,6 @@ impl RendererBuilder {
         self
     }
 
-    /// When set to true, the skia surface from the last frame will be reused for the next frame if
-    /// neither the window size nor the scale factor have changed since the last Renderer.draw call.
-    /// This allows partial updates of the shown content. This feature defaults to false.
-    ///
-    /// (Note: If set to false, you will still get the same surface every few frames dependent
-    /// on the image count of the used swapchain. To avoid flickering when doing so you should clear
-    /// the canvas every frame).
-    pub fn keep_skia_surface(
-        mut self,
-        keep_surface: bool,
-    ) -> Self {
-        self.keep_surface = keep_surface;
-        self
-    }
-
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
         self,
@@ -72,15 +55,13 @@ impl RendererBuilder {
             window_size,
             self.coordinate_system,
             self.vsync_enabled,
-            self.keep_surface,
         )
     }
 }
 struct SwapchainEventListener<'a> {
     skia_context: &'a mut VkSkiaContext,
-    skia_surfaces: &'a mut Vec<VkSkiaSurface>,
+    skia_surface: &'a mut Option<VkSkiaSurface>,
     resource_manager: &'a ResourceManager,
-    single_skia_surface: bool,
 }
 
 impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
@@ -89,26 +70,14 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
         _device_context: &RafxDeviceContext,
         swapchain: &RafxSwapchain,
     ) -> RafxResult<()> {
-        self.skia_surfaces.clear();
-        let surface_count = {
-            if self.single_skia_surface {
-                1
-            } else {
-                swapchain.image_count()
-            }
-        };
-        for _ in 0..surface_count {
-            let skia_surface = VkSkiaSurface::new(
-                &self.resource_manager,
-                &mut self.skia_context,
-                RafxExtents2D {
-                    width: swapchain.swapchain_def().width.max(1),
-                    height: swapchain.swapchain_def().height.max(1),
-                },
-            )?;
-
-            self.skia_surfaces.push(skia_surface);
-        }
+        *self.skia_surface = Some(VkSkiaSurface::new(
+            &self.resource_manager,
+            &mut self.skia_context,
+            RafxExtents2D {
+                width: swapchain.swapchain_def().width.max(1),
+                height: swapchain.swapchain_def().height.max(1),
+            },
+        )?);
 
         Ok(())
     }
@@ -118,7 +87,8 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
         _device_context: &RafxDeviceContext,
         _swapchain: &RafxSwapchain,
     ) -> RafxResult<()> {
-        self.skia_surfaces.clear();
+        *self.skia_surface = None;
+
         Ok(())
     }
 }
@@ -128,7 +98,7 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
 pub struct Renderer {
     // Ordered in drop order
     pub coordinate_system: CoordinateSystem,
-    pub skia_surfaces: Vec<VkSkiaSurface>,
+    pub skia_surface: Option<VkSkiaSurface>,
     pub skia_context: VkSkiaContext,
     pub skia_material_pass: MaterialPass,
     pub graphics_queue: RafxQueue,
@@ -136,7 +106,6 @@ pub struct Renderer {
     pub resource_manager: ResourceManager,
     #[allow(dead_code)]
     pub api: RafxApi,
-    pub single_skia_surface: bool,
 }
 
 impl Renderer {
@@ -146,7 +115,6 @@ impl Renderer {
         window_size: RafxExtents2D,
         coordinate_system: CoordinateSystem,
         vsync_enabled: bool,
-        single_skia_surface: bool,
     ) -> RafxResult<Renderer> {
         let api = RafxApi::new(window, &Default::default())?;
         let device_context = api.device_context();
@@ -169,16 +137,15 @@ impl Renderer {
         let graphics_queue = device_context.create_queue(RafxQueueType::Graphics)?;
 
         let mut skia_context = VkSkiaContext::new(&device_context, &graphics_queue);
-        let mut skia_surfaces = Vec::default();
+        let mut skia_surface = None;
 
         let swapchain_helper = RafxSwapchainHelper::new(
             &device_context,
             swapchain,
             Some(&mut SwapchainEventListener {
                 skia_context: &mut skia_context,
-                skia_surfaces: &mut skia_surfaces,
+                skia_surface: &mut skia_surface,
                 resource_manager: &resource_manager,
-                single_skia_surface,
             }),
         )?;
 
@@ -203,8 +170,7 @@ impl Renderer {
             skia_material_pass,
             coordinate_system,
             skia_context,
-            skia_surfaces,
-            single_skia_surface,
+            skia_surface
         })
     }
 
@@ -224,9 +190,8 @@ impl Renderer {
             window_size.height,
             Some(&mut SwapchainEventListener {
                 skia_context: &mut self.skia_context,
-                skia_surfaces: &mut self.skia_surfaces,
+                skia_surface: &mut self.skia_surface,
                 resource_manager: &self.resource_manager,
-                single_skia_surface: self.single_skia_surface,
             }),
         )?;
 
@@ -236,14 +201,7 @@ impl Renderer {
         //
         // Do skia drawing (including the user's callback)
         //
-        let skia_surface = {
-            if self.single_skia_surface {
-                &mut self.skia_surfaces[0]
-            } else {
-                &mut self.skia_surfaces[frame.rotating_frame_index()]
-            }
-        };
-        let mut canvas = skia_surface.surface.canvas();
+        let mut canvas = self.skia_surface.as_mut().unwrap().surface.canvas();
 
         let coordinate_system_helper = CoordinateSystemHelper::new(window_size, scale_factor);
 
@@ -279,7 +237,7 @@ impl Renderer {
                 .descriptor_set_layouts[0],
         )?;
 
-        descriptor_set.set_image(1, &skia_surface.image_view);
+        descriptor_set.set_image(1, &self.skia_surface.as_ref().unwrap().image_view);
 
         descriptor_set.flush(&mut descriptor_set_allocator)?;
         descriptor_set_allocator.flush_changes()?;
@@ -311,7 +269,7 @@ impl Renderer {
                     queue_transition: RafxBarrierQueueTransition::None,
                 },
                 RafxTextureBarrier {
-                    texture: &skia_surface.image_view.get_raw().image.get_raw().image,
+                    texture: &self.skia_surface.as_ref().unwrap().image_view.get_raw().image.get_raw().image,
                     array_slice: None,
                     mip_slice: None,
                     src_state: RafxResourceState::RENDER_TARGET,
@@ -388,7 +346,7 @@ impl Renderer {
                     queue_transition: RafxBarrierQueueTransition::None,
                 },
                 RafxTextureBarrier {
-                    texture: &skia_surface.image_view.get_raw().image.get_raw().image,
+                    texture: &self.skia_surface.as_ref().unwrap().image_view.get_raw().image.get_raw().image,
                     array_slice: None,
                     mip_slice: None,
                     src_state: RafxResourceState::SHADER_RESOURCE,
