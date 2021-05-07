@@ -170,7 +170,7 @@ impl Renderer {
             skia_material_pass,
             coordinate_system,
             skia_context,
-            skia_surface
+            skia_surface,
         })
     }
 
@@ -269,7 +269,15 @@ impl Renderer {
                     queue_transition: RafxBarrierQueueTransition::None,
                 },
                 RafxTextureBarrier {
-                    texture: &self.skia_surface.as_ref().unwrap().image_view.get_raw().image.get_raw().image,
+                    texture: &self
+                        .skia_surface
+                        .as_ref()
+                        .unwrap()
+                        .image_view
+                        .get_raw()
+                        .image
+                        .get_raw()
+                        .image,
                     array_slice: None,
                     mip_slice: None,
                     src_state: RafxResourceState::RENDER_TARGET,
@@ -346,7 +354,15 @@ impl Renderer {
                     queue_transition: RafxBarrierQueueTransition::None,
                 },
                 RafxTextureBarrier {
-                    texture: &self.skia_surface.as_ref().unwrap().image_view.get_raw().image.get_raw().image,
+                    texture: &self
+                        .skia_surface
+                        .as_ref()
+                        .unwrap()
+                        .image_view
+                        .get_raw()
+                        .image
+                        .get_raw()
+                        .image,
                     array_slice: None,
                     mip_slice: None,
                     src_state: RafxResourceState::SHADER_RESOURCE,
