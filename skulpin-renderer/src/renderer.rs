@@ -1,5 +1,5 @@
 use rafx::api::*;
-use rafx::nodes::*;
+use rafx::render_features::*;
 use rafx::framework::*;
 
 use super::CoordinateSystemHelper;
@@ -116,7 +116,7 @@ impl Renderer {
         coordinate_system: CoordinateSystem,
         vsync_enabled: bool,
     ) -> RafxResult<Renderer> {
-        let api = RafxApi::new(window, &Default::default())?;
+        let api = unsafe { RafxApi::new(window, &Default::default()) }?;
         let device_context = api.device_context();
 
         let render_registry = RenderRegistryBuilder::default()
@@ -435,9 +435,8 @@ rafx::declare_render_phase!(
     opaque_render_phase_sort_submit_nodes
 );
 
-fn opaque_render_phase_sort_submit_nodes(submit_nodes: Vec<SubmitNode>) -> Vec<SubmitNode> {
+fn opaque_render_phase_sort_submit_nodes(_submit_nodes: &mut Vec<RenderFeatureSubmitNode>) {
     // No sort needed
-    submit_nodes
 }
 
 #[derive(Clone, Debug, Copy)]
