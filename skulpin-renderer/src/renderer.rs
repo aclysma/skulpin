@@ -116,9 +116,7 @@ impl Renderer {
         coordinate_system: CoordinateSystem,
         vsync_enabled: bool,
     ) -> RafxResult<Renderer> {
-        let api = unsafe {
-            RafxApi::new(window, &Default::default())
-        }?;
+        let api = unsafe { RafxApi::new(window, &Default::default()) }?;
         let device_context = api.device_context();
 
         let render_registry = RenderRegistryBuilder::default()
