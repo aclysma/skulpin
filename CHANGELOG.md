@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.0
+
+ * Reuse the same canvas every frame instead of rotating between one per swapchain
+ * Update to rafx 0.13.0 to fix a crash when resizing the window on linux
+
 ## 0.13.1
 
  * Fix a crash that occurs when minimizing
