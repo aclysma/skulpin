@@ -27,7 +27,7 @@ The [interactive](examples/interactive_winit_app.rs) example is good to look at 
 
 ```
 # winit 0.24
-cargo run --example interactive_winit_app --features winit-app,winit-24
+cargo run --example interactive_winit_app --features winit-app,winit-25
 
 # sdl2
 cargo run --example interactive_sdl2
@@ -36,7 +36,7 @@ cargo run --example interactive_sdl2
 The [physics](examples/physics.rs) demo is fun too.
 
 ```
-cargo run --example physics --features winit-app,winit-24
+cargo run --example physics --features winit-app,winit-25
 ```
 
 Here's a video of the physics and interactive examples.
@@ -90,6 +90,7 @@ If using winit-app, you MUST specify a winit version feature flag (see below)
 * `winit-22`
 * `winit-23`
 * `winit-24`
+* `winit-25`
 * `winit-latest`
 
 (These feature names match the imgui-rs crate.)
