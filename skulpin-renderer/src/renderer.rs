@@ -481,7 +481,7 @@ lazy_static::lazy_static! {
             tex_coord: Default::default(),
         };
 
-        VertexDataLayout::build_vertex_layout(&vertex, |builder, vertex| {
+        VertexDataLayout::build_vertex_layout(&vertex, RafxVertexAttributeRate::Vertex, |builder, vertex| {
             builder.add_member(&vertex.pos, "POSITION", RafxFormat::R32G32_SFLOAT);
             builder.add_member(&vertex.tex_coord, "TEXCOORD", RafxFormat::R32G32_SFLOAT);
         }).into_set(RafxPrimitiveTopology::TriangleList)
