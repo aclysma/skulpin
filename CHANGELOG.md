@@ -1,9 +1,14 @@
 # Changelog
 
+## 0.14.1
+
+ * Update to rafx 0.0.14. This fixes an compile error caused by a non-semver change upstream
+ * Add winit-25 config flag
+
 ## 0.14.0
 
  * Reuse the same canvas every frame instead of rotating between one per swapchain
- * Update to rafx 0.13.0 to fix a crash when resizing the window on linux
+ * Update to rafx 0.0.13 to fix a crash when resizing the window on linux
 
 ## 0.13.1
 

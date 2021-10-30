@@ -1,6 +1,6 @@
 [package]
 name = "skulpin-renderer"
-version = "0.14.0"
+version = "0.14.1"
 authors = ["Philip Degarmo <aclysma@gmail.com>"]
 edition = "2018"
 description = "A vulkan renderer for skia, a component of skulpin"
