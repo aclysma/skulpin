@@ -23,7 +23,7 @@ complete = ["skia-safe/textlayout"]
 
 [dependencies]
 # rafx does not yet follow semver
-rafx = { version = "=0.0.13", features = ["rafx-vulkan", "framework"] }
+rafx = { version = "=0.0.14", features = ["rafx-vulkan", "framework"] }
 bincode = "1.3.1"
 lazy_static = "1"
 
