@@ -532,7 +532,12 @@ impl InputState {
                     );
                 }
 
-                #[cfg(any(feature = "winit-23", feature = "winit-24", feature = "winit-latest"))]
+                #[cfg(any(
+                    feature = "winit-23",
+                    feature = "winit-24",
+                    feature = "winit-25",
+                    feature = "winit-latest"
+                ))]
                 {
                     self.mouse_wheel_delta = MouseScrollDelta::PixelDelta(
                         PhysicalPosition::<f64>::new(d1.x + d2.x, d1.y + d2.y),

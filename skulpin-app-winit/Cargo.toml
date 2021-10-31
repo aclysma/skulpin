@@ -21,6 +21,7 @@ winit-21 = { package = "winit", version = "0.21", optional = true }
 winit-22 = { package = "winit", version = "0.22", optional = true }
 winit-23 = { package = "winit", version = "0.23", optional = true }
 winit-24 = { package = "winit", version = "0.24", optional = true }
+winit-25 = { package = "winit", version = "0.25", optional = true }
 winit-latest = { package = "winit", version = ">=0.23", optional = true }
 raw-window-handle = "0.3"
 

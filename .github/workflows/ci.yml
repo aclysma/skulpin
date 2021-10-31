@@ -71,6 +71,14 @@ jobs:
           CARGO_INCREMENTAL: 0
           RUSTFLAGS: "-C debuginfo=0 -D warnings"
 
+      # Run tests (within winit 0.25)
+      - name: Run tests
+        run: cargo test --workspace --features=winit-25,winit-app
+        if: ${{ runner.os == 'Linux' }}
+        env:
+          CARGO_INCREMENTAL: 0
+          RUSTFLAGS: "-C debuginfo=0 -D warnings"
+
   clean:
     runs-on: ubuntu-latest
     steps:
