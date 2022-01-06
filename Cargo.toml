@@ -68,6 +68,11 @@ rapier2d = "0.5"
 sdl2-sys = { version = ">=0.33, <=0.34.2"}
 sdl2 = { version = ">=0.33,<0.34.3", features = ["bundled", "static-link", "raw-window-handle"] }
 
+# Cf. MFEK/skulpin.rlib#2 and aclysma/rafx#180.
+[profile.dev.package.rafx]
+debug-assertions = false
+opt-level = 3
+
 [[example]]
 name = "hello_skulpin_sdl2"
 required-features = []
