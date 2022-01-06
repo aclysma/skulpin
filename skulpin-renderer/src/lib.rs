@@ -14,6 +14,7 @@ pub use skia_support::VkSkiaSurface;
 mod renderer;
 pub use renderer::RendererBuilder;
 pub use renderer::Renderer;
+pub use renderer::ValidationMode;
 
 mod coordinates;
 pub use coordinates::Size;

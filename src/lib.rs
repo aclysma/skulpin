@@ -31,6 +31,7 @@ pub use skulpin_renderer::RendererBuilder;
 pub use skulpin_renderer::Renderer;
 pub use skulpin_renderer::CoordinateSystemHelper;
 pub use skulpin_renderer::CoordinateSystem;
+pub use skulpin_renderer::ValidationMode;
 pub use skulpin_renderer::Size;
 pub use skulpin_renderer::LogicalSize;
 pub use skulpin_renderer::PhysicalSize;

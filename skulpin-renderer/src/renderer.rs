@@ -9,12 +9,46 @@ use std::sync::Arc;
 use crate::VkSkiaContext;
 use crate::skia_support::VkSkiaSurface;
 
+use rafx::api::RafxValidationMode;
+
+/// Controls if validation is enabled or not. Validation layers require the vulkan SDK to be
+/// installed.
+#[derive(Copy, Clone, Debug)]
+pub enum ValidationMode {
+    /// Do not enable validation.
+    Disabled,
+
+    /// Enable validation if possible (i.e. vulkan SDK is installed)
+    EnabledIfAvailable,
+
+    /// Enable validation, and fail if we cannot enable it. This requires the vulkan SDK to be
+    /// installed.
+    Enabled,
+}
+
+impl Default for ValidationMode {
+    fn default() -> Self {
+        ValidationMode::Disabled
+    }
+}
+
+impl Into<RafxValidationMode> for ValidationMode {
+    fn into(self) -> RafxValidationMode {
+        match self {
+            ValidationMode::Disabled => RafxValidationMode::Disabled,
+            ValidationMode::Enabled => RafxValidationMode::Enabled,
+            ValidationMode::EnabledIfAvailable => RafxValidationMode::EnabledIfAvailable,
+        }
+    }
+}
+
 /// A builder to create the renderer. It's easier to use AppBuilder and implement an AppHandler, but
 /// initializing the renderer and maintaining the window yourself allows for more customization
 #[derive(Default)]
 pub struct RendererBuilder {
     coordinate_system: CoordinateSystem,
     vsync_enabled: bool,
+    validation_mode: ValidationMode,
 }
 
 impl RendererBuilder {
@@ -23,6 +57,7 @@ impl RendererBuilder {
         RendererBuilder {
             coordinate_system: Default::default(),
             vsync_enabled: true,
+            validation_mode: ValidationMode::default(),
         }
     }
 
@@ -44,6 +79,14 @@ impl RendererBuilder {
         self
     }
 
+    pub fn validation_mode(
+        mut self,
+        validation_mode: ValidationMode,
+    ) -> Self {
+        self.validation_mode = validation_mode;
+        self
+    }
+
     /// Builds the renderer. The window that's passed in will be used for creating the swapchain
     pub fn build(
         self,
@@ -55,6 +98,7 @@ impl RendererBuilder {
             window_size,
             self.coordinate_system,
             self.vsync_enabled,
+            self.validation_mode,
         )
     }
 }
@@ -121,8 +165,14 @@ impl Renderer {
         window_size: RafxExtents2D,
         coordinate_system: CoordinateSystem,
         vsync_enabled: bool,
+        validation_mode: ValidationMode,
     ) -> RafxResult<Renderer> {
-        let api = unsafe { RafxApi::new(window, &Default::default()) }?;
+        let api_def = RafxApiDefVulkan {
+            validation_mode: validation_mode.into(),
+            ..Default::default()
+        };
+
+        let api = unsafe { RafxApi::new_vulkan(window, &Default::default(), &api_def) }?;
         let device_context = api.device_context();
 
         let resource_manager =

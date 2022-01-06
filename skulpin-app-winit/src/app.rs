@@ -13,6 +13,7 @@ use skulpin_renderer::Size;
 use skulpin_renderer::RendererBuilder;
 use skulpin_renderer::CoordinateSystem;
 use skulpin_renderer::CoordinateSystemHelper;
+use skulpin_renderer::ValidationMode;
 use skulpin_renderer::rafx::api::RafxError;
 use crate::rafx::api::RafxExtents2D;
 
@@ -146,6 +147,16 @@ impl AppBuilder {
         coordinate_system: CoordinateSystem,
     ) -> Self {
         self.renderer_builder = self.renderer_builder.coordinate_system(coordinate_system);
+        self
+    }
+
+    /// Set the validation mode in rafx. For skulpin, this essentially means turning the vulkan
+    /// debug layers on/off.
+    pub fn validation_mode(
+        mut self,
+        validation_mode: ValidationMode,
+    ) -> Self {
+        self.renderer_builder = self.renderer_builder.validation_mode(validation_mode);
         self
     }
 
