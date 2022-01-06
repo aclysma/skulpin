@@ -108,6 +108,12 @@ pub struct Renderer {
     pub api: RafxApi,
 }
 
+lazy_static::lazy_static! {
+    pub static ref RENDER_REGISTRY: RenderRegistry = RenderRegistryBuilder::default()
+            .register_render_phase::<OpaqueRenderPhase>("opaque")
+            .build();
+}
+
 impl Renderer {
     /// Create the renderer
     pub fn new(
@@ -119,11 +125,8 @@ impl Renderer {
         let api = unsafe { RafxApi::new(window, &Default::default()) }?;
         let device_context = api.device_context();
 
-        let render_registry = RenderRegistryBuilder::default()
-            .register_render_phase::<OpaqueRenderPhase>("opaque")
-            .build();
         let resource_manager =
-            rafx::framework::ResourceManager::new(&device_context, &render_registry);
+            rafx::framework::ResourceManager::new(&device_context, &RENDER_REGISTRY);
 
         let swapchain = device_context.create_swapchain(
             window,
