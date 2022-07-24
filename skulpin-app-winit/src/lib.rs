@@ -49,5 +49,7 @@ pub use winit_23 as winit;
 pub use winit_24 as winit;
 #[cfg(feature = "winit-25")]
 pub use winit_25 as winit;
+#[cfg(feature = "winit-26")]
+pub use winit_26 as winit;
 #[cfg(feature = "winit-latest")]
 pub use winit_latest as winit;
