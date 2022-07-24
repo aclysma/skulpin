@@ -166,8 +166,7 @@ impl Renderer {
         vsync_enabled: bool,
         validation_mode: ValidationMode,
     ) -> RafxResult<Renderer> {
-
-        let api = if cfg!(target_os = "macos"){
+        let api = if cfg!(target_os = "macos") {
             let api_def = RafxApiDefMetal {};
             unsafe { RafxApi::new_metal(window, &Default::default(), &api_def) }?
         } else {
