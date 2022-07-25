@@ -6,8 +6,7 @@ use super::CoordinateSystemHelper;
 use super::CoordinateSystem;
 use rafx::api::raw_window_handle::HasRawWindowHandle;
 use std::sync::Arc;
-use crate::VkSkiaContext;
-use crate::skia_support::VkSkiaSurface;
+use crate::skia_support::{SkiaContext, SkiaSurface};
 
 use rafx::api::RafxValidationMode;
 
@@ -103,8 +102,8 @@ impl RendererBuilder {
     }
 }
 struct SwapchainEventListener<'a> {
-    skia_context: &'a mut VkSkiaContext,
-    skia_surface: &'a mut Option<VkSkiaSurface>,
+    skia_context: &'a mut SkiaContext,
+    skia_surface: &'a mut Option<SkiaSurface>,
     resource_manager: &'a ResourceManager,
 }
 
@@ -114,7 +113,7 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
         _device_context: &RafxDeviceContext,
         swapchain: &RafxSwapchain,
     ) -> RafxResult<()> {
-        *self.skia_surface = Some(VkSkiaSurface::new(
+        *self.skia_surface = Some(SkiaSurface::new(
             &self.resource_manager,
             &mut self.skia_context,
             RafxExtents2D {
@@ -142,8 +141,8 @@ impl<'a> RafxSwapchainEventListener for SwapchainEventListener<'a> {
 pub struct Renderer {
     // Ordered in drop order
     pub coordinate_system: CoordinateSystem,
-    pub skia_surface: Option<VkSkiaSurface>,
-    pub skia_context: VkSkiaContext,
+    pub skia_surface: Option<SkiaSurface>,
+    pub skia_context: SkiaContext,
     pub skia_material_pass: MaterialPass,
     pub graphics_queue: RafxQueue,
     pub swapchain_helper: RafxSwapchainHelper,
@@ -167,12 +166,17 @@ impl Renderer {
         vsync_enabled: bool,
         validation_mode: ValidationMode,
     ) -> RafxResult<Renderer> {
-        let api_def = RafxApiDefVulkan {
-            validation_mode: validation_mode.into(),
-            ..Default::default()
+        let api = if cfg!(target_os = "macos") {
+            let api_def = RafxApiDefMetal {};
+            unsafe { RafxApi::new_metal(window, &Default::default(), &api_def) }?
+        } else {
+            let api_def = RafxApiDefVulkan {
+                validation_mode: validation_mode.into(),
+                ..Default::default()
+            };
+            unsafe { RafxApi::new_vulkan(window, &Default::default(), &api_def) }?
         };
 
-        let api = unsafe { RafxApi::new_vulkan(window, &Default::default(), &api_def) }?;
         let device_context = api.device_context();
 
         let resource_manager =
@@ -189,7 +193,7 @@ impl Renderer {
 
         let graphics_queue = device_context.create_queue(RafxQueueType::Graphics)?;
 
-        let mut skia_context = VkSkiaContext::new(&device_context, &graphics_queue);
+        let mut skia_context = SkiaContext::new(&device_context, &graphics_queue);
         let mut skia_surface = None;
 
         let swapchain_helper = RafxSwapchainHelper::new(
@@ -204,10 +208,20 @@ impl Renderer {
 
         let resource_context = resource_manager.resource_context();
 
+        #[cfg(target_os = "macos")]
+        let vertex_shader = include_bytes!("../shaders/out/mtl/skia.vert.cookedshaderpackage");
+        #[cfg(target_os = "macos")]
+        let fragment_shader = include_bytes!("../shaders/out/mtl/skia.frag.cookedshaderpackage");
+
+        #[cfg(not(target_os = "macos"))]
+        let vertex_shader = include_bytes!("../shaders/out/vk/skia.vert.cookedshaderpackage");
+        #[cfg(not(target_os = "macos"))]
+        let fragment_shader = include_bytes!("../shaders/out/vk/skia.frag.cookedshaderpackage");
+
         let skia_material_pass = Self::load_material_pass(
             &resource_context,
-            include_bytes!("../shaders/out/skia.vert.cookedshaderpackage"),
-            include_bytes!("../shaders/out/skia.frag.cookedshaderpackage"),
+            vertex_shader,
+            fragment_shader,
             FixedFunctionState {
                 rasterizer_state: Default::default(),
                 depth_state: Default::default(),

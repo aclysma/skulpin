@@ -26,8 +26,14 @@ complete = ["skia-safe/textlayout"]
 rafx = { version = "=0.0.14", features = ["rafx-vulkan", "framework"] }
 bincode = "1.3.1"
 lazy_static = "1"
-
-skia-safe = { version = ">=0.38.1", features = ["vulkan"] }
-skia-bindings = { version = ">=0.38.0" }
-
 log="0.4"
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+rafx = { version = "=0.0.14", features = ["rafx-vulkan", "framework"] }
+skia-safe = { version = ">=0.52", features = ["vulkan"] }
+skia-bindings = { version = ">=0.52", features = ["vulkan"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+rafx = { version = "=0.0.14", features = ["rafx-metal", "framework"] }
+skia-safe = { version = ">=0.52", features = ["metal"] }
+skia-bindings = { version = ">=0.52", features = ["metal"] }
