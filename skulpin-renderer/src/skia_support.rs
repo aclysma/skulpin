@@ -104,7 +104,7 @@ impl VkSkiaSurface {
         assert!(extents.height > 0);
         // The "native" color type is based on platform. For example, on Windows it's BGR and on
         // MacOS it's RGB
-        let color_type = skia_safe::ColorType::n32();
+        let color_type = skia_safe::ColorType::N32;
         let alpha_type = skia_safe::AlphaType::Premul;
         let color_space = Some(skia_safe::ColorSpace::new_srgb_linear());
 
