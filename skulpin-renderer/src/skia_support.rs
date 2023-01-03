@@ -92,7 +92,7 @@ pub struct VkSkiaSurface {
 
 impl VkSkiaSurface {
     pub fn get_image_from_skia_texture(texture: &skia_safe::gpu::BackendTexture) -> vk::Image {
-        unsafe { std::mem::transmute(texture.vulkan_image_info().unwrap().image) }
+        unsafe { std::mem::transmute(texture.vulkan_image_info().unwrap().image.as_ref().unwrap()) }
     }
 
     pub fn new(
@@ -128,9 +128,7 @@ impl VkSkiaSurface {
 
         let texture = surface
             .get_backend_texture(skia_safe::surface::BackendHandleAccess::FlushRead)
-            .as_ref()
-            .unwrap()
-            .clone();
+            .unwrap();
         let image = Self::get_image_from_skia_texture(&texture);
 
         // According to docs, kN32_SkColorType can only be kRGBA_8888_SkColorType or
