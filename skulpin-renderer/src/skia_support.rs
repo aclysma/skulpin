@@ -69,22 +69,10 @@ impl VkSkiaContext {
         use rafx::api::ash::vk::Handle;
         match of {
             skia_safe::gpu::vk::GetProcOf::Instance(instance_proc, name) => {
-                // See comments on enumerate_instance_version_hooked for why we have to hook this fn
-                let name_cstr = std::ffi::CStr::from_ptr(name as _);
-                if name_cstr.to_string_lossy() == "vkEnumerateInstanceVersion" {
-                    // We must not return vulkan 1.2 because skia compiles VMA with support only up to 1.1 and will
-                    // fail if we return 1.2.
-                    //
-                    // Using 1.1 fails as well.. skia is using an older version of VMA with a bug that has since
-                    // been fixed, so for now report that we only support 1.0 to work around it
-                    // https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/commit/f9921aefddee2437cc2e3303d3175bd8ef23e22c
-                    //
-                    // Returning none will force skia to assume vulkan 1.0.0, which works
-                    None
-                } else {
-                    let ash_instance = vk::Instance::from_raw(instance_proc as _);
-                    entry.get_instance_proc_addr(ash_instance, name)
-                }
+                // Instead of forcing skia to use vk 1.0.0,
+                // use the instance version that is the most appropriate.
+                let ash_instance = vk::Instance::from_raw(instance_proc as _);
+                entry.get_instance_proc_addr(ash_instance, name)
             }
             skia_safe::gpu::vk::GetProcOf::Device(device_proc, name) => {
                 let ash_device = vk::Device::from_raw(device_proc as _);
@@ -104,7 +92,7 @@ pub struct VkSkiaSurface {
 
 impl VkSkiaSurface {
     pub fn get_image_from_skia_texture(texture: &skia_safe::gpu::BackendTexture) -> vk::Image {
-        unsafe { std::mem::transmute(texture.vulkan_image_info().unwrap().image) }
+        unsafe { std::mem::transmute(texture.vulkan_image_info().unwrap().image.as_ref().unwrap()) }
     }
 
     pub fn new(
@@ -116,7 +104,7 @@ impl VkSkiaSurface {
         assert!(extents.height > 0);
         // The "native" color type is based on platform. For example, on Windows it's BGR and on
         // MacOS it's RGB
-        let color_type = skia_safe::ColorType::n32();
+        let color_type = skia_safe::ColorType::N32;
         let alpha_type = skia_safe::AlphaType::Premul;
         let color_space = Some(skia_safe::ColorSpace::new_srgb_linear());
 
@@ -140,9 +128,7 @@ impl VkSkiaSurface {
 
         let texture = surface
             .get_backend_texture(skia_safe::surface::BackendHandleAccess::FlushRead)
-            .as_ref()
-            .unwrap()
-            .clone();
+            .unwrap();
         let image = Self::get_image_from_skia_texture(&texture);
 
         // According to docs, kN32_SkColorType can only be kRGBA_8888_SkColorType or
