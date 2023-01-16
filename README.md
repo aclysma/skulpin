@@ -4,6 +4,8 @@ Skia + Vulkan = Skulpin
 
 This crate provides an easy option for drawing hardware-accelerated 2D by combining vulkan and skia.
 
+Please note the [status of this crate](#status) before using.
+
 [![Build Status](https://travis-ci.org/aclysma/skulpin.svg?branch=master)](https://travis-ci.org/aclysma/skulpin)
 ![Crates.io](https://img.shields.io/crates/v/skulpin)
 
@@ -45,13 +47,7 @@ Here's a video of the physics and interactive examples.
 
 ## Status
 
-This crate is in "maintenance" mode - I'm not adding features or planning any API reworks, but I do plan to make fixes
-as necessary to address issues that might come up and maintain compatibility with the broader rust ecosystem.
-
-Originally this was just a proof-of-concept, but it is now being used by [neovide](https://github.com/Kethku/neovide).
-
-Flutter, Google's new UI framework, uses a Skia + Vulkan stack to achieve 60+ FPS on mobile devices. Because Google is
-deeply invested in this stack, I anticipate relatively long term support of this type of usage in Skia.
+I am no longer using this crate for anything, so will only maintain this crate on a very minimal basis. I will review simple pull requests and offer suggestions on opened issues. However, I may fully sunset this repo at any time, particularly if the crate stops working and requires more than trivial changes to fix. Unfortunately, I have limited time to work on open source, so I want to focus it on crates that I think are most interesting to me personally. I'm open to passing ownership of the crate to someone who has made a few PRs and shown themselves to be trustworthy, and will be glad to link to a fork if someone makes one.
 
 ## Usage
 
